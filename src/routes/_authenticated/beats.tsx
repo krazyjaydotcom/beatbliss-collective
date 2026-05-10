@@ -472,7 +472,7 @@ const SAMPLE_NOTES: { title: string; content: string }[] = [
   { title: "Marketing Ideas", content: "- Post beat previews on IG\n- TikTok beat challenges\n- Email list for drops" },
 ];
 
-function NotepadPanel({ userId, beats }: { userId?: string; beats: Beat[] }) {
+function NotepadPanel({ userId, beats, onClose }: { userId?: string; beats: Beat[]; onClose?: () => void }) {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Note | null>(null);
