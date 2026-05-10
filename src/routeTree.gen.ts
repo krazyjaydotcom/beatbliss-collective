@@ -23,6 +23,9 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
+import { Route as AuthenticatedAdminImportRouteImport } from './routes/_authenticated/admin/import'
+import { Route as AuthenticatedAdminGiftRouteImport } from './routes/_authenticated/admin/gift'
+import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authenticated/admin/beats'
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -97,6 +100,22 @@ const AuthenticatedAdminOnlineRoute =
     path: '/online',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminImportRoute =
+  AuthenticatedAdminImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminGiftRoute = AuthenticatedAdminGiftRouteImport.update({
+  id: '/gift',
+  path: '/gift',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminBeatsRoute = AuthenticatedAdminBeatsRouteImport.update({
+  id: '/beats',
+  path: '/beats',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminAgreementsRoute =
   AuthenticatedAdminAgreementsRouteImport.update({
     id: '/agreements',
@@ -122,6 +141,9 @@ export interface FileRoutesByFullPath {
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
+  '/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/admin/gift': typeof AuthenticatedAdminGiftRoute
+  '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -138,6 +160,9 @@ export interface FileRoutesByTo {
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
+  '/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/admin/gift': typeof AuthenticatedAdminGiftRoute
+  '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -157,6 +182,9 @@ export interface FileRoutesById {
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
+  '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/_authenticated/admin/gift': typeof AuthenticatedAdminGiftRoute
+  '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -176,6 +204,9 @@ export interface FileRouteTypes {
     | '/downloads'
     | '/checkout/return'
     | '/admin/agreements'
+    | '/admin/beats'
+    | '/admin/gift'
+    | '/admin/import'
     | '/admin/online'
     | '/admin/support'
     | '/admin/'
@@ -192,6 +223,9 @@ export interface FileRouteTypes {
     | '/downloads'
     | '/checkout/return'
     | '/admin/agreements'
+    | '/admin/beats'
+    | '/admin/gift'
+    | '/admin/import'
     | '/admin/online'
     | '/admin/support'
     | '/admin'
@@ -210,6 +244,9 @@ export interface FileRouteTypes {
     | '/_authenticated/downloads'
     | '/checkout/return'
     | '/_authenticated/admin/agreements'
+    | '/_authenticated/admin/beats'
+    | '/_authenticated/admin/gift'
+    | '/_authenticated/admin/import'
     | '/_authenticated/admin/online'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/'
@@ -325,6 +362,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOnlineRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/import': {
+      id: '/_authenticated/admin/import'
+      path: '/import'
+      fullPath: '/admin/import'
+      preLoaderRoute: typeof AuthenticatedAdminImportRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/gift': {
+      id: '/_authenticated/admin/gift'
+      path: '/gift'
+      fullPath: '/admin/gift'
+      preLoaderRoute: typeof AuthenticatedAdminGiftRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/beats': {
+      id: '/_authenticated/admin/beats'
+      path: '/beats'
+      fullPath: '/admin/beats'
+      preLoaderRoute: typeof AuthenticatedAdminBeatsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/agreements': {
       id: '/_authenticated/admin/agreements'
       path: '/agreements'
@@ -344,6 +402,9 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
+  AuthenticatedAdminBeatsRoute: typeof AuthenticatedAdminBeatsRoute
+  AuthenticatedAdminGiftRoute: typeof AuthenticatedAdminGiftRoute
+  AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -351,6 +412,9 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
+  AuthenticatedAdminBeatsRoute: AuthenticatedAdminBeatsRoute,
+  AuthenticatedAdminGiftRoute: AuthenticatedAdminGiftRoute,
+  AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -392,3 +456,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
