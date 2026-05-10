@@ -87,6 +87,7 @@ function BeatsDashboard() {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [confirmBeat, setConfirmBeat] = useState<Beat | null>(null);
+  const [notepadOpen, setNotepadOpen] = useState(false);
 
   const { data: beats = [] } = useQuery({
     queryKey: ["beats"],
