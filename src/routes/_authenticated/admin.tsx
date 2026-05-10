@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { BarChart3, MessageSquare, Users, ArrowLeft, Loader2, Music, Gift, Download } from "lucide-react";
+import { BarChart3, MessageSquare, Users, ArrowLeft, Loader2, Music, Gift, Download, Eye } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ const NAV = [
   { to: "/admin/support", label: "Support", icon: MessageSquare },
   { to: "/admin/online", label: "Online Users", icon: Users },
   { to: "/admin/agreements", label: "Agreements", icon: BarChart3 },
+  { to: "/beats", label: "View as user", icon: Eye },
 ];
 
 function AdminLayout() {

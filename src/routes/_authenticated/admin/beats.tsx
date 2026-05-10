@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Upload, Music, Trash2 } from "lucide-react";
+import { Loader2, Upload, Music, Trash2, FolderUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,7 +141,103 @@ function AdminBeatsPage() {
           </div>
         )}
       </div>
+
+      <BulkUpload onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
     </div>
+  );
+}
+
+function BulkUpload({ onDone }: { onDone: () => void }) {
+  const [audioFiles, setAudioFiles] = useState<File[]>([]);
+  const [coverFiles, setCoverFiles] = useState<File[]>([]);
+  const [genre, setGenre] = useState("Trap");
+  const [bpm, setBpm] = useState("140");
+  const [memberOnly, setMemberOnly] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number; current: string }>({ done: 0, total: 0, current: "" });
+
+  function basename(name: string) {
+    return name.replace(/\.[^.]+$/, "").toLowerCase().trim();
+  }
+
+  async function run(e: React.FormEvent) {
+    e.preventDefault();
+    if (!audioFiles.length) { toast.error("Pick at least one audio file"); return; }
+    setBusy(true);
+    const total = audioFiles.length;
+    setProgress({ done: 0, total, current: "" });
+    const coverByBase = new Map(coverFiles.map((f) => [basename(f.name), f]));
+    let ok = 0; let failed = 0;
+
+    for (let i = 0; i < audioFiles.length; i++) {
+      const audio = audioFiles[i];
+      const baseRaw = audio.name.replace(/\.[^.]+$/, "");
+      const safeTitle = baseRaw.replace(/[^\w-]+/g, "_") || `beat_${i}`;
+      setProgress({ done: i, total, current: baseRaw });
+      try {
+        const stamp = Date.now() + i;
+        const audioPath = `${stamp}-${safeTitle}.${audio.name.split(".").pop()}`;
+        const { error: aErr } = await supabase.storage.from("beat-audio").upload(audioPath, audio, { upsert: false });
+        if (aErr) throw aErr;
+        const audio_url = supabase.storage.from("beat-audio").getPublicUrl(audioPath).data.publicUrl;
+
+        let cover_url: string | null = null;
+        const cover = coverByBase.get(basename(audio.name));
+        if (cover) {
+          const coverPath = `${stamp}-${safeTitle}.${cover.name.split(".").pop()}`;
+          const { error: cErr } = await supabase.storage.from("beat-covers").upload(coverPath, cover, { upsert: false });
+          if (!cErr) cover_url = supabase.storage.from("beat-covers").getPublicUrl(coverPath).data.publicUrl;
+        }
+
+        const duration_seconds = await getAudioDuration(audio);
+
+        const { error: insErr } = await supabase.from("beats").insert({
+          title: baseRaw, genre, mood: "Unknown", bpm: parseInt(bpm) || 0,
+          music_key: "C", producer_name: "KRAZYJAY",
+          duration_seconds, audio_url, cover_url, is_member_only: memberOnly,
+        });
+        if (insErr) throw insErr;
+        ok++;
+      } catch (err: any) {
+        failed++;
+        console.error("Bulk upload failed for", audio.name, err);
+      }
+    }
+
+    setProgress({ done: total, total, current: "" });
+    setBusy(false);
+    setAudioFiles([]); setCoverFiles([]);
+    toast.success(`Bulk upload finished: ${ok} succeeded, ${failed} failed`);
+    onDone();
+  }
+
+  return (
+    <form onSubmit={run} className="rounded-2xl border border-border bg-card p-6 space-y-4">
+      <h2 className="font-semibold flex items-center gap-2"><FolderUp className="h-4 w-4" /> Bulk upload</h2>
+      <p className="text-xs text-muted-foreground">Pick multiple audio files at once. Title is taken from the filename. Optional: pick cover images with matching filenames (e.g. <code>track-01.mp3</code> + <code>track-01.jpg</code>).</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Field label={`Audio files (${audioFiles.length})`}>
+          <Input type="file" accept="audio/*" multiple onChange={(e) => setAudioFiles(Array.from(e.target.files ?? []))} />
+        </Field>
+        <Field label={`Cover images (${coverFiles.length}) — optional`}>
+          <Input type="file" accept="image/*" multiple onChange={(e) => setCoverFiles(Array.from(e.target.files ?? []))} />
+        </Field>
+        <Field label="Default genre"><Input value={genre} onChange={(e) => setGenre(e.target.value)} /></Field>
+        <Field label="Default BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
+      </div>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={memberOnly} onChange={(e) => setMemberOnly(e.target.checked)} />
+        Mark all as members only
+      </label>
+      {busy && (
+        <div className="text-xs text-muted-foreground">
+          Uploading {progress.done}/{progress.total}: {progress.current || "…"}
+        </div>
+      )}
+      <Button type="submit" disabled={busy || !audioFiles.length}>
+        {busy ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</> : `Bulk upload ${audioFiles.length || ""} beat${audioFiles.length === 1 ? "" : "s"}`}
+      </Button>
+    </form>
   );
 }
 

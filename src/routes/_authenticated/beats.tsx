@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,26 +48,30 @@ type Note = {
 };
 type Profile = { credits_balance: number; display_name: string | null; full_name: string | null; email: string | null };
 
-const SIDEBAR = [
-  { icon: Music, label: "Beats", active: true },
-  { icon: Sparkles, label: "New Releases", badge: "NEW" },
-  { icon: Disc3, label: "By Genre" },
-  { icon: Smile, label: "By Mood" },
-  { icon: Hash, label: "By Key" },
-  { icon: Gauge, label: "By BPM" },
-  { icon: Music, label: "My Beats" },
-  { icon: ListMusic, label: "My Playlists" },
-  { icon: Download, label: "Downloads" },
-  { icon: Heart, label: "Favorites" },
-  { icon: CreditCard, label: "Credits & Plan" },
-  { icon: Receipt, label: "Transactions" },
-  { icon: NotebookPen, label: "Notepad", badge: "NEW" },
-  { icon: Settings, label: "Settings" },
-  { icon: LifeBuoy, label: "Support" },
+type SidebarAction = "beats" | "new" | "filterGenre" | "filterMood" | "filterKey" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "settings" | "support";
+
+const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge?: string }[] = [
+  { icon: Music, label: "Beats", action: "beats" },
+  { icon: Sparkles, label: "New Releases", action: "new", badge: "NEW" },
+  { icon: Disc3, label: "By Genre", action: "filterGenre" },
+  { icon: Smile, label: "By Mood", action: "filterMood" },
+  { icon: Hash, label: "By Key", action: "filterKey" },
+  { icon: Gauge, label: "By BPM", action: "filterBpm" },
+  { icon: Music, label: "My Beats", action: "myBeats" },
+  { icon: ListMusic, label: "My Playlists", action: "playlists" },
+  { icon: Download, label: "Downloads", action: "downloads" },
+  { icon: Heart, label: "Favorites", action: "favorites" },
+  { icon: CreditCard, label: "Credits & Plan", action: "credits" },
+  { icon: Receipt, label: "Transactions", action: "transactions" },
+  { icon: NotebookPen, label: "Notepad", action: "notepad", badge: "NEW" },
+  { icon: Settings, label: "Settings", action: "settings" },
+  { icon: LifeBuoy, label: "Support", action: "support" },
 ];
 
 function BeatsDashboard() {
   const { user, signOut } = useAuth();
+  const isAdmin = useIsAdmin();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [view, setView] = useState<"list" | "grid">("list");
   const [search, setSearch] = useState("");
@@ -75,6 +80,8 @@ function BeatsDashboard() {
   const [musicKey, setMusicKey] = useState("all");
   const [bpm, setBpm] = useState("all");
   const [sort, setSort] = useState("newest");
+  const [favOnly, setFavOnly] = useState(false);
+  const [activeNav, setActiveNav] = useState<SidebarAction>("beats");
   const [now, setNow] = useState<Beat | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -122,6 +129,7 @@ function BeatsDashboard() {
 
   const filtered = useMemo(() => {
     let list = beats.filter((b) => {
+      if (favOnly && !favorites.includes(b.id)) return false;
       if (search && !`${b.title} ${b.producer_name} ${b.genre} ${b.mood} ${b.music_key}`.toLowerCase().includes(search.toLowerCase())) return false;
       if (genre !== "all" && b.genre !== genre) return false;
       if (mood !== "all" && b.mood !== mood) return false;
@@ -136,9 +144,41 @@ function BeatsDashboard() {
     if (sort === "bpm") list = [...list].sort((a, b) => a.bpm - b.bpm);
     if (sort === "title") list = [...list].sort((a, b) => a.title.localeCompare(b.title));
     return list;
-  }, [beats, search, genre, mood, musicKey, bpm, sort]);
+  }, [beats, favorites, favOnly, search, genre, mood, musicKey, bpm, sort]);
 
   const uniq = (key: keyof Beat) => Array.from(new Set(beats.map((b) => b[key] as string)));
+
+  function handleNav(action: SidebarAction) {
+    setActiveNav(action);
+    switch (action) {
+      case "beats":
+        setSearch(""); setGenre("all"); setMood("all"); setMusicKey("all"); setBpm("all"); setFavOnly(false); setSort("newest");
+        break;
+      case "new":
+        setSort("newest"); setFavOnly(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        break;
+      case "filterGenre": case "filterMood": case "filterKey": case "filterBpm":
+        toast.info("Use the filter dropdowns above to narrow results.");
+        break;
+      case "myBeats":
+      case "playlists":
+        toast.info("Coming soon.");
+        break;
+      case "downloads": navigate({ to: "/downloads" }); break;
+      case "favorites": setFavOnly((v) => !v); break;
+      case "credits":
+      case "transactions":
+      case "settings":
+        navigate({ to: "/account" }); break;
+      case "notepad":
+        toast.info("Open the Notepad panel on the right (visible on wider screens).");
+        break;
+      case "support":
+        toast.info("Use the chat bubble at the bottom right to reach support.");
+        break;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -149,20 +189,24 @@ function BeatsDashboard() {
             <Link to="/"><KrazyLogo className="text-xl" /></Link>
           </div>
           <nav className="flex-1 space-y-1">
-            {SIDEBAR.map((item) => (
-              <button
-                key={item.label}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                  item.active ? "bg-electric/15 text-electric border border-electric/30" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                <span className="flex-1 text-left">{item.label}</span>
-                {item.badge && (
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-electric text-electric-foreground">{item.badge}</span>
-                )}
-              </button>
-            ))}
+            {SIDEBAR.map((item) => {
+              const active = activeNav === item.action || (item.action === "favorites" && favOnly);
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => handleNav(item.action)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    active ? "bg-electric/15 text-electric border border-electric/30" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.badge && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-electric text-electric-foreground">{item.badge}</span>
+                  )}
+                </button>
+              );
+            })}
             <button onClick={signOut} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
               <LogOut className="h-4 w-4" /> Log Out
             </button>
@@ -208,9 +252,15 @@ function BeatsDashboard() {
             {/* CATALOG */}
             <ScrollArea className="flex-1">
               <div className="px-4 lg:px-8 py-6 pb-32">
+                {isAdmin && (
+                  <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-electric/30 bg-electric/10 px-4 py-2 text-sm">
+                    <span className="text-electric font-medium">Viewing as user (admin preview)</span>
+                    <Link to="/admin" className="text-electric hover:underline font-semibold">← Back to admin</Link>
+                  </div>
+                )}
                 <div className="flex items-end justify-between flex-wrap gap-4 mb-6">
                   <div>
-                    <h1 className="text-3xl font-bold">All Beats</h1>
+                    <h1 className="text-3xl font-bold">{favOnly ? "Favorites" : "All Beats"}</h1>
                     <p className="text-sm text-muted-foreground mt-1">{filtered.length.toLocaleString()} beats found</p>
                   </div>
                 </div>
@@ -317,10 +367,20 @@ function FilterSelect({ value, onChange, placeholder, options }: { value: string
 
 function BeatCover({ beat, size = "md" }: { beat: Beat; size?: "sm" | "md" | "lg" }) {
   const sizeCls = size === "sm" ? "h-10 w-10" : size === "lg" ? "h-14 w-14" : "h-12 w-12";
-  // generate a deterministic gradient from beat id
   const hash = beat.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const hue1 = hash % 360;
   const hue2 = (hue1 + 60) % 360;
+  if (beat.cover_url) {
+    return (
+      <img
+        src={beat.cover_url}
+        alt={beat.title}
+        loading="lazy"
+        className={`${sizeCls} rounded-md object-cover shadow-card shrink-0 bg-secondary`}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+      />
+    );
+  }
   return (
     <div className={`${sizeCls} rounded-md flex items-center justify-center text-xs font-bold text-white shadow-card shrink-0`}
       style={{ background: `linear-gradient(135deg, hsl(${hue1} 70% 35%), hsl(${hue2} 70% 25%))` }}>
@@ -374,7 +434,14 @@ function BeatCard({ beat, isFav, onPlay, onFav, onDownload }: {
   const hue1 = hash % 360;
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden group">
-      <div className="aspect-square relative" style={{ background: `linear-gradient(135deg, hsl(${hue1} 70% 35%), hsl(${(hue1 + 60) % 360} 70% 20%))` }}>
+      <div
+        className="aspect-square relative bg-cover bg-center"
+        style={
+          beat.cover_url
+            ? { backgroundImage: `url(${beat.cover_url})` }
+            : { background: `linear-gradient(135deg, hsl(${hue1} 70% 35%), hsl(${(hue1 + 60) % 360} 70% 20%))` }
+        }
+      >
         <button onClick={onPlay} className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition">
           <Play className="h-12 w-12 text-electric fill-electric" />
         </button>
