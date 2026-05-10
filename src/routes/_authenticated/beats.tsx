@@ -252,9 +252,15 @@ function BeatsDashboard() {
             {/* CATALOG */}
             <ScrollArea className="flex-1">
               <div className="px-4 lg:px-8 py-6 pb-32">
+                {isAdmin && (
+                  <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-electric/30 bg-electric/10 px-4 py-2 text-sm">
+                    <span className="text-electric font-medium">Viewing as user (admin preview)</span>
+                    <Link to="/admin" className="text-electric hover:underline font-semibold">← Back to admin</Link>
+                  </div>
+                )}
                 <div className="flex items-end justify-between flex-wrap gap-4 mb-6">
                   <div>
-                    <h1 className="text-3xl font-bold">All Beats</h1>
+                    <h1 className="text-3xl font-bold">{favOnly ? "Favorites" : "All Beats"}</h1>
                     <p className="text-sm text-muted-foreground mt-1">{filtered.length.toLocaleString()} beats found</p>
                   </div>
                 </div>
