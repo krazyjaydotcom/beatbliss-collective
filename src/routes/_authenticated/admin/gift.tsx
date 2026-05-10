@@ -40,7 +40,7 @@ function AdminGiftPage() {
     if (!amt) { toast.error("Enter a non-zero amount"); return; }
     setSubmitting(true);
     const { data, error } = await supabase.rpc("admin_gift_credits", {
-      _user_id: selected.id, _amount: amt, _note: note || null,
+      _user_id: selected.id, _amount: amt, _note: note || undefined,
     });
     setSubmitting(false);
     if (error) return toast.error(error.message);
