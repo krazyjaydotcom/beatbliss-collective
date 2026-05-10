@@ -441,7 +441,7 @@ function NotepadPanel({ userId, beats }: { userId?: string; beats: Beat[] }) {
         if (error) throw error;
       } else {
         const { error } = await supabase.from("notes").insert({
-          user_id: userId, title: n.title, content: n.content, beat_id: n.beat_id ?? null,
+          user_id: userId!, title: n.title, content: n.content, beat_id: n.beat_id ?? null,
         });
         if (error) throw error;
       }
