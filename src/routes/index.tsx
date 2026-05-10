@@ -1,26 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SiteNav } from "@/components/site-nav";
+import { Hero } from "@/components/hero";
+import { Stats } from "@/components/stats";
+import { Features } from "@/components/features";
+import { Pricing } from "@/components/pricing";
+import { AsHeardIn } from "@/components/as-heard-in";
+import { SiteFooter } from "@/components/site-footer";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: "KrazyJayDotCom — Premium Beats for Artists & Labels" },
+      {
+        name: "description",
+        content: "Subscription beat store with unlimited streaming. $37/mo for artists, $97/mo for labels. Royalty-free, industry ready.",
+      },
+    ],
+  }),
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
-
 function Index() {
-  return <PlaceholderIndex />;
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <SiteNav />
+      <Hero />
+      <Stats />
+      <Features />
+      <Pricing />
+      <AsHeardIn />
+      <SiteFooter />
+    </main>
+  );
 }
