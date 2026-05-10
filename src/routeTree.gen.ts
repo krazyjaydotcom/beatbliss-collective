@@ -17,6 +17,7 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
+import { Route as AuthenticatedAgreementsRouteImport } from './routes/_authenticated/agreements'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -59,6 +60,11 @@ const AuthenticatedBeatsRoute = AuthenticatedBeatsRouteImport.update({
   path: '/beats',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAgreementsRoute = AuthenticatedAgreementsRouteImport.update({
+  id: '/agreements',
+  path: '/agreements',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/agreements': typeof AuthenticatedAgreementsRoute
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/account'
+    | '/agreements'
     | '/beats'
     | '/checkout'
     | '/downloads'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/account'
+    | '/agreements'
     | '/beats'
     | '/checkout'
     | '/downloads'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authenticated/account'
+    | '/_authenticated/agreements'
     | '/_authenticated/beats'
     | '/_authenticated/checkout'
     | '/_authenticated/downloads'
@@ -210,6 +222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBeatsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/agreements': {
+      id: '/_authenticated/agreements'
+      path: '/agreements'
+      fullPath: '/agreements'
+      preLoaderRoute: typeof AuthenticatedAgreementsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/account': {
       id: '/_authenticated/account'
       path: '/account'
@@ -229,6 +248,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedAgreementsRoute: typeof AuthenticatedAgreementsRoute
   AuthenticatedBeatsRoute: typeof AuthenticatedBeatsRoute
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
@@ -236,6 +256,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedAgreementsRoute: AuthenticatedAgreementsRoute,
   AuthenticatedBeatsRoute: AuthenticatedBeatsRoute,
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
