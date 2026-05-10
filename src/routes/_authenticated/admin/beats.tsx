@@ -75,7 +75,7 @@ function AdminBeatsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-black tracking-tight">Beats</h1>
-        <p className="text-muted-foreground mt-1">Drag &amp; drop to upload. Both MP3 and WAV are saved automatically.</p>
+        <p className="text-muted-foreground mt-1">Drag &amp; drop to upload. MP3 + WAV are auto-generated. Files with <code>tag</code> or <code>tagged</code> in the name are paired as the free-tier preview.</p>
       </div>
 
       <DropUploader onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
