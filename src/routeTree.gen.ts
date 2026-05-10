@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
+import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -47,6 +48,11 @@ const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedBeatsRoute = AuthenticatedBeatsRouteImport.update({
+  id: '/beats',
+  path: '/beats',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/beats': typeof AuthenticatedBeatsRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/beats': typeof AuthenticatedBeatsRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/beats': typeof AuthenticatedBeatsRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/account'
+    | '/beats'
     | '/checkout'
     | '/checkout/return'
     | '/api/public/payments/webhook'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/account'
+    | '/beats'
     | '/checkout'
     | '/checkout/return'
     | '/api/public/payments/webhook'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authenticated/account'
+    | '/_authenticated/beats'
     | '/_authenticated/checkout'
     | '/checkout/return'
     | '/api/public/payments/webhook'
@@ -172,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/beats': {
+      id: '/_authenticated/beats'
+      path: '/beats'
+      fullPath: '/beats'
+      preLoaderRoute: typeof AuthenticatedBeatsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/account': {
       id: '/_authenticated/account'
       path: '/account'
@@ -191,11 +210,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedBeatsRoute: typeof AuthenticatedBeatsRoute
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedBeatsRoute: AuthenticatedBeatsRoute,
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
 }
 
@@ -214,3 +235,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
