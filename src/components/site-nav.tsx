@@ -19,9 +19,14 @@ export function SiteNav() {
         </div>
         <div className="flex items-center gap-3">
           {loading ? null : user ? (
-            <Button variant="hero" size="sm" asChild>
-              <Link to="/account">My Account</Link>
-            </Button>
+            <>
+              <Button variant="heroOutline" size="sm" asChild>
+                <Link to="/account">My Account</Link>
+              </Button>
+              <Button variant="hero" size="sm" asChild>
+                <Link to="/beats">Browse Beats</Link>
+              </Button>
+            </>
           ) : (
             <>
               <Button variant="heroOutline" size="sm" asChild>
