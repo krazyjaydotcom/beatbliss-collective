@@ -190,25 +190,38 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       setItems((s) => s.map((i) => i.id === p.id ? { ...i, status, message } : i));
     try {
       setStatus("decoding");
+      const taggedOnly = p.tagged && p.audio === p.tagged;
       const buf = await decodeAudioFile(p.audio);
       const sourceIsMp3 = isMp3(p.audio);
-      const mp3Blob = sourceIsMp3 ? p.audio : encodeMp3(buf, 192);
-      const wavBlob = isWav(p.audio) ? p.audio : encodeWav(buf);
 
       setStatus("uploading");
       const stamp = Date.now();
       const safe = (p.title || "beat").replace(/[^\w-]+/g, "_");
+      let audio_url: string | null = null;
+      let audio_url_wav: string | null = null;
+      let audio_url_tagged: string | null = null;
 
-      const mp3Path = `${stamp}-${safe}.mp3`;
-      const wavPath = `${stamp}-${safe}.wav`;
+      if (!taggedOnly) {
+        const mp3Blob = sourceIsMp3 ? p.audio : encodeMp3(buf, 192);
+        const wavBlob = isWav(p.audio) ? p.audio : encodeWav(buf);
+        const mp3Path = `${stamp}-${safe}.mp3`;
+        const wavPath = `${stamp}-${safe}.wav`;
+        const up1 = await supabase.storage.from("beat-audio").upload(mp3Path, mp3Blob, { upsert: false, contentType: "audio/mpeg" });
+        if (up1.error) throw up1.error;
+        const up2 = await supabase.storage.from("beat-audio").upload(wavPath, wavBlob, { upsert: false, contentType: "audio/wav" });
+        if (up2.error) throw up2.error;
+        audio_url = supabase.storage.from("beat-audio").getPublicUrl(mp3Path).data.publicUrl;
+        audio_url_wav = supabase.storage.from("beat-audio").getPublicUrl(wavPath).data.publicUrl;
+      }
 
-      const up1 = await supabase.storage.from("beat-audio").upload(mp3Path, mp3Blob, { upsert: false, contentType: "audio/mpeg" });
-      if (up1.error) throw up1.error;
-      const up2 = await supabase.storage.from("beat-audio").upload(wavPath, wavBlob, { upsert: false, contentType: "audio/wav" });
-      if (up2.error) throw up2.error;
-
-      const audio_url = supabase.storage.from("beat-audio").getPublicUrl(mp3Path).data.publicUrl;
-      const audio_url_wav = supabase.storage.from("beat-audio").getPublicUrl(wavPath).data.publicUrl;
+      if (p.tagged) {
+        const tBuf = p.tagged === p.audio ? buf : await decodeAudioFile(p.tagged);
+        const tBlob = isMp3(p.tagged) ? p.tagged : encodeMp3(tBuf, 192);
+        const tPath = `${stamp}-${safe}-tagged.mp3`;
+        const upT = await supabase.storage.from("beat-audio").upload(tPath, tBlob, { upsert: false, contentType: "audio/mpeg" });
+        if (upT.error) throw upT.error;
+        audio_url_tagged = supabase.storage.from("beat-audio").getPublicUrl(tPath).data.publicUrl;
+      }
 
       let cover_url: string | null = null;
       if (p.cover) {
@@ -222,7 +235,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       const { error: insErr } = await supabase.from("beats").insert({
         title: p.title, genre, mood: "Unknown", bpm: parseInt(bpm) || 0,
         music_key: "C", producer_name: "KRAZYJAY",
-        duration_seconds, audio_url, audio_url_wav, cover_url,
+        duration_seconds, audio_url, audio_url_wav, audio_url_tagged, cover_url,
         is_member_only: memberOnly,
       });
       if (insErr) throw insErr;
