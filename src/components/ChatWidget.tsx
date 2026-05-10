@@ -79,7 +79,7 @@ export function ChatWidget() {
   }, [open, threadId, unread]);
 
   const send = async () => {
-    if (!text.trim() || !threadId) return;
+    if (!text.trim() || !threadId || !user) return;
     const body = text.trim();
     setText("");
     await supabase.from("chat_messages").insert({
