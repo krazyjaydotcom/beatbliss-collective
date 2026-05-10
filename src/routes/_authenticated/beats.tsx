@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
