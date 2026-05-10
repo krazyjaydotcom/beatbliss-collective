@@ -317,10 +317,20 @@ function FilterSelect({ value, onChange, placeholder, options }: { value: string
 
 function BeatCover({ beat, size = "md" }: { beat: Beat; size?: "sm" | "md" | "lg" }) {
   const sizeCls = size === "sm" ? "h-10 w-10" : size === "lg" ? "h-14 w-14" : "h-12 w-12";
-  // generate a deterministic gradient from beat id
   const hash = beat.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const hue1 = hash % 360;
   const hue2 = (hue1 + 60) % 360;
+  if (beat.cover_url) {
+    return (
+      <img
+        src={beat.cover_url}
+        alt={beat.title}
+        loading="lazy"
+        className={`${sizeCls} rounded-md object-cover shadow-card shrink-0 bg-secondary`}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+      />
+    );
+  }
   return (
     <div className={`${sizeCls} rounded-md flex items-center justify-center text-xs font-bold text-white shadow-card shrink-0`}
       style={{ background: `linear-gradient(135deg, hsl(${hue1} 70% 35%), hsl(${hue2} 70% 25%))` }}>
