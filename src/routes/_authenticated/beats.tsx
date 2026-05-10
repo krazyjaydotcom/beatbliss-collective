@@ -47,22 +47,24 @@ type Note = {
 };
 type Profile = { credits_balance: number; display_name: string | null; full_name: string | null; email: string | null };
 
-const SIDEBAR = [
-  { icon: Music, label: "Beats", active: true },
-  { icon: Sparkles, label: "New Releases", badge: "NEW" },
-  { icon: Disc3, label: "By Genre" },
-  { icon: Smile, label: "By Mood" },
-  { icon: Hash, label: "By Key" },
-  { icon: Gauge, label: "By BPM" },
-  { icon: Music, label: "My Beats" },
-  { icon: ListMusic, label: "My Playlists" },
-  { icon: Download, label: "Downloads" },
-  { icon: Heart, label: "Favorites" },
-  { icon: CreditCard, label: "Credits & Plan" },
-  { icon: Receipt, label: "Transactions" },
-  { icon: NotebookPen, label: "Notepad", badge: "NEW" },
-  { icon: Settings, label: "Settings" },
-  { icon: LifeBuoy, label: "Support" },
+type SidebarAction = "beats" | "new" | "filterGenre" | "filterMood" | "filterKey" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "settings" | "support";
+
+const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge?: string }[] = [
+  { icon: Music, label: "Beats", action: "beats" },
+  { icon: Sparkles, label: "New Releases", action: "new", badge: "NEW" },
+  { icon: Disc3, label: "By Genre", action: "filterGenre" },
+  { icon: Smile, label: "By Mood", action: "filterMood" },
+  { icon: Hash, label: "By Key", action: "filterKey" },
+  { icon: Gauge, label: "By BPM", action: "filterBpm" },
+  { icon: Music, label: "My Beats", action: "myBeats" },
+  { icon: ListMusic, label: "My Playlists", action: "playlists" },
+  { icon: Download, label: "Downloads", action: "downloads" },
+  { icon: Heart, label: "Favorites", action: "favorites" },
+  { icon: CreditCard, label: "Credits & Plan", action: "credits" },
+  { icon: Receipt, label: "Transactions", action: "transactions" },
+  { icon: NotebookPen, label: "Notepad", action: "notepad", badge: "NEW" },
+  { icon: Settings, label: "Settings", action: "settings" },
+  { icon: LifeBuoy, label: "Support", action: "support" },
 ];
 
 function BeatsDashboard() {
