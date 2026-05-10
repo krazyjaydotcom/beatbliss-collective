@@ -6,7 +6,7 @@ import {
   CreditCard, Receipt, NotebookPen, Settings, LifeBuoy, LogOut, Search,
   ShoppingCart, Bell, SlidersHorizontal, Play, Pause, SkipBack, SkipForward,
   Shuffle, Repeat, Volume2, MoreHorizontal, Plus, Pin, Trash2, Edit3,
-  LayoutGrid, List as ListIcon, FileText, Loader2,
+  LayoutGrid, List as ListIcon, FileText, Loader2, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
