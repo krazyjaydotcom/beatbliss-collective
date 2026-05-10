@@ -173,7 +173,7 @@ function BeatsDashboard() {
       case "settings":
         navigate({ to: "/account" }); break;
       case "notepad":
-        toast.info("Open the Notepad panel on the right (visible on wider screens).");
+        setNotepadOpen((v) => !v);
         break;
       case "support":
         toast.info("Use the chat bubble at the bottom right to reach support.");
