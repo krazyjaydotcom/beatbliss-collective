@@ -22,11 +22,14 @@ async function applySubscription(
   const stripe = createStripeClient(env);
   const admin = getAdmin();
 
-  const userId =
-    (sub.metadata?.userId as string | undefined) ||
-    (typeof sub.customer === "string"
-      ? ((await stripe.customers.retrieve(sub.customer)) as Stripe.Customer).metadata?.userId
-      : sub.customer.metadata?.userId);
+  let userId: string | undefined = sub.metadata?.userId;
+  if (!userId) {
+    const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!customer.deleted) {
+      userId = customer.metadata?.userId;
+    }
+  }
 
   if (!userId) {
     console.warn("[webhook] subscription has no userId metadata", sub.id);
