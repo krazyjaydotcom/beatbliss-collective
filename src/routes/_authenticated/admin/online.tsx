@@ -18,19 +18,23 @@ function OnlineUsers() {
   const [users, setUsers] = useState<Presence[]>([]);
 
   useEffect(() => {
-    const channel = supabase.channel("site-presence", {
-      config: { presence: { key: "admin-watcher" } },
-    });
-    channel.on("presence", { event: "sync" }, () => {
+    // The site-presence channel is already subscribed by the auth layout's
+    // broadcaster. Reuse it and poll its presence state instead of attaching
+    // another `on('presence', 'sync')` listener (which Supabase forbids
+    // after subscribe()).
+    const channel = supabase.channel("site-presence");
+
+    const refresh = () => {
       const state = channel.presenceState<Presence>();
       const flat = Object.values(state).flat();
-      // dedupe by user_id, latest path wins
       const map = new Map<string, Presence>();
       flat.forEach((p) => { if (p.user_id) map.set(p.user_id, p); });
       setUsers(Array.from(map.values()));
-    });
-    channel.subscribe();
-    return () => { supabase.removeChannel(channel); };
+    };
+
+    refresh();
+    const interval = setInterval(refresh, 2000);
+    return () => { clearInterval(interval); };
   }, []);
 
   return (
