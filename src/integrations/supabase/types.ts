@@ -89,6 +89,7 @@ export type Database = {
       beats: {
         Row: {
           audio_url: string | null
+          audio_url_wav: string | null
           bpm: number
           cover_url: string | null
           created_at: string
@@ -103,6 +104,7 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          audio_url_wav?: string | null
           bpm: number
           cover_url?: string | null
           created_at?: string
@@ -117,6 +119,7 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          audio_url_wav?: string | null
           bpm?: number
           cover_url?: string | null
           created_at?: string
@@ -387,6 +390,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_bulk_update_beats: {
+        Args: {
+          _bpm?: number
+          _genre?: string
+          _ids: string[]
+          _is_member_only?: boolean
+          _mood?: string
+          _music_key?: string
+        }
+        Returns: number
+      }
       admin_gift_credits: {
         Args: { _amount: number; _note?: string; _user_id: string }
         Returns: Json
