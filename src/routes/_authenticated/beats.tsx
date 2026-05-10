@@ -176,6 +176,8 @@ function BeatsDashboard() {
       case "notepad":
         setNotepadOpen((v) => !v);
         break;
+      case "whitelist":
+        navigate({ to: "/whitelist" }); break;
       case "support":
         toast.info("Use the chat bubble at the bottom right to reach support.");
         break;
