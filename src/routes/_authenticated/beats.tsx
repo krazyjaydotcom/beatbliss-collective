@@ -537,9 +537,16 @@ function NotepadPanel({ userId, beats, onClose }: { userId?: string; beats: Beat
     <aside className="hidden xl:flex w-80 shrink-0 flex-col border-l border-border bg-card/40 p-4 gap-3">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold flex items-center gap-2"><NotebookPen className="h-4 w-4 text-electric" /> My Notepad</h2>
-        <button onClick={() => setEditing({ id: "", title: "", content: "", is_pinned: false, beat_id: null, updated_at: "" })} className="text-muted-foreground hover:text-electric">
-          <Edit3 className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setEditing({ id: "", title: "", content: "", is_pinned: false, beat_id: null, updated_at: "" })} className="text-muted-foreground hover:text-electric">
+            <Edit3 className="h-4 w-4" />
+          </button>
+          {onClose && (
+            <button onClick={onClose} aria-label="Close notepad" className="text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
