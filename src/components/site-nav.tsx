@@ -1,9 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 
 export function SiteNav() {
   const { user, loading } = useAuth();
+  const isAdmin = useIsAdmin();
 
   return (
     <header className="absolute top-0 left-0 right-0 z-50">
@@ -20,6 +22,11 @@ export function SiteNav() {
         <div className="flex items-center gap-3">
           {loading ? null : user ? (
             <>
+              {isAdmin && (
+                <Button variant="heroOutline" size="sm" asChild>
+                  <Link to="/admin">Admin</Link>
+                </Button>
+              )}
               <Button variant="heroOutline" size="sm" asChild>
                 <Link to="/account">My Account</Link>
               </Button>
