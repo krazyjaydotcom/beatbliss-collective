@@ -1,14 +1,22 @@
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Check, Crown, Building2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+
+type Interval = "monthly" | "yearly";
 
 const tiers = [
   {
     name: "Artist / Creator",
-    price: 37,
     icon: Crown,
     tag: "Most Popular",
     highlight: true,
     desc: "For independent artists ready to level up.",
+    monthlyPrice: 37,
+    yearlyPrice: 370,
+    monthlyPlan: "artist_monthly",
+    yearlyPlan: "artist_yearly",
     features: [
       "Unlimited streaming of 5,000+ beats",
       "10 beat downloads per month",
@@ -20,11 +28,14 @@ const tiers = [
   },
   {
     name: "Label",
-    price: 97,
     icon: Building2,
     tag: "For Teams",
     highlight: false,
     desc: "Built for labels signing multiple artists.",
+    monthlyPrice: 97,
+    yearlyPrice: 970,
+    monthlyPlan: "label_monthly",
+    yearlyPlan: "label_yearly",
     features: [
       "Everything in Artist plan",
       "Unlimited downloads",
@@ -38,6 +49,9 @@ const tiers = [
 ];
 
 export function Pricing() {
+  const [interval, setInterval] = useState<Interval>("monthly");
+  const { user } = useAuth();
+
   return (
     <section id="pricing" className="container mx-auto px-6 py-20">
       <div className="text-center max-w-2xl mx-auto">
@@ -50,11 +64,33 @@ export function Pricing() {
         <p className="mt-4 text-muted-foreground">
           Simple, fair pricing. Pick the plan that fits your hustle.
         </p>
+
+        <div className="mt-8 inline-flex items-center rounded-full border border-border bg-card p-1">
+          {(["monthly", "yearly"] as const).map((opt) => (
+            <button
+              key={opt}
+              onClick={() => setInterval(opt)}
+              className={`px-5 py-2 rounded-full text-sm font-bold tracking-wide transition-colors ${
+                interval === opt
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {opt === "monthly" ? "Monthly" : "Yearly · save 17%"}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-14 grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
         {tiers.map((tier) => {
           const Icon = tier.icon;
+          const price = interval === "monthly" ? tier.monthlyPrice : tier.yearlyPrice;
+          const planId = interval === "monthly" ? tier.monthlyPlan : tier.yearlyPlan;
+          const linkProps = user
+            ? { to: "/checkout" as const, search: { plan: planId } }
+            : { to: "/signup" as const, search: { plan: planId } };
+
           return (
             <div
               key={tier.name}
@@ -77,15 +113,18 @@ export function Pricing() {
               </div>
               <p className="mt-3 text-muted-foreground">{tier.desc}</p>
               <div className="mt-6 flex items-baseline gap-2">
-                <span className="text-6xl font-black">${tier.price}</span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="text-6xl font-black">${price}</span>
+                <span className="text-muted-foreground">
+                  /{interval === "monthly" ? "month" : "year"}
+                </span>
               </div>
               <Button
                 variant={tier.highlight ? "hero" : "heroOutline"}
                 size="lg"
                 className="mt-6 w-full"
+                asChild
               >
-                Get Started
+                <Link {...linkProps}>Get Started</Link>
               </Button>
               <ul className="mt-8 space-y-3">
                 {tier.features.map((f) => (
