@@ -66,6 +66,66 @@ async function applySubscription(
     .eq("id", userId);
 }
 
+const CREDITS_PER_TIER: Record<string, number> = { artist: 10, label: 25 };
+
+async function grantMonthlyCredits(
+  env: StripeEnv,
+  invoice: Stripe.Invoice,
+) {
+  const stripe = createStripeClient(env);
+  const admin = getAdmin();
+
+  // Only grant for subscription invoices that were actually paid
+  const subId = (invoice as unknown as { subscription?: string | Stripe.Subscription }).subscription;
+  if (!subId || invoice.status !== "paid") return;
+  const subscriptionId = typeof subId === "string" ? subId : subId.id;
+
+  const sub = await stripe.subscriptions.retrieve(subscriptionId);
+  let userId: string | undefined = sub.metadata?.userId;
+  if (!userId) {
+    const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!customer.deleted) userId = customer.metadata?.userId;
+  }
+  if (!userId) return;
+
+  const item = sub.items.data[0];
+  let lookupKey = item?.price?.lookup_key ?? null;
+  if (!lookupKey && item?.price?.id) {
+    const price = await stripe.prices.retrieve(item.price.id);
+    lookupKey = price.lookup_key ?? null;
+  }
+  const tier = tierFromLookupKey(lookupKey);
+  const credits = CREDITS_PER_TIER[tier];
+  if (!credits) return;
+
+  // Idempotency: only grant once per invoice
+  const description = `Subscription credits (${tier}) · invoice ${invoice.id}`;
+  const { data: existing } = await admin
+    .from("transactions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("description", description)
+    .limit(1)
+    .maybeSingle();
+  if (existing) return;
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("credits_balance")
+    .eq("id", userId)
+    .maybeSingle();
+  const newBalance = (profile?.credits_balance ?? 0) + credits;
+
+  await admin.from("profiles").update({ credits_balance: newBalance }).eq("id", userId);
+  await admin.from("transactions").insert({
+    user_id: userId,
+    type: "subscription_grant",
+    credits_amount: credits,
+    description,
+  });
+}
+
 export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
     handlers: {
@@ -116,6 +176,11 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
             case "customer.subscription.updated":
             case "customer.subscription.deleted": {
               await applySubscription(env, event.data.object as Stripe.Subscription);
+              break;
+            }
+            case "invoice.paid":
+            case "invoice.payment_succeeded": {
+              await grantMonthlyCredits(env, event.data.object as Stripe.Invoice);
               break;
             }
             default:
