@@ -69,6 +69,8 @@ const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge
 
 function BeatsDashboard() {
   const { user, signOut } = useAuth();
+  const isAdmin = useIsAdmin();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [view, setView] = useState<"list" | "grid">("list");
   const [search, setSearch] = useState("");
@@ -77,6 +79,8 @@ function BeatsDashboard() {
   const [musicKey, setMusicKey] = useState("all");
   const [bpm, setBpm] = useState("all");
   const [sort, setSort] = useState("newest");
+  const [favOnly, setFavOnly] = useState(false);
+  const [activeNav, setActiveNav] = useState<SidebarAction>("beats");
   const [now, setNow] = useState<Beat | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
