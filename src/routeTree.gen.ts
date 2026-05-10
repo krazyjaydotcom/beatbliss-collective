@@ -14,9 +14,12 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
+import { Route as AuthenticatedAgreementsRouteImport } from './routes/_authenticated/agreements'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const SignupRoute = SignupRouteImport.update({
@@ -43,6 +46,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedDownloadsRoute = AuthenticatedDownloadsRouteImport.update({
+  id: '/downloads',
+  path: '/downloads',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
@@ -53,11 +61,22 @@ const AuthenticatedBeatsRoute = AuthenticatedBeatsRouteImport.update({
   path: '/beats',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAgreementsRoute = AuthenticatedAgreementsRouteImport.update({
+  id: '/agreements',
+  path: '/agreements',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdminAgreementsRoute =
+  AuthenticatedAdminAgreementsRouteImport.update({
+    id: '/admin/agreements',
+    path: '/admin/agreements',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -70,9 +89,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/downloads': typeof AuthenticatedDownloadsRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -80,9 +102,12 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/downloads': typeof AuthenticatedDownloadsRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -92,9 +117,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/agreements': typeof AuthenticatedAgreementsRoute
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
+  '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -104,9 +132,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/account'
+    | '/agreements'
     | '/beats'
     | '/checkout'
+    | '/downloads'
     | '/checkout/return'
+    | '/admin/agreements'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -114,9 +145,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/account'
+    | '/agreements'
     | '/beats'
     | '/checkout'
+    | '/downloads'
     | '/checkout/return'
+    | '/admin/agreements'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -125,9 +159,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authenticated/account'
+    | '/_authenticated/agreements'
     | '/_authenticated/beats'
     | '/_authenticated/checkout'
+    | '/_authenticated/downloads'
     | '/checkout/return'
+    | '/_authenticated/admin/agreements'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -177,6 +214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/downloads': {
+      id: '/_authenticated/downloads'
+      path: '/downloads'
+      fullPath: '/downloads'
+      preLoaderRoute: typeof AuthenticatedDownloadsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/checkout': {
       id: '/_authenticated/checkout'
       path: '/checkout'
@@ -191,11 +235,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBeatsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/agreements': {
+      id: '/_authenticated/agreements'
+      path: '/agreements'
+      fullPath: '/agreements'
+      preLoaderRoute: typeof AuthenticatedAgreementsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/account': {
       id: '/_authenticated/account'
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/agreements': {
+      id: '/_authenticated/admin/agreements'
+      path: '/admin/agreements'
+      fullPath: '/admin/agreements'
+      preLoaderRoute: typeof AuthenticatedAdminAgreementsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/api/public/payments/webhook': {
@@ -210,14 +268,20 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedAgreementsRoute: typeof AuthenticatedAgreementsRoute
   AuthenticatedBeatsRoute: typeof AuthenticatedBeatsRoute
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
+  AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
+  AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedAgreementsRoute: AuthenticatedAgreementsRoute,
   AuthenticatedBeatsRoute: AuthenticatedBeatsRoute,
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
+  AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
+  AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
