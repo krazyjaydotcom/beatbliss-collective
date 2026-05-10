@@ -109,6 +109,22 @@ function AccountPage() {
           </div>
         </div>
 
+        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-semibold">Whitelist your releases</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {isSubscribed
+                  ? "Submit songs you've released using KRAZYJAY beats so they're cleared on streaming platforms."
+                  : "Available with a paid membership — clear your tracks on Spotify, Apple Music and YouTube."}
+              </p>
+            </div>
+            <Button variant={isSubscribed ? "heroOutline" : "outline"} asChild>
+              <Link to="/whitelist">{isSubscribed ? "Open whitelist" : "Learn more"}</Link>
+            </Button>
+          </div>
+        </div>
+
         <div className="mt-6 flex justify-end">
           <Button variant="ghost" onClick={handleSignOut}>Sign out</Button>
         </div>
