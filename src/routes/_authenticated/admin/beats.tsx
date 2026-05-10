@@ -301,11 +301,11 @@ function BulkEditBar({ ids, onDone, onClear }: { ids: string[]; onDone: () => vo
     setSaving(true);
     const { data, error } = await supabase.rpc("admin_bulk_update_beats", {
       _ids: ids,
-      _genre: genre || null,
-      _mood: mood || null,
-      _bpm: bpm ? parseInt(bpm) : null,
-      _music_key: musicKey || null,
-      _is_member_only: memberOnly === "unchanged" ? null : memberOnly === "yes",
+      _genre: genre || undefined,
+      _mood: mood || undefined,
+      _bpm: bpm ? parseInt(bpm) : undefined,
+      _music_key: musicKey || undefined,
+      _is_member_only: memberOnly === "unchanged" ? undefined : memberOnly === "yes",
     });
     setSaving(false);
     if (error) return toast.error(error.message);
