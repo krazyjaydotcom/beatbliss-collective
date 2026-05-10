@@ -1,57 +1,70 @@
 ## Goal
 
-Turn the landing page into a working subscription beat store with two plans:
-- **Artist / Creator** — $37/mo (already exists in your Stripe)
-- **Label** — $97/mo (needs to be created)
+Differentiate license tiers based on subscription, add audio-tagged previews for free users with a 3-download limit, and add a whitelist submission section for paying members.
 
-Using **Lovable Payments (built-in Stripe)** so there are no API keys to copy from your other app — billing is handled inside Lovable.
+## 1. License tiers
 
-## Heads up before we start
+Drive license type from the user's `subscription_tier` at download time:
 
-- **Pro plan required** — Lovable Payments needs a Pro subscription.
-- **Your existing $37 product won't carry over.** Lovable Payments creates its own connected Stripe environment for this project. Both products will be created fresh inside it (test mode first, then live after you verify your account). Your other app's products stay untouched.
-- If you'd rather reuse your exact existing Stripe account/products, that requires the BYOK Stripe integration where you paste your secret key — say the word and I'll switch to that path instead.
+- `none` (free) → **Standard Membership License**
+  - Only `tagged` (watermarked) MP3 file
+  - Max **3 lifetime downloads**
+  - Non-monetizable, demo/social use only
+- `artist` / `label` (paid, active) → **Unlimited Membership License**
+  - Untagged MP3 or WAV
+  - No download cap (still spends credits as today)
+  - Monetization rights granted
 
-## Plan
+The `process_beat_download` RPC is updated to:
+- Read the caller's tier from `profiles`
+- Block free users from non-tagged files and from a 4th download (count from `downloads` table)
+- Set `license_type` and a tier-appropriate `agreement_text` accordingly
+- Return the correct `audio_url` (tagged vs clean)
 
-### 1. Enable Lovable Cloud
-Provisions database, auth, and server runtime. Needed to store users, their plan, and Stripe customer/subscription IDs.
+## 2. Audio-tagged catalog
 
-### 2. Enable Lovable Payments (Stripe)
-Runs the eligibility check, then enables the built-in Stripe integration. Creates a test environment immediately.
+Add a watermarked variant alongside the existing files:
 
-### 3. Create both products in Stripe
-- Artist / Creator — $37/month recurring
-- Label — $97/month recurring
+- New column `beats.audio_url_tagged` (nullable text)
+- Admin upload flow gets a third slot: drop a "tagged" MP3 (filename containing `tag`/`tagged` auto-pairs, otherwise a per-row picker in the bulk uploader)
+- Existing beats without a tagged file can still be downloaded by paid users; free users see a "preview only" lock until a tagged version exists
+- Admin bulk editor gets a "Replace tagged audio" action
 
-### 4. Add authentication
-- Email + password sign up / log in
-- `/login` and `/signup` routes
-- `_authenticated` layout for gated pages
+This matches the old "audio tag" concept (your producer tag on the watermarked version).
 
-### 5. Add `/account` page
-Shows the user's current plan, renewal date, and a "Manage billing" button (Stripe customer portal).
+## 3. Whitelist submissions (paid only)
 
-### 6. Wire up checkout
-- "Get Started" buttons on each pricing card create a Stripe Checkout session for that plan
-- Success returns user to `/account`
-- Webhook at `/api/public/stripe-webhook` updates the user's subscription status in the database
+New table `whitelist_submissions`:
+- `user_id`, `beat_id` (which beat of yours was used), `track_title`, `artist_name`, `streaming_url` (Spotify/Apple/SoundCloud/YouTube), `release_date`, `notes`, `status` (`pending` / `approved` / `rejected`), `admin_notes`, timestamps
+- RLS: paid users insert/select their own; admins see all and update status
 
-### 7. Gate beat content
-Add a `subscription_tier` column on profiles (`none` / `artist` / `label`). Future beats/downloads pages can check this.
+UI:
+- New page `/_authenticated/account/whitelist` — list of the user's submissions + a "Submit a track" form, gated by `subscription_tier !== 'none'`. Free users see an upgrade card.
+- Sidebar/account nav entry "Whitelist"
+- New admin page `/admin/whitelist` to review and approve/reject
 
-## Technical details
+## 4. UX hooks
 
-- **Tables:** `profiles` (id, email, stripe_customer_id, subscription_tier, subscription_status, current_period_end), with RLS so users only read their own row.
-- **Server functions:** `createCheckoutSession`, `createPortalSession`, `getMyAccount` — all under `requireSupabaseAuth`.
-- **Webhook route:** `src/routes/api/public/stripe-webhook.ts` — handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`.
-- **Label tier** gets stored as `label` so we can later expose label-only beats and team seats.
+- Beats grid: free users see a "Free preview (tagged)" badge and the download button shows remaining free credits "X of 3 left" and disables when none remain or the beat has no tagged file
+- Account page: shows current license tier and entitlements
+- Agreement PDF already pulls `license_type` from the row, so it updates automatically
 
-## Out of scope for this round
+## Out of scope this round
 
-Beat catalog, audio player, downloads, team seats for Label plan. Those come after subscriptions are working end-to-end.
+- Re-encoding existing beats with a producer tag (you'll upload tagged files going forward; I'll add a one-click "needs tagged" filter in admin so you can backfill)
+- Automated whitelist verification — it stays manual review
+- Any change to checkout, pricing, or subscription detection logic
 
-## Confirm before I build
+## Technical notes
 
-1. OK to create the $37 product fresh in this project's Stripe (instead of reusing the one in your other app)?
-2. OK to use Lovable Payments? (Or do you want BYOK Stripe with your existing secret key instead?)
+- Schema: `ALTER TABLE beats ADD COLUMN audio_url_tagged text;`
+- New `whitelist_submissions` table + RLS using `has_role` and `auth.uid() = user_id`; insert policy adds `EXISTS` check on `profiles.subscription_tier <> 'none'`
+- `process_beat_download(_beat_id, _file_type)` rewritten to:
+  - Look up `subscription_tier`
+  - If `none`: enforce `count(downloads where user_id) < 3`, force `_file_type = 'MP3'`, require `audio_url_tagged IS NOT NULL`, set license to Standard, return `audio_url_tagged`
+  - Else: existing path, license = "Unlimited Membership License", return `audio_url` or `audio_url_wav`
+- Admin bulk uploader (`src/routes/_authenticated/admin/beats.tsx`) extended to detect `*tag*` files and write to `audio_url_tagged`
+- New routes:
+  - `src/routes/_authenticated/account.whitelist.tsx`
+  - `src/routes/_authenticated/admin/whitelist.tsx`
+- Admin sidebar (`admin.tsx`) gets a "Whitelist" nav item
