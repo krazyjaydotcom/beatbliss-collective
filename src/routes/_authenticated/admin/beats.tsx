@@ -312,7 +312,9 @@ function DropUploader({ onDone }: { onDone: () => void }) {
                 onChange={(e) => setItems((s) => s.map((x) => x.id === i.id ? { ...x, title: e.target.value } : x))}
               />
               <span className="text-xs text-muted-foreground truncate flex-1">
-                {i.audio.name}{i.cover ? ` · cover: ${i.cover.name}` : ""}
+                {i.audio.name}
+                {i.tagged && i.tagged !== i.audio ? ` · tagged: ${i.tagged.name}` : i.tagged === i.audio ? " · (tagged-only)" : <span className="text-amber-500"> · no tagged file</span>}
+                {i.cover ? ` · cover: ${i.cover.name}` : ""}
               </span>
               <span className={`text-xs ${i.status === "error" ? "text-destructive" : "text-muted-foreground"}`}>
                 {i.status === "done" ? "✓ done" : i.status === "error" ? `✗ ${i.message ?? "error"}` : i.status}
