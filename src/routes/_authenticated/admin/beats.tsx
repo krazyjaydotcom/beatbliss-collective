@@ -141,18 +141,41 @@ function DropUploader({ onDone }: { onDone: () => void }) {
   function basename(name: string) { return name.replace(/\.[^.]+$/, ""); }
 
   function addFiles(files: File[]) {
-    const audios = files.filter((f) => isMp3(f) || isWav(f) || f.type.startsWith("audio/"));
+    const audiosAll = files.filter((f) => isMp3(f) || isWav(f) || f.type.startsWith("audio/"));
     const covers = files.filter((f) => f.type.startsWith("image/"));
+    const taggedAudios = audiosAll.filter((a) => isTaggedName(a.name));
+    const cleanAudios = audiosAll.filter((a) => !isTaggedName(a.name));
+    const taggedByBase = new Map(taggedAudios.map((t) => [stripTagTokens(t.name), t]));
     const coverByBase = new Map(covers.map((c) => [basename(c.name).toLowerCase(), c]));
-    const next: Pending[] = audios.map((a) => ({
-      id: crypto.randomUUID(),
-      audio: a,
-      cover: coverByBase.get(basename(a.name).toLowerCase()),
-      title: basename(a.name),
-      status: "queued",
-    }));
+
+    const next: Pending[] = cleanAudios.map((a) => {
+      const base = basename(a.name).toLowerCase();
+      return {
+        id: crypto.randomUUID(),
+        audio: a,
+        tagged: taggedByBase.get(base) ?? taggedByBase.get(stripTagTokens(a.name)),
+        cover: coverByBase.get(base),
+        title: basename(a.name),
+        status: "queued",
+      };
+    });
+
+    // Tagged-only drops (no clean counterpart) become standalone "tagged-only" entries
+    const consumedTagged = new Set(next.map((n) => n.tagged).filter(Boolean));
+    const orphanTagged = taggedAudios.filter((t) => !consumedTagged.has(t));
+    for (const t of orphanTagged) {
+      next.push({
+        id: crypto.randomUUID(),
+        audio: t,
+        tagged: t,
+        cover: coverByBase.get(basename(t.name).toLowerCase()),
+        title: basename(t.name).replace(/[\s_-]*(tagged|tag)[\s_-]*/gi, "").trim(),
+        status: "queued",
+      });
+    }
+
     setItems((cur) => [...cur, ...next]);
-    if (audios.length === 0 && files.length) toast.error("No audio files detected");
+    if (audiosAll.length === 0 && files.length) toast.error("No audio files detected");
   }
 
   function onDrop(e: React.DragEvent) {
