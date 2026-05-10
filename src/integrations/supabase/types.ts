@@ -387,6 +387,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_gift_credits: {
+        Args: { _amount: number; _note?: string; _user_id: string }
+        Returns: Json
+      }
+      admin_import_beat: {
+        Args: {
+          _audio_url: string
+          _bpm: number
+          _cover_url: string
+          _duration_seconds: number
+          _genre: string
+          _mood: string
+          _music_key: string
+          _producer_name: string
+          _title: string
+        }
+        Returns: string
+      }
       ensure_chat_thread: { Args: never; Returns: string }
       has_role: {
         Args: {
