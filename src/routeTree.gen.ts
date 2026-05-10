@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
@@ -21,6 +22,7 @@ import { Route as AuthenticatedAgreementsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
 import { Route as AuthenticatedAdminImportRouteImport } from './routes/_authenticated/admin/import'
@@ -53,6 +55,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedWhitelistRoute = AuthenticatedWhitelistRouteImport.update({
+  id: '/whitelist',
+  path: '/whitelist',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDownloadsRoute = AuthenticatedDownloadsRouteImport.update({
   id: '/downloads',
@@ -89,6 +96,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminWhitelistRoute =
+  AuthenticatedAdminWhitelistRouteImport.update({
+    id: '/whitelist',
+    path: '/whitelist',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminSupportRoute =
   AuthenticatedAdminSupportRouteImport.update({
     id: '/support',
@@ -146,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/beats': typeof AuthenticatedBeatsRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
+  '/whitelist': typeof AuthenticatedWhitelistRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
@@ -153,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
+  '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -166,6 +181,7 @@ export interface FileRoutesByTo {
   '/beats': typeof AuthenticatedBeatsRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
+  '/whitelist': typeof AuthenticatedWhitelistRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
@@ -173,6 +189,7 @@ export interface FileRoutesByTo {
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
+  '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -189,6 +206,7 @@ export interface FileRoutesById {
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
+  '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
@@ -196,6 +214,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
+  '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -212,6 +231,7 @@ export interface FileRouteTypes {
     | '/beats'
     | '/checkout'
     | '/downloads'
+    | '/whitelist'
     | '/checkout/return'
     | '/admin/agreements'
     | '/admin/beats'
@@ -219,6 +239,7 @@ export interface FileRouteTypes {
     | '/admin/import'
     | '/admin/online'
     | '/admin/support'
+    | '/admin/whitelist'
     | '/admin/'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -232,6 +253,7 @@ export interface FileRouteTypes {
     | '/beats'
     | '/checkout'
     | '/downloads'
+    | '/whitelist'
     | '/checkout/return'
     | '/admin/agreements'
     | '/admin/beats'
@@ -239,6 +261,7 @@ export interface FileRouteTypes {
     | '/admin/import'
     | '/admin/online'
     | '/admin/support'
+    | '/admin/whitelist'
     | '/admin'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -254,6 +277,7 @@ export interface FileRouteTypes {
     | '/_authenticated/beats'
     | '/_authenticated/checkout'
     | '/_authenticated/downloads'
+    | '/_authenticated/whitelist'
     | '/checkout/return'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/beats'
@@ -261,6 +285,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/import'
     | '/_authenticated/admin/online'
     | '/_authenticated/admin/support'
+    | '/_authenticated/admin/whitelist'
     | '/_authenticated/admin/'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -313,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/whitelist': {
+      id: '/_authenticated/whitelist'
+      path: '/whitelist'
+      fullPath: '/whitelist'
+      preLoaderRoute: typeof AuthenticatedWhitelistRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/downloads': {
       id: '/_authenticated/downloads'
       path: '/downloads'
@@ -360,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/whitelist': {
+      id: '/_authenticated/admin/whitelist'
+      path: '/whitelist'
+      fullPath: '/admin/whitelist'
+      preLoaderRoute: typeof AuthenticatedAdminWhitelistRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/support': {
@@ -428,6 +467,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
+  AuthenticatedAdminWhitelistRoute: typeof AuthenticatedAdminWhitelistRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -438,6 +478,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
+  AuthenticatedAdminWhitelistRoute: AuthenticatedAdminWhitelistRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
@@ -451,6 +492,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBeatsRoute: typeof AuthenticatedBeatsRoute
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
+  AuthenticatedWhitelistRoute: typeof AuthenticatedWhitelistRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -460,6 +502,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBeatsRoute: AuthenticatedBeatsRoute,
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
+  AuthenticatedWhitelistRoute: AuthenticatedWhitelistRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

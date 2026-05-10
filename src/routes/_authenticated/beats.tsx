@@ -48,7 +48,7 @@ type Note = {
 };
 type Profile = { credits_balance: number; display_name: string | null; full_name: string | null; email: string | null };
 
-type SidebarAction = "beats" | "new" | "filterGenre" | "filterMood" | "filterKey" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "settings" | "support";
+type SidebarAction = "beats" | "new" | "filterGenre" | "filterMood" | "filterKey" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
 
 const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge?: string }[] = [
   { icon: Music, label: "Beats", action: "beats" },
@@ -63,7 +63,8 @@ const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge
   { icon: Heart, label: "Favorites", action: "favorites" },
   { icon: CreditCard, label: "Credits & Plan", action: "credits" },
   { icon: Receipt, label: "Transactions", action: "transactions" },
-  { icon: NotebookPen, label: "Notepad", action: "notepad", badge: "NEW" },
+  { icon: NotebookPen, label: "Notepad", action: "notepad" },
+  { icon: FileText, label: "Whitelist", action: "whitelist" },
   { icon: Settings, label: "Settings", action: "settings" },
   { icon: LifeBuoy, label: "Support", action: "support" },
 ];
@@ -175,6 +176,8 @@ function BeatsDashboard() {
       case "notepad":
         setNotepadOpen((v) => !v);
         break;
+      case "whitelist":
+        navigate({ to: "/whitelist" }); break;
       case "support":
         toast.info("Use the chat bubble at the bottom right to reach support.");
         break;

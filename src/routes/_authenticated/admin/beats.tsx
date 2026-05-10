@@ -27,11 +27,19 @@ async function getAudioDuration(file: File | Blob): Promise<number> {
 type Pending = {
   id: string;
   audio: File;
+  tagged?: File;
   cover?: File;
   title: string;
   status: "queued" | "decoding" | "uploading" | "done" | "error";
   message?: string;
 };
+
+function stripTagTokens(name: string): string {
+  return name.toLowerCase().replace(/[\s_-]*(tagged|tag)[\s_-]*/g, "").replace(/\.[^.]+$/, "").trim();
+}
+function isTaggedName(name: string): boolean {
+  return /(?:^|[\s_-])(tag|tagged)(?:[\s_-]|\.)/i.test(name);
+}
 
 function AdminBeatsPage() {
   const qc = useQueryClient();
@@ -67,7 +75,7 @@ function AdminBeatsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-black tracking-tight">Beats</h1>
-        <p className="text-muted-foreground mt-1">Drag &amp; drop to upload. Both MP3 and WAV are saved automatically.</p>
+        <p className="text-muted-foreground mt-1">Drag &amp; drop to upload. MP3 + WAV are auto-generated. Files with <code>tag</code> or <code>tagged</code> in the name are paired as the free-tier preview.</p>
       </div>
 
       <DropUploader onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
@@ -105,6 +113,7 @@ function AdminBeatsPage() {
                     {b.genre} · {b.bpm} BPM · {b.music_key}
                     {b.audio_url ? <span className="ml-2 inline-flex items-center gap-1"><FileMusic className="h-3 w-3" />MP3</span> : null}
                     {b.audio_url_wav ? <span className="ml-2 inline-flex items-center gap-1"><FileAudio className="h-3 w-3" />WAV</span> : null}
+                    {b.audio_url_tagged ? <span className="ml-2 inline-flex items-center gap-1 text-electric"><FileMusic className="h-3 w-3" />TAGGED</span> : <span className="ml-2 text-amber-500">· no tagged file (free users blocked)</span>}
                     {b.is_member_only ? " · Members" : ""}
                   </div>
                 </div>
@@ -133,18 +142,41 @@ function DropUploader({ onDone }: { onDone: () => void }) {
   function basename(name: string) { return name.replace(/\.[^.]+$/, ""); }
 
   function addFiles(files: File[]) {
-    const audios = files.filter((f) => isMp3(f) || isWav(f) || f.type.startsWith("audio/"));
+    const audiosAll = files.filter((f) => isMp3(f) || isWav(f) || f.type.startsWith("audio/"));
     const covers = files.filter((f) => f.type.startsWith("image/"));
+    const taggedAudios = audiosAll.filter((a) => isTaggedName(a.name));
+    const cleanAudios = audiosAll.filter((a) => !isTaggedName(a.name));
+    const taggedByBase = new Map(taggedAudios.map((t) => [stripTagTokens(t.name), t]));
     const coverByBase = new Map(covers.map((c) => [basename(c.name).toLowerCase(), c]));
-    const next: Pending[] = audios.map((a) => ({
-      id: crypto.randomUUID(),
-      audio: a,
-      cover: coverByBase.get(basename(a.name).toLowerCase()),
-      title: basename(a.name),
-      status: "queued",
-    }));
+
+    const next: Pending[] = cleanAudios.map((a) => {
+      const base = basename(a.name).toLowerCase();
+      return {
+        id: crypto.randomUUID(),
+        audio: a,
+        tagged: taggedByBase.get(base) ?? taggedByBase.get(stripTagTokens(a.name)),
+        cover: coverByBase.get(base),
+        title: basename(a.name),
+        status: "queued",
+      };
+    });
+
+    // Tagged-only drops (no clean counterpart) become standalone "tagged-only" entries
+    const consumedTagged = new Set(next.map((n) => n.tagged).filter(Boolean));
+    const orphanTagged = taggedAudios.filter((t) => !consumedTagged.has(t));
+    for (const t of orphanTagged) {
+      next.push({
+        id: crypto.randomUUID(),
+        audio: t,
+        tagged: t,
+        cover: coverByBase.get(basename(t.name).toLowerCase()),
+        title: basename(t.name).replace(/[\s_-]*(tagged|tag)[\s_-]*/gi, "").trim(),
+        status: "queued",
+      });
+    }
+
     setItems((cur) => [...cur, ...next]);
-    if (audios.length === 0 && files.length) toast.error("No audio files detected");
+    if (audiosAll.length === 0 && files.length) toast.error("No audio files detected");
   }
 
   function onDrop(e: React.DragEvent) {
@@ -159,25 +191,38 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       setItems((s) => s.map((i) => i.id === p.id ? { ...i, status, message } : i));
     try {
       setStatus("decoding");
+      const taggedOnly = p.tagged && p.audio === p.tagged;
       const buf = await decodeAudioFile(p.audio);
       const sourceIsMp3 = isMp3(p.audio);
-      const mp3Blob = sourceIsMp3 ? p.audio : encodeMp3(buf, 192);
-      const wavBlob = isWav(p.audio) ? p.audio : encodeWav(buf);
 
       setStatus("uploading");
       const stamp = Date.now();
       const safe = (p.title || "beat").replace(/[^\w-]+/g, "_");
+      let audio_url: string | null = null;
+      let audio_url_wav: string | null = null;
+      let audio_url_tagged: string | null = null;
 
-      const mp3Path = `${stamp}-${safe}.mp3`;
-      const wavPath = `${stamp}-${safe}.wav`;
+      if (!taggedOnly) {
+        const mp3Blob = sourceIsMp3 ? p.audio : encodeMp3(buf, 192);
+        const wavBlob = isWav(p.audio) ? p.audio : encodeWav(buf);
+        const mp3Path = `${stamp}-${safe}.mp3`;
+        const wavPath = `${stamp}-${safe}.wav`;
+        const up1 = await supabase.storage.from("beat-audio").upload(mp3Path, mp3Blob, { upsert: false, contentType: "audio/mpeg" });
+        if (up1.error) throw up1.error;
+        const up2 = await supabase.storage.from("beat-audio").upload(wavPath, wavBlob, { upsert: false, contentType: "audio/wav" });
+        if (up2.error) throw up2.error;
+        audio_url = supabase.storage.from("beat-audio").getPublicUrl(mp3Path).data.publicUrl;
+        audio_url_wav = supabase.storage.from("beat-audio").getPublicUrl(wavPath).data.publicUrl;
+      }
 
-      const up1 = await supabase.storage.from("beat-audio").upload(mp3Path, mp3Blob, { upsert: false, contentType: "audio/mpeg" });
-      if (up1.error) throw up1.error;
-      const up2 = await supabase.storage.from("beat-audio").upload(wavPath, wavBlob, { upsert: false, contentType: "audio/wav" });
-      if (up2.error) throw up2.error;
-
-      const audio_url = supabase.storage.from("beat-audio").getPublicUrl(mp3Path).data.publicUrl;
-      const audio_url_wav = supabase.storage.from("beat-audio").getPublicUrl(wavPath).data.publicUrl;
+      if (p.tagged) {
+        const tBuf = p.tagged === p.audio ? buf : await decodeAudioFile(p.tagged);
+        const tBlob = isMp3(p.tagged) ? p.tagged : encodeMp3(tBuf, 192);
+        const tPath = `${stamp}-${safe}-tagged.mp3`;
+        const upT = await supabase.storage.from("beat-audio").upload(tPath, tBlob, { upsert: false, contentType: "audio/mpeg" });
+        if (upT.error) throw upT.error;
+        audio_url_tagged = supabase.storage.from("beat-audio").getPublicUrl(tPath).data.publicUrl;
+      }
 
       let cover_url: string | null = null;
       if (p.cover) {
@@ -191,7 +236,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       const { error: insErr } = await supabase.from("beats").insert({
         title: p.title, genre, mood: "Unknown", bpm: parseInt(bpm) || 0,
         music_key: "C", producer_name: "KRAZYJAY",
-        duration_seconds, audio_url, audio_url_wav, cover_url,
+        duration_seconds, audio_url, audio_url_wav, audio_url_tagged, cover_url,
         is_member_only: memberOnly,
       });
       if (insErr) throw insErr;
@@ -267,7 +312,9 @@ function DropUploader({ onDone }: { onDone: () => void }) {
                 onChange={(e) => setItems((s) => s.map((x) => x.id === i.id ? { ...x, title: e.target.value } : x))}
               />
               <span className="text-xs text-muted-foreground truncate flex-1">
-                {i.audio.name}{i.cover ? ` · cover: ${i.cover.name}` : ""}
+                {i.audio.name}
+                {i.tagged && i.tagged !== i.audio ? ` · tagged: ${i.tagged.name}` : i.tagged === i.audio ? " · (tagged-only)" : <span className="text-amber-500"> · no tagged file</span>}
+                {i.cover ? ` · cover: ${i.cover.name}` : ""}
               </span>
               <span className={`text-xs ${i.status === "error" ? "text-destructive" : "text-muted-foreground"}`}>
                 {i.status === "done" ? "✓ done" : i.status === "error" ? `✗ ${i.message ?? "error"}` : i.status}
