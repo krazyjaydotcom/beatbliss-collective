@@ -90,6 +90,8 @@ export function ChatWidget() {
     });
   };
 
+  if (!enabled) return null;
+
   return (
     <>
       {!open && (
