@@ -113,6 +113,7 @@ function AdminBeatsPage() {
                     {b.genre} · {b.bpm} BPM · {b.music_key}
                     {b.audio_url ? <span className="ml-2 inline-flex items-center gap-1"><FileMusic className="h-3 w-3" />MP3</span> : null}
                     {b.audio_url_wav ? <span className="ml-2 inline-flex items-center gap-1"><FileAudio className="h-3 w-3" />WAV</span> : null}
+                    {b.audio_url_tagged ? <span className="ml-2 inline-flex items-center gap-1 text-electric"><FileMusic className="h-3 w-3" />TAGGED</span> : <span className="ml-2 text-amber-500">· no tagged file (free users blocked)</span>}
                     {b.is_member_only ? " · Members" : ""}
                   </div>
                 </div>
