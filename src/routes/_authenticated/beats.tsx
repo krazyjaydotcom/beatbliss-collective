@@ -129,6 +129,7 @@ function BeatsDashboard() {
 
   const filtered = useMemo(() => {
     let list = beats.filter((b) => {
+      if (favOnly && !favorites.includes(b.id)) return false;
       if (search && !`${b.title} ${b.producer_name} ${b.genre} ${b.mood} ${b.music_key}`.toLowerCase().includes(search.toLowerCase())) return false;
       if (genre !== "all" && b.genre !== genre) return false;
       if (mood !== "all" && b.mood !== mood) return false;
@@ -143,9 +144,41 @@ function BeatsDashboard() {
     if (sort === "bpm") list = [...list].sort((a, b) => a.bpm - b.bpm);
     if (sort === "title") list = [...list].sort((a, b) => a.title.localeCompare(b.title));
     return list;
-  }, [beats, search, genre, mood, musicKey, bpm, sort]);
+  }, [beats, favorites, favOnly, search, genre, mood, musicKey, bpm, sort]);
 
   const uniq = (key: keyof Beat) => Array.from(new Set(beats.map((b) => b[key] as string)));
+
+  function handleNav(action: SidebarAction) {
+    setActiveNav(action);
+    switch (action) {
+      case "beats":
+        setSearch(""); setGenre("all"); setMood("all"); setMusicKey("all"); setBpm("all"); setFavOnly(false); setSort("newest");
+        break;
+      case "new":
+        setSort("newest"); setFavOnly(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        break;
+      case "filterGenre": case "filterMood": case "filterKey": case "filterBpm":
+        toast.info("Use the filter dropdowns above to narrow results.");
+        break;
+      case "myBeats":
+      case "playlists":
+        toast.info("Coming soon.");
+        break;
+      case "downloads": navigate({ to: "/downloads" }); break;
+      case "favorites": setFavOnly((v) => !v); break;
+      case "credits":
+      case "transactions":
+      case "settings":
+        navigate({ to: "/account" }); break;
+      case "notepad":
+        toast.info("Open the Notepad panel on the right (visible on wider screens).");
+        break;
+      case "support":
+        toast.info("Use the chat bubble at the bottom right to reach support.");
+        break;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
