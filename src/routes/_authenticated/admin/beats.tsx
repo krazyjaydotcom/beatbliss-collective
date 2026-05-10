@@ -27,11 +27,19 @@ async function getAudioDuration(file: File | Blob): Promise<number> {
 type Pending = {
   id: string;
   audio: File;
+  tagged?: File;
   cover?: File;
   title: string;
   status: "queued" | "decoding" | "uploading" | "done" | "error";
   message?: string;
 };
+
+function stripTagTokens(name: string): string {
+  return name.toLowerCase().replace(/[\s_-]*(tagged|tag)[\s_-]*/g, "").replace(/\.[^.]+$/, "").trim();
+}
+function isTaggedName(name: string): boolean {
+  return /(?:^|[\s_-])(tag|tagged)(?:[\s_-]|\.)/i.test(name);
+}
 
 function AdminBeatsPage() {
   const qc = useQueryClient();
