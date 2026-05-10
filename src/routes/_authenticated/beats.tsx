@@ -384,7 +384,14 @@ function BeatCard({ beat, isFav, onPlay, onFav, onDownload }: {
   const hue1 = hash % 360;
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden group">
-      <div className="aspect-square relative" style={{ background: `linear-gradient(135deg, hsl(${hue1} 70% 35%), hsl(${(hue1 + 60) % 360} 70% 20%))` }}>
+      <div
+        className="aspect-square relative bg-cover bg-center"
+        style={
+          beat.cover_url
+            ? { backgroundImage: `url(${beat.cover_url})` }
+            : { background: `linear-gradient(135deg, hsl(${hue1} 70% 35%), hsl(${(hue1 + 60) % 360} 70% 20%))` }
+        }
+      >
         <button onClick={onPlay} className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition">
           <Play className="h-12 w-12 text-electric fill-electric" />
         </button>
