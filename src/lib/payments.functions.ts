@@ -48,36 +48,43 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     }
     return data;
   })
-  .handler(async ({ data, context }) => {
-    const { supabase, userId, claims } = context;
-    const email = (claims.email as string | undefined) ?? undefined;
+  .handler(async ({ data, context }): Promise<{ clientSecret: string | null; error: string | null }> => {
+    try {
+      const { supabase, userId, claims } = context;
+      const email = (claims.email as string | undefined) ?? undefined;
 
-    const stripe = createStripeClient(data.environment);
+      const stripe = createStripeClient(data.environment);
 
-    const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
-    if (!prices.data.length) throw new Error("Price not found");
-    const stripePrice = prices.data[0];
-    const isRecurring = stripePrice.type === "recurring";
+      const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
+      if (!prices.data.length) {
+        return { clientSecret: null, error: `Plan "${data.priceId}" is not configured in Stripe yet. Add a Price with this lookup_key in your Stripe dashboard.` };
+      }
+      const stripePrice = prices.data[0];
+      const isRecurring = stripePrice.type === "recurring";
 
-    const customerId = await resolveOrCreateCustomer(stripe, { email, userId });
+      const customerId = await resolveOrCreateCustomer(stripe, { email, userId });
 
-    // Persist the customer id on the profile for later portal access
-    await supabase
-      .from("profiles")
-      .update({ stripe_customer_id: customerId })
-      .eq("id", userId);
+      await supabase
+        .from("profiles")
+        .update({ stripe_customer_id: customerId })
+        .eq("id", userId);
 
-    const session = await stripe.checkout.sessions.create({
-      line_items: [{ price: stripePrice.id, quantity: 1 }],
-      mode: isRecurring ? "subscription" : "payment",
-      ui_mode: "embedded_page",
-      return_url: data.returnUrl,
-      customer: customerId,
-      metadata: { userId },
-      ...(isRecurring && { subscription_data: { metadata: { userId } } }),
-    });
+      const session = await stripe.checkout.sessions.create({
+        line_items: [{ price: stripePrice.id, quantity: 1 }],
+        mode: isRecurring ? "subscription" : "payment",
+        ui_mode: "embedded_page",
+        return_url: data.returnUrl,
+        customer: customerId,
+        metadata: { userId },
+        ...(isRecurring && { subscription_data: { metadata: { userId } } }),
+      });
 
-    return session.client_secret;
+      return { clientSecret: session.client_secret ?? null, error: null };
+    } catch (err) {
+      console.error("createCheckoutSession failed:", err);
+      const message = err instanceof Error ? err.message : "Unknown error";
+      return { clientSecret: null, error: message };
+    }
   });
 
 export const createPortalSession = createServerFn({ method: "POST" })
