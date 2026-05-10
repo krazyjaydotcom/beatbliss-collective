@@ -330,7 +330,7 @@ function BeatsDashboard() {
           </div>
 
           {/* NOTEPAD */}
-          <NotepadPanel userId={user?.id} beats={beats} />
+          {notepadOpen && <NotepadPanel userId={user?.id} beats={beats} onClose={() => setNotepadOpen(false)} />}
         </div>
       </div>
 
