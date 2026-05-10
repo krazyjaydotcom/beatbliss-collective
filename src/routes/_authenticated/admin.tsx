@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { BarChart3, MessageSquare, Users, ArrowLeft, Loader2, Music, Gift, Download, Eye } from "lucide-react";
+import { BarChart3, MessageSquare, Users, ArrowLeft, Loader2, Music, Gift, Download, Eye, ShieldCheck } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ const NAV = [
   { to: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
   { to: "/admin/beats", label: "Beats", icon: Music },
   { to: "/admin/import", label: "Import beats", icon: Download },
+  { to: "/admin/whitelist", label: "Whitelist", icon: ShieldCheck },
   { to: "/admin/gift", label: "Gift credits", icon: Gift },
   { to: "/admin/support", label: "Support", icon: MessageSquare },
   { to: "/admin/online", label: "Online Users", icon: Users },
