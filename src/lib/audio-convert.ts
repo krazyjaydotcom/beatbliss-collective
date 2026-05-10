@@ -60,14 +60,19 @@ export function encodeMp3(buf: AudioBuffer, kbps = 192): Blob {
   const right = numCh > 1 ? floatTo16(buf.getChannelData(1)) : null;
   const block = 1152;
   const out: BlobPart[] = [];
+  const toBlob = (chunk: Int8Array | Uint8Array) => {
+    const ab = new ArrayBuffer(chunk.byteLength);
+    new Uint8Array(ab).set(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+    return ab;
+  };
   for (let i = 0; i < left.length; i += block) {
     const l = left.subarray(i, i + block);
     const r = right ? right.subarray(i, i + block) : null;
     const chunk = r ? enc.encodeBuffer(l as any, r as any) : enc.encodeBuffer(l as any);
-    if (chunk.length) out.push(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+    if (chunk.length) out.push(toBlob(chunk));
   }
   const tail = enc.flush();
-  if (tail.length) out.push(new Uint8Array(tail.buffer, tail.byteOffset, tail.byteLength));
+  if (tail.length) out.push(toBlob(tail));
   return new Blob(out, { type: "audio/mpeg" });
 }
 
