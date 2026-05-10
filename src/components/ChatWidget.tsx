@@ -23,10 +23,10 @@ export function ChatWidget() {
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Don't show widget for admins (they have the inbox)
-  if (!user || isAdmin) return null;
+  const enabled = !!user && !isAdmin;
 
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     (async () => {
       const { data } = await supabase.rpc("ensure_chat_thread");
@@ -47,7 +47,7 @@ export function ChatWidget() {
       setUnread(thread?.unread_for_user ?? 0);
     })();
     return () => { cancelled = true; };
-  }, [user.id]);
+  }, [enabled, user?.id]);
 
   useEffect(() => {
     if (!threadId) return;
@@ -79,7 +79,7 @@ export function ChatWidget() {
   }, [open, threadId, unread]);
 
   const send = async () => {
-    if (!text.trim() || !threadId) return;
+    if (!text.trim() || !threadId || !user) return;
     const body = text.trim();
     setText("");
     await supabase.from("chat_messages").insert({
@@ -89,6 +89,8 @@ export function ChatWidget() {
       body,
     });
   };
+
+  if (!enabled) return null;
 
   return (
     <>
