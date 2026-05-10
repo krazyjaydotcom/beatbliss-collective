@@ -89,6 +89,7 @@ export type Database = {
       beats: {
         Row: {
           audio_url: string | null
+          audio_url_tagged: string | null
           audio_url_wav: string | null
           bpm: number
           cover_url: string | null
@@ -104,6 +105,7 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          audio_url_tagged?: string | null
           audio_url_wav?: string | null
           bpm: number
           cover_url?: string | null
@@ -119,6 +121,7 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          audio_url_tagged?: string | null
           audio_url_wav?: string | null
           bpm?: number
           cover_url?: string | null
@@ -492,6 +495,51 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whitelist_submissions: {
+        Row: {
+          admin_notes: string | null
+          artist_name: string
+          beat_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          release_date: string | null
+          status: string
+          streaming_url: string
+          track_title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          artist_name: string
+          beat_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          release_date?: string | null
+          status?: string
+          streaming_url: string
+          track_title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          artist_name?: string
+          beat_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          release_date?: string | null
+          status?: string
+          streaming_url?: string
+          track_title?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
