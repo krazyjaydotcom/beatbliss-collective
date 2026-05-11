@@ -42,6 +42,7 @@ function CheckoutPage() {
       </div>
     );
   }
+  const planLabel = PLAN_LABEL[plan];
 
   return (
     <div className="min-h-screen bg-background">
