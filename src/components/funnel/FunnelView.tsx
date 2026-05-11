@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Download, Mail, Lock, Play, Pause } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
 
+export type SectionKey = "hero" | "video" | "download" | "email";
+
 export interface FunnelContent {
   hero_eyebrow?: string;
   hero_title?: string;
@@ -15,6 +17,16 @@ export interface FunnelContent {
   email_button?: string;
   privacy_text?: string;
   show_sticky_player?: boolean;
+  /** Pixel size for the main hero title */
+  hero_title_size?: number;
+  /** Pixel size for the hero subtitle */
+  hero_subtitle_size?: number;
+  /** Pixel size for the email-card heading */
+  email_heading_size?: number;
+  /** Pixel size for body / button text on the page */
+  body_size?: number;
+  /** Order of the page sections */
+  section_order?: SectionKey[];
 }
 
 export const DEFAULT_CONTENT: Required<FunnelContent> = {
@@ -28,6 +40,11 @@ export const DEFAULT_CONTENT: Required<FunnelContent> = {
   email_button: "Show Me The Beat Subscription Offer",
   privacy_text: "We respect your privacy. No spam, ever.",
   show_sticky_player: true,
+  hero_title_size: 56,
+  hero_subtitle_size: 16,
+  email_heading_size: 22,
+  body_size: 14,
+  section_order: ["hero", "video", "download", "email"],
 };
 
 export interface FunnelViewProps {
@@ -41,11 +58,8 @@ export interface FunnelViewProps {
     beat_title: string | null;
   };
   content: FunnelContent;
-  /** Form behavior */
   onEmailSubmit?: (email: string) => Promise<void> | void;
-  /** When true, ignore the form action; used inside the editor preview */
   previewMode?: boolean;
-  /** When true, embedded inside an editor — disables full-viewport scroll lock */
   embedded?: boolean;
 }
 
@@ -74,6 +88,14 @@ function toEmbedUrl(url: string | null): string | null {
 
 export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedded }: FunnelViewProps) {
   const c = { ...DEFAULT_CONTENT, ...content };
+  // Ensure section_order always contains all sections
+  const order: SectionKey[] = (() => {
+    const all: SectionKey[] = ["hero", "video", "download", "email"];
+    const provided = (c.section_order || []).filter((k) => all.includes(k));
+    const missing = all.filter((k) => !provided.includes(k));
+    return [...provided, ...missing];
+  })();
+
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +114,140 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
     }
   };
 
+  const heroBlock = (
+    <div key="hero">
+      {c.hero_eyebrow && (
+        <div className="text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[10px] font-bold tracking-[0.2em] text-primary">
+            {c.hero_eyebrow}
+          </span>
+        </div>
+      )}
+      <h1
+        className="mt-4 text-center font-black tracking-tight leading-[1.05]"
+        style={{ fontSize: `${c.hero_title_size}px` }}
+      >
+        {c.hero_title}
+      </h1>
+      {(c.hero_subtitle || funnel.headline) && (
+        <p
+          className="mt-4 text-center text-muted-foreground max-w-xl mx-auto"
+          style={{ fontSize: `${c.hero_subtitle_size}px` }}
+        >
+          {funnel.headline || c.hero_subtitle}
+        </p>
+      )}
+    </div>
+  );
+
+  const videoBlock = (
+    <div key="video" className="mt-8">
+      {embed ? (
+        <div className="rounded-2xl overflow-hidden border border-border bg-black aspect-video">
+          <iframe
+            src={embed}
+            title="Watch this first"
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      ) : funnel.cover_url ? (
+        <div className="rounded-2xl overflow-hidden border border-border bg-black aspect-video flex items-center justify-center">
+          <img src={funnel.cover_url} alt={funnel.title} className="w-full h-full object-cover opacity-80" />
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-border bg-card aspect-video flex items-center justify-center text-sm text-muted-foreground">
+          Add a video URL to display a player here
+        </div>
+      )}
+    </div>
+  );
+
+  const downloadBlock = (
+    <div key="download" className="mt-6 text-center">
+      {previewMode ? (
+        <span
+          className="inline-flex items-center gap-2 text-primary font-semibold underline underline-offset-4"
+          style={{ fontSize: `${c.body_size}px` }}
+        >
+          <Download className="h-4 w-4" />
+          {c.download_label}
+        </span>
+      ) : (
+        <a
+          href={funnel.download_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          download
+          className="inline-flex items-center gap-2 text-primary font-semibold hover:underline underline-offset-4"
+          style={{ fontSize: `${c.body_size}px` }}
+        >
+          <Download className="h-4 w-4" />
+          {c.download_label}
+        </a>
+      )}
+    </div>
+  );
+
+  const emailBlock = (
+    <form
+      key="email"
+      onSubmit={handleSubmit}
+      className="mt-8 rounded-2xl border border-border bg-card/60 p-4 sm:p-5 backdrop-blur"
+    >
+      <div className="flex justify-center">
+        <Mail className="h-5 w-5 text-primary" />
+      </div>
+      <h2
+        className="mt-2 font-bold text-center"
+        style={{ fontSize: `${c.email_heading_size}px` }}
+      >
+        {c.email_heading}
+      </h2>
+      <p
+        className="mt-1 text-muted-foreground text-center"
+        style={{ fontSize: `${c.body_size}px` }}
+      >
+        {c.email_subheading}
+      </p>
+      <div className="mt-3">
+        <Input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={c.email_placeholder}
+          disabled={busy || previewMode}
+          className="h-11"
+          style={{ fontSize: `${c.body_size}px` }}
+        />
+      </div>
+      <Button
+        type="submit"
+        variant="hero"
+        size="lg"
+        className="mt-2 w-full h-11 font-bold"
+        style={{ fontSize: `${c.body_size}px` }}
+        disabled={busy || previewMode}
+      >
+        {busy ? "Sending..." : c.email_button}
+      </Button>
+      {error && <p className="mt-2 text-sm text-destructive text-center">{error}</p>}
+      <p className="mt-2 inline-flex items-center justify-center gap-1.5 w-full text-xs text-muted-foreground">
+        <Lock className="h-3 w-3" />
+        {c.privacy_text}
+      </p>
+    </form>
+  );
+
+  const blocks: Record<SectionKey, JSX.Element> = {
+    hero: heroBlock,
+    video: videoBlock,
+    download: downloadBlock,
+    email: emailBlock,
+  };
+
   return (
     <div className={embedded ? "bg-background" : "min-h-screen bg-background"}>
       <header className="border-b border-border">
@@ -101,109 +257,9 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
       </header>
 
       <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-3xl pb-32">
-        {c.hero_eyebrow && (
-          <div className="text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[10px] font-bold tracking-[0.2em] text-primary">
-              {c.hero_eyebrow}
-            </span>
-          </div>
-        )}
-
-        <h1 className="mt-4 text-center text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.05]">
-          {c.hero_title}
-        </h1>
-
-        {(c.hero_subtitle || funnel.headline) && (
-          <p className="mt-4 text-center text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
-            {funnel.headline || c.hero_subtitle}
-          </p>
-        )}
-
-        {/* Video */}
-        {embed ? (
-          <div className="mt-8 rounded-2xl overflow-hidden border border-border bg-black aspect-video">
-            <iframe
-              src={embed}
-              title="Watch this first"
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        ) : funnel.cover_url ? (
-          <div className="mt-8 rounded-2xl overflow-hidden border border-border bg-black aspect-video flex items-center justify-center">
-            <img src={funnel.cover_url} alt={funnel.title} className="w-full h-full object-cover opacity-80" />
-          </div>
-        ) : (
-          <div className="mt-8 rounded-2xl border border-dashed border-border bg-card aspect-video flex items-center justify-center text-sm text-muted-foreground">
-            Add a video URL to display a player here
-          </div>
-        )}
-
-        {/* Free download link */}
-        <div className="mt-6 text-center">
-          {previewMode ? (
-            <span className="inline-flex items-center gap-2 text-primary font-semibold underline underline-offset-4">
-              <Download className="h-4 w-4" />
-              {c.download_label}
-            </span>
-          ) : (
-            <a
-              href={funnel.download_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              download
-              className="inline-flex items-center gap-2 text-primary font-semibold hover:underline underline-offset-4"
-            >
-              <Download className="h-4 w-4" />
-              {c.download_label}
-            </a>
-          )}
-        </div>
-
-        {/* Email card */}
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 rounded-2xl border border-border bg-card/60 p-6 sm:p-8 backdrop-blur"
-        >
-          <div className="flex justify-center">
-            <Mail className="h-5 w-5 text-primary" />
-          </div>
-          <h2 className="mt-3 text-xl sm:text-2xl font-bold text-center">{c.email_heading}</h2>
-          <p className="mt-2 text-sm text-muted-foreground text-center">{c.email_subheading}</p>
-
-          <div className="mt-5">
-            <Input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={c.email_placeholder}
-              disabled={busy || previewMode}
-              className="h-12 text-base"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            variant="hero"
-            size="lg"
-            className="mt-3 w-full h-12 text-base font-bold"
-            disabled={busy || previewMode}
-          >
-            {busy ? "Sending..." : c.email_button}
-          </Button>
-
-          {error && <p className="mt-3 text-sm text-destructive text-center">{error}</p>}
-
-          <p className="mt-4 inline-flex items-center justify-center gap-1.5 w-full text-xs text-muted-foreground">
-            <Lock className="h-3 w-3" />
-            {c.privacy_text}
-          </p>
-        </form>
+        {order.map((key) => blocks[key])}
       </main>
 
-      {/* Sticky audio player */}
       {c.show_sticky_player && funnel.audio_url && (
         <StickyAudio
           audioUrl={funnel.audio_url}
