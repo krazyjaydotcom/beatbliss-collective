@@ -11,7 +11,7 @@ import { ArrowLeft, Loader2, Monitor, Smartphone, ExternalLink, Save } from "luc
 import { FunnelView, DEFAULT_CONTENT, type FunnelContent } from "@/components/funnel/FunnelView";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/admin/funnels/$id")({
+export const Route = createFileRoute("/_authenticated/admin/funnels_/$id")({
   component: EditFunnelPage,
 });
 
