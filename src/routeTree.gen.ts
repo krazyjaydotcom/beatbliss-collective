@@ -11,12 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
-import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
 import { Route as AuthenticatedAgreementsRouteImport } from './routes/_authenticated/agreements'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -42,6 +43,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -51,10 +57,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
-  id: '/checkout/return',
-  path: '/checkout/return',
+const ClaimTokenRoute = ClaimTokenRouteImport.update({
+  id: '/claim/$token',
+  path: '/claim/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
+  id: '/return',
+  path: '/return',
+  getParentRoute: () => CheckoutRoute,
 } as any)
 const AuthenticatedWhitelistRoute = AuthenticatedWhitelistRouteImport.update({
   id: '/whitelist',
@@ -64,11 +75,6 @@ const AuthenticatedWhitelistRoute = AuthenticatedWhitelistRouteImport.update({
 const AuthenticatedDownloadsRoute = AuthenticatedDownloadsRouteImport.update({
   id: '/downloads',
   path: '/downloads',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
-  id: '/checkout',
-  path: '/checkout',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedBeatsRoute = AuthenticatedBeatsRouteImport.update({
@@ -151,16 +157,17 @@ const ApiPublicPaymentsWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/checkout': typeof CheckoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
-  '/checkout': typeof AuthenticatedCheckoutRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
@@ -174,15 +181,16 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/checkout': typeof CheckoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/account': typeof AuthenticatedAccountRoute
   '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
-  '/checkout': typeof AuthenticatedCheckoutRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
@@ -198,16 +206,17 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/checkout': typeof CheckoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/agreements': typeof AuthenticatedAgreementsRoute
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
-  '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/claim/$token': typeof ClaimTokenRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/_authenticated/admin/gift': typeof AuthenticatedAdminGiftRoute
@@ -223,16 +232,17 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/checkout'
     | '/login'
     | '/signup'
     | '/account'
     | '/admin'
     | '/agreements'
     | '/beats'
-    | '/checkout'
     | '/downloads'
     | '/whitelist'
     | '/checkout/return'
+    | '/claim/$token'
     | '/admin/agreements'
     | '/admin/beats'
     | '/admin/gift'
@@ -246,15 +256,16 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/checkout'
     | '/login'
     | '/signup'
     | '/account'
     | '/agreements'
     | '/beats'
-    | '/checkout'
     | '/downloads'
     | '/whitelist'
     | '/checkout/return'
+    | '/claim/$token'
     | '/admin/agreements'
     | '/admin/beats'
     | '/admin/gift'
@@ -269,16 +280,17 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/checkout'
     | '/login'
     | '/signup'
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/_authenticated/agreements'
     | '/_authenticated/beats'
-    | '/_authenticated/checkout'
     | '/_authenticated/downloads'
     | '/_authenticated/whitelist'
     | '/checkout/return'
+    | '/claim/$token'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/beats'
     | '/_authenticated/admin/gift'
@@ -294,9 +306,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  CheckoutRoute: typeof CheckoutRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
-  CheckoutReturnRoute: typeof CheckoutReturnRoute
+  ClaimTokenRoute: typeof ClaimTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
@@ -317,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -331,12 +351,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/claim/$token': {
+      id: '/claim/$token'
+      path: '/claim/$token'
+      fullPath: '/claim/$token'
+      preLoaderRoute: typeof ClaimTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/return': {
       id: '/checkout/return'
-      path: '/checkout/return'
+      path: '/return'
       fullPath: '/checkout/return'
       preLoaderRoute: typeof CheckoutReturnRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof CheckoutRoute
     }
     '/_authenticated/whitelist': {
       id: '/_authenticated/whitelist'
@@ -350,13 +377,6 @@ declare module '@tanstack/react-router' {
       path: '/downloads'
       fullPath: '/downloads'
       preLoaderRoute: typeof AuthenticatedDownloadsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/checkout': {
-      id: '/_authenticated/checkout'
-      path: '/checkout'
-      fullPath: '/checkout'
-      preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/beats': {
@@ -490,7 +510,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAgreementsRoute: typeof AuthenticatedAgreementsRoute
   AuthenticatedBeatsRoute: typeof AuthenticatedBeatsRoute
-  AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
   AuthenticatedWhitelistRoute: typeof AuthenticatedWhitelistRoute
 }
@@ -500,7 +519,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAgreementsRoute: AuthenticatedAgreementsRoute,
   AuthenticatedBeatsRoute: AuthenticatedBeatsRoute,
-  AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
   AuthenticatedWhitelistRoute: AuthenticatedWhitelistRoute,
 }
@@ -509,15 +527,38 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface CheckoutRouteChildren {
+  CheckoutReturnRoute: typeof CheckoutReturnRoute
+}
+
+const CheckoutRouteChildren: CheckoutRouteChildren = {
+  CheckoutReturnRoute: CheckoutReturnRoute,
+}
+
+const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
+  CheckoutRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  CheckoutRoute: CheckoutRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
-  CheckoutReturnRoute: CheckoutReturnRoute,
+  ClaimTokenRoute: ClaimTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
