@@ -116,3 +116,49 @@ export const createPortalSession = createServerFn({ method: "POST" })
     });
     return portal.url;
   });
+
+// Guest checkout: no auth required. Email is collected up front so the
+// post-purchase webhook can issue a single-use claim invite.
+export const createGuestCheckoutSession = createServerFn({ method: "POST" })
+  .inputValidator((input: { priceId: string; email: string; returnUrl: string; environment: StripeEnv }) =>
+    z
+      .object({
+        priceId: z.string().regex(/^[a-zA-Z0-9_-]+$/).max(64),
+        email: z.string().email().max(254),
+        returnUrl: z.string().url().max(2048),
+        environment: z.enum(["sandbox", "live"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<{ clientSecret: string | null; error: string | null }> => {
+    try {
+      const stripe = createStripeClient(data.environment);
+
+      const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
+      if (!prices.data.length) {
+        return { clientSecret: null, error: `Plan "${data.priceId}" is not configured.` };
+      }
+      const stripePrice = prices.data[0];
+      const isRecurring = stripePrice.type === "recurring";
+
+      // Reuse customer with same email if present
+      const existing = await stripe.customers.list({ email: data.email, limit: 1 });
+      const customerId = existing.data.length
+        ? existing.data[0].id
+        : (await stripe.customers.create({ email: data.email })).id;
+
+      const session = await stripe.checkout.sessions.create({
+        line_items: [{ price: stripePrice.id, quantity: 1 }],
+        mode: isRecurring ? "subscription" : "payment",
+        ui_mode: "embedded_page",
+        return_url: data.returnUrl,
+        customer: customerId,
+        customer_update: { address: "auto" },
+      });
+
+      return { clientSecret: session.client_secret ?? null, error: null };
+    } catch (err) {
+      console.error("createGuestCheckoutSession failed:", err);
+      return { clientSecret: null, error: err instanceof Error ? err.message : "Unknown error" };
+    }
+  });
