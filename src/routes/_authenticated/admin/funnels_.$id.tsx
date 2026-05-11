@@ -177,18 +177,10 @@ function EditFunnelPage() {
               <Input value={c.hero_eyebrow} onChange={(e) => setC("hero_eyebrow", e.target.value)} />
             </Field>
             <Field label="Headline">
-              <Textarea
-                value={c.hero_title}
-                onChange={(e) => setC("hero_title", e.target.value)}
-                rows={2}
-              />
+              <Textarea value={c.hero_title} onChange={(e) => setC("hero_title", e.target.value)} rows={2} />
             </Field>
             <Field label="Subheadline">
-              <Textarea
-                value={c.hero_subtitle}
-                onChange={(e) => setC("hero_subtitle", e.target.value)}
-                rows={2}
-              />
+              <Textarea value={c.hero_subtitle} onChange={(e) => setC("hero_subtitle", e.target.value)} rows={2} />
             </Field>
             <Field label="Headline override (legacy)">
               <Input
@@ -204,25 +196,14 @@ function EditFunnelPage() {
               <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
             </Field>
             <Field label="Cover image URL">
-              <Input
-                value={coverUrl}
-                onChange={(e) => setCoverUrl(e.target.value)}
-                placeholder={resolvedCover ?? ""}
-              />
+              <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder={resolvedCover ?? ""} />
             </Field>
             <Field label="Sticky audio URL">
-              <Input
-                value={audioUrl}
-                onChange={(e) => setAudioUrl(e.target.value)}
-                placeholder={resolvedAudio ?? ""}
-              />
+              <Input value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder={resolvedAudio ?? ""} />
             </Field>
             <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
               <Label className="text-sm">Show sticky audio player</Label>
-              <Switch
-                checked={c.show_sticky_player}
-                onCheckedChange={(v) => setC("show_sticky_player", v)}
-              />
+              <Switch checked={c.show_sticky_player} onCheckedChange={(v) => setC("show_sticky_player", v)} />
             </div>
           </Section>
 
@@ -247,10 +228,7 @@ function EditFunnelPage() {
               />
             </Field>
             <Field label="Input placeholder">
-              <Input
-                value={c.email_placeholder}
-                onChange={(e) => setC("email_placeholder", e.target.value)}
-              />
+              <Input value={c.email_placeholder} onChange={(e) => setC("email_placeholder", e.target.value)} />
             </Field>
             <Field label="Button text">
               <Input value={c.email_button} onChange={(e) => setC("email_button", e.target.value)} />
@@ -258,6 +236,37 @@ function EditFunnelPage() {
             <Field label="Privacy line">
               <Input value={c.privacy_text} onChange={(e) => setC("privacy_text", e.target.value)} />
             </Field>
+          </Section>
+
+          <Section title="Spacing">
+            <SizeField
+              label="Header padding"
+              value={c.padding_header ?? 12}
+              min={0}
+              max={48}
+              onChange={(v) => setC("padding_header", v)}
+            />
+            <SizeField
+              label="Headline top/bottom padding"
+              value={c.padding_hero ?? 12}
+              min={0}
+              max={64}
+              onChange={(v) => setC("padding_hero", v)}
+            />
+            <SizeField
+              label="Video top gap"
+              value={c.padding_video_top ?? 0}
+              min={0}
+              max={64}
+              onChange={(v) => setC("padding_video_top", v)}
+            />
+            <SizeField
+              label="Email form top gap"
+              value={c.padding_email_top ?? 16}
+              min={0}
+              max={64}
+              onChange={(v) => setC("padding_email_top", v)}
+            />
           </Section>
 
           <Section title="Typography">
@@ -315,7 +324,7 @@ function EditFunnelPage() {
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
                 device === "desktop"
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Monitor className="h-3.5 w-3.5" /> Desktop
@@ -327,7 +336,7 @@ function EditFunnelPage() {
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
                 device === "mobile"
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Smartphone className="h-3.5 w-3.5" /> Mobile
@@ -338,17 +347,12 @@ function EditFunnelPage() {
             <div
               className={cn(
                 "bg-background rounded-xl overflow-hidden border border-border shadow-2xl transition-all",
-                device === "mobile" ? "w-[390px]" : "w-full max-w-[1100px]"
+                device === "mobile" ? "w-[390px]" : "w-full max-w-[1100px]",
               )}
               style={{ height: "calc(100vh - 240px)", minHeight: 600 }}
             >
               <div className="h-full overflow-y-auto">
-                <FunnelView
-                  funnel={previewFunnel}
-                  content={content}
-                  previewMode
-                  embedded
-                />
+                <FunnelView funnel={previewFunnel} content={content} previewMode embedded />
               </div>
             </div>
           </div>
@@ -395,13 +399,7 @@ function SizeField({
         <Label className="text-xs">{label}</Label>
         <span className="text-xs text-muted-foreground tabular-nums">{value}px</span>
       </div>
-      <Slider
-        value={[value]}
-        min={min}
-        max={max}
-        step={1}
-        onValueChange={(v) => onChange(v[0])}
-      />
+      <Slider value={[value]} min={min} max={max} step={1} onValueChange={(v) => onChange(v[0])} />
     </div>
   );
 }
@@ -413,13 +411,7 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   email: "Email capture card",
 };
 
-function SectionOrder({
-  order,
-  onChange,
-}: {
-  order: SectionKey[];
-  onChange: (o: SectionKey[]) => void;
-}) {
+function SectionOrder({ order, onChange }: { order: SectionKey[]; onChange: (o: SectionKey[]) => void }) {
   const all: SectionKey[] = ["hero", "video", "download", "email"];
   const normalized = [...order.filter((k) => all.includes(k)), ...all.filter((k) => !order.includes(k))];
 
