@@ -18,6 +18,7 @@ import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
+import { Route as AuthenticatedLicenseExampleRouteImport } from './routes/_authenticated/license-example'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
 import { Route as AuthenticatedAgreementsRouteImport } from './routes/_authenticated/agreements'
@@ -35,7 +36,7 @@ import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
-import { Route as AuthenticatedAdminFunnelsIdRouteImport } from './routes/_authenticated/admin/funnels.$id'
+import { Route as AuthenticatedAdminFunnelsIdRouteImport } from './routes/_authenticated/admin/funnels_.$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -81,6 +82,12 @@ const AuthenticatedWhitelistRoute = AuthenticatedWhitelistRouteImport.update({
   path: '/whitelist',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedLicenseExampleRoute =
+  AuthenticatedLicenseExampleRouteImport.update({
+    id: '/license-example',
+    path: '/license-example',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDownloadsRoute = AuthenticatedDownloadsRouteImport.update({
   id: '/downloads',
   path: '/downloads',
@@ -176,9 +183,9 @@ const ApiPublicPaymentsWebhookRoute =
   } as any)
 const AuthenticatedAdminFunnelsIdRoute =
   AuthenticatedAdminFunnelsIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedAdminFunnelsRoute,
+    id: '/funnels_/$id',
+    path: '/funnels/$id',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -191,13 +198,14 @@ export interface FileRoutesByFullPath {
   '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
+  '/license-example': typeof AuthenticatedLicenseExampleRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
-  '/admin/funnels': typeof AuthenticatedAdminFunnelsRouteWithChildren
+  '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
@@ -218,13 +226,14 @@ export interface FileRoutesByTo {
   '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
+  '/license-example': typeof AuthenticatedLicenseExampleRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
-  '/admin/funnels': typeof AuthenticatedAdminFunnelsRouteWithChildren
+  '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
@@ -248,13 +257,14 @@ export interface FileRoutesById {
   '/_authenticated/agreements': typeof AuthenticatedAgreementsRoute
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
+  '/_authenticated/license-example': typeof AuthenticatedLicenseExampleRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
-  '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRouteWithChildren
+  '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/_authenticated/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
@@ -262,7 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
-  '/_authenticated/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
+  '/_authenticated/admin/funnels_/$id': typeof AuthenticatedAdminFunnelsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/agreements'
     | '/beats'
     | '/downloads'
+    | '/license-example'
     | '/whitelist'
     | '/b/$slug'
     | '/checkout/return'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/agreements'
     | '/beats'
     | '/downloads'
+    | '/license-example'
     | '/whitelist'
     | '/b/$slug'
     | '/checkout/return'
@@ -334,6 +346,7 @@ export interface FileRouteTypes {
     | '/_authenticated/agreements'
     | '/_authenticated/beats'
     | '/_authenticated/downloads'
+    | '/_authenticated/license-example'
     | '/_authenticated/whitelist'
     | '/b/$slug'
     | '/checkout/return'
@@ -348,7 +361,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/whitelist'
     | '/b/$slug/offer'
     | '/_authenticated/admin/'
-    | '/_authenticated/admin/funnels/$id'
+    | '/_authenticated/admin/funnels_/$id'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
@@ -428,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/whitelist'
       fullPath: '/whitelist'
       preLoaderRoute: typeof AuthenticatedWhitelistRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/license-example': {
+      id: '/_authenticated/license-example'
+      path: '/license-example'
+      fullPath: '/license-example'
+      preLoaderRoute: typeof AuthenticatedLicenseExampleRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/downloads': {
@@ -549,52 +569,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/funnels/$id': {
-      id: '/_authenticated/admin/funnels/$id'
-      path: '/$id'
+    '/_authenticated/admin/funnels_/$id': {
+      id: '/_authenticated/admin/funnels_/$id'
+      path: '/funnels/$id'
       fullPath: '/admin/funnels/$id'
       preLoaderRoute: typeof AuthenticatedAdminFunnelsIdRouteImport
-      parentRoute: typeof AuthenticatedAdminFunnelsRoute
+      parentRoute: typeof AuthenticatedAdminRoute
     }
   }
 }
 
-interface AuthenticatedAdminFunnelsRouteChildren {
-  AuthenticatedAdminFunnelsIdRoute: typeof AuthenticatedAdminFunnelsIdRoute
-}
-
-const AuthenticatedAdminFunnelsRouteChildren: AuthenticatedAdminFunnelsRouteChildren =
-  {
-    AuthenticatedAdminFunnelsIdRoute: AuthenticatedAdminFunnelsIdRoute,
-  }
-
-const AuthenticatedAdminFunnelsRouteWithChildren =
-  AuthenticatedAdminFunnelsRoute._addFileChildren(
-    AuthenticatedAdminFunnelsRouteChildren,
-  )
-
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
   AuthenticatedAdminBeatsRoute: typeof AuthenticatedAdminBeatsRoute
-  AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRouteWithChildren
+  AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRoute
   AuthenticatedAdminGiftRoute: typeof AuthenticatedAdminGiftRoute
   AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
   AuthenticatedAdminWhitelistRoute: typeof AuthenticatedAdminWhitelistRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminFunnelsIdRoute: typeof AuthenticatedAdminFunnelsIdRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
   AuthenticatedAdminBeatsRoute: AuthenticatedAdminBeatsRoute,
-  AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRouteWithChildren,
+  AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRoute,
   AuthenticatedAdminGiftRoute: AuthenticatedAdminGiftRoute,
   AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
   AuthenticatedAdminWhitelistRoute: AuthenticatedAdminWhitelistRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminFunnelsIdRoute: AuthenticatedAdminFunnelsIdRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
@@ -606,6 +614,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAgreementsRoute: typeof AuthenticatedAgreementsRoute
   AuthenticatedBeatsRoute: typeof AuthenticatedBeatsRoute
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
+  AuthenticatedLicenseExampleRoute: typeof AuthenticatedLicenseExampleRoute
   AuthenticatedWhitelistRoute: typeof AuthenticatedWhitelistRoute
 }
 
@@ -615,6 +624,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAgreementsRoute: AuthenticatedAgreementsRoute,
   AuthenticatedBeatsRoute: AuthenticatedBeatsRoute,
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
+  AuthenticatedLicenseExampleRoute: AuthenticatedLicenseExampleRoute,
   AuthenticatedWhitelistRoute: AuthenticatedWhitelistRoute,
 }
 
