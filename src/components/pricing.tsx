@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Check, Crown, Building2 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
 
 type Interval = "monthly" | "yearly";
 
@@ -51,7 +50,6 @@ const tiers = [
 
 export function Pricing() {
   const [interval, setInterval] = useState<Interval>("monthly");
-  const { user } = useAuth();
 
   return (
     <section id="pricing" className="container mx-auto px-6 py-20">
@@ -88,9 +86,7 @@ export function Pricing() {
           const Icon = tier.icon;
           const price = interval === "monthly" ? tier.monthlyPrice : tier.yearlyPrice;
           const planId = interval === "monthly" ? tier.monthlyPlan : tier.yearlyPlan;
-          const linkProps = user
-            ? { to: "/checkout" as const, search: { plan: planId } }
-            : { to: "/signup" as const, search: { plan: planId } };
+          const linkProps = { to: "/checkout" as const, search: { plan: planId } };
 
           return (
             <div

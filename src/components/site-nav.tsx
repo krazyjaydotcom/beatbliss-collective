@@ -40,7 +40,7 @@ export function SiteNav() {
                 <Link to="/login">Log In</Link>
               </Button>
               <Button variant="hero" size="sm" asChild>
-                <Link to="/signup">Get Started</Link>
+                <Link to="/" hash="pricing">Get Access</Link>
               </Button>
             </>
           )}
