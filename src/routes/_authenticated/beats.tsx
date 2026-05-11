@@ -109,7 +109,7 @@ function BeatsDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("credits_balance, display_name, full_name, email")
+        .select("credits_balance, display_name, full_name, email, subscription_tier, subscription_status")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
