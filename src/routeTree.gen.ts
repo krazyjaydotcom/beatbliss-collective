@@ -18,6 +18,7 @@ import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
+import { Route as AuthenticatedLicenseExampleRouteImport } from './routes/_authenticated/license-example'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
 import { Route as AuthenticatedAgreementsRouteImport } from './routes/_authenticated/agreements'
@@ -81,6 +82,12 @@ const AuthenticatedWhitelistRoute = AuthenticatedWhitelistRouteImport.update({
   path: '/whitelist',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedLicenseExampleRoute =
+  AuthenticatedLicenseExampleRouteImport.update({
+    id: '/license-example',
+    path: '/license-example',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDownloadsRoute = AuthenticatedDownloadsRouteImport.update({
   id: '/downloads',
   path: '/downloads',
@@ -191,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
+  '/license-example': typeof AuthenticatedLicenseExampleRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
@@ -218,6 +226,7 @@ export interface FileRoutesByTo {
   '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
+  '/license-example': typeof AuthenticatedLicenseExampleRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
@@ -248,6 +257,7 @@ export interface FileRoutesById {
   '/_authenticated/agreements': typeof AuthenticatedAgreementsRoute
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
+  '/_authenticated/license-example': typeof AuthenticatedLicenseExampleRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/agreements'
     | '/beats'
     | '/downloads'
+    | '/license-example'
     | '/whitelist'
     | '/b/$slug'
     | '/checkout/return'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/agreements'
     | '/beats'
     | '/downloads'
+    | '/license-example'
     | '/whitelist'
     | '/b/$slug'
     | '/checkout/return'
@@ -334,6 +346,7 @@ export interface FileRouteTypes {
     | '/_authenticated/agreements'
     | '/_authenticated/beats'
     | '/_authenticated/downloads'
+    | '/_authenticated/license-example'
     | '/_authenticated/whitelist'
     | '/b/$slug'
     | '/checkout/return'
@@ -428,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/whitelist'
       fullPath: '/whitelist'
       preLoaderRoute: typeof AuthenticatedWhitelistRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/license-example': {
+      id: '/_authenticated/license-example'
+      path: '/license-example'
+      fullPath: '/license-example'
+      preLoaderRoute: typeof AuthenticatedLicenseExampleRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/downloads': {
@@ -594,6 +614,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAgreementsRoute: typeof AuthenticatedAgreementsRoute
   AuthenticatedBeatsRoute: typeof AuthenticatedBeatsRoute
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
+  AuthenticatedLicenseExampleRoute: typeof AuthenticatedLicenseExampleRoute
   AuthenticatedWhitelistRoute: typeof AuthenticatedWhitelistRoute
 }
 
@@ -603,6 +624,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAgreementsRoute: AuthenticatedAgreementsRoute,
   AuthenticatedBeatsRoute: AuthenticatedBeatsRoute,
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
+  AuthenticatedLicenseExampleRoute: AuthenticatedLicenseExampleRoute,
   AuthenticatedWhitelistRoute: AuthenticatedWhitelistRoute,
 }
 

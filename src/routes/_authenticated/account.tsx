@@ -125,6 +125,20 @@ function AccountPage() {
           </div>
         </div>
 
+        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-semibold">Unlimited License — preview</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                See exactly what rights, credits, and split requirements apply to every beat you download as a paid member.
+              </p>
+            </div>
+            <Button variant="heroOutline" asChild>
+              <Link to="/license-example">View example license</Link>
+            </Button>
+          </div>
+        </div>
+
         <div className="mt-6 flex justify-end">
           <Button variant="ghost" onClick={handleSignOut}>Sign out</Button>
         </div>
