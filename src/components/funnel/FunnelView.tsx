@@ -241,7 +241,7 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
     </form>
   );
 
-  const blocks: Record<SectionKey, JSX.Element> = {
+  const blocks: Record<SectionKey, React.ReactElement> = {
     hero: heroBlock,
     video: videoBlock,
     download: downloadBlock,
