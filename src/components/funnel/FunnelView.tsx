@@ -27,6 +27,11 @@ export interface FunnelContent {
   body_size?: number;
   /** Order of the page sections */
   section_order?: SectionKey[];
+  /** Padding controls (px) */
+  padding_header?: number;
+  padding_hero?: number;
+  padding_video_top?: number;
+  padding_email_top?: number;
 }
 
 export const DEFAULT_CONTENT: Required<FunnelContent> = {
@@ -45,6 +50,10 @@ export const DEFAULT_CONTENT: Required<FunnelContent> = {
   email_heading_size: 22,
   body_size: 14,
   section_order: ["hero", "video", "email"],
+  padding_header: 12,
+  padding_hero: 12,
+  padding_video_top: 0,
+  padding_email_top: 16,
 };
 
 export interface FunnelViewProps {
@@ -115,7 +124,7 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
   };
 
   const heroBlock = (
-    <div key="hero" className="text-center px-4 pt-3 pb-2">
+    <div key="hero" className="text-center px-4" style={{ paddingTop: c.padding_hero, paddingBottom: c.padding_hero }}>
       <p
         className="font-semibold text-foreground"
         style={{ fontSize: `${c.hero_title_size > 36 ? 18 : c.hero_title_size}px` }}
@@ -126,7 +135,7 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
   );
 
   const videoBlock = (
-    <div key="video" className="w-full">
+    <div key="video" className="w-full" style={{ paddingTop: c.padding_video_top }}>
       {embed ? (
         <div className="overflow-hidden bg-black aspect-video">
           <iframe
@@ -152,7 +161,12 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
   const downloadBlock = <div key="download" className="hidden" />;
 
   const emailBlock = (
-    <form key="email" onSubmit={handleSubmit} className="px-4 pt-4 pb-6 max-w-2xl mx-auto w-full">
+    <form
+      key="email"
+      onSubmit={handleSubmit}
+      className="px-4 pb-6 max-w-2xl mx-auto w-full"
+      style={{ paddingTop: c.padding_email_top }}
+    >
       <p className="text-center text-sm font-medium text-foreground mb-3">{c.email_subheading}</p>
       <div className="flex flex-col sm:flex-row gap-2">
         <Input
@@ -194,7 +208,10 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
   return (
     <div className={embedded ? "bg-background" : "min-h-screen bg-background"}>
       <header className="border-b border-border">
-        <div className="container mx-auto px-6 py-3 flex justify-center">
+        <div
+          className="container mx-auto px-6 flex justify-center"
+          style={{ paddingTop: c.padding_header, paddingBottom: c.padding_header }}
+        >
           <KrazyLogo className="text-lg" />
         </div>
       </header>
