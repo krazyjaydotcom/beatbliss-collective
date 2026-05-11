@@ -24,6 +24,7 @@ import { Route as AuthenticatedAgreementsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as BSlugOfferRouteImport } from './routes/b.$slug.offer'
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
@@ -108,6 +109,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const BSlugOfferRoute = BSlugOfferRouteImport.update({
+  id: '/offer',
+  path: '/offer',
+  getParentRoute: () => BSlugRoute,
+} as any)
 const AuthenticatedAdminWhitelistRoute =
   AuthenticatedAdminWhitelistRouteImport.update({
     id: '/whitelist',
@@ -172,7 +178,7 @@ export interface FileRoutesByFullPath {
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
-  '/b/$slug': typeof BSlugRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -196,7 +203,7 @@ export interface FileRoutesByTo {
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
-  '/b/$slug': typeof BSlugRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -223,7 +231,7 @@ export interface FileRoutesById {
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
-  '/b/$slug': typeof BSlugRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/b/$slug/offer': typeof BSlugOfferRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
+    | '/b/$slug/offer'
     | '/admin/'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
+    | '/b/$slug/offer'
     | '/admin'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/online'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/whitelist'
+    | '/b/$slug/offer'
     | '/_authenticated/admin/'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -321,7 +333,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
-  BSlugRoute: typeof BSlugRoute
+  BSlugRoute: typeof BSlugRouteWithChildren
   ClaimTokenRoute: typeof ClaimTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -433,6 +445,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/b/$slug/offer': {
+      id: '/b/$slug/offer'
+      path: '/offer'
+      fullPath: '/b/$slug/offer'
+      preLoaderRoute: typeof BSlugOfferRouteImport
+      parentRoute: typeof BSlugRoute
     }
     '/_authenticated/admin/whitelist': {
       id: '/_authenticated/admin/whitelist'
@@ -559,13 +578,23 @@ const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
   CheckoutRouteChildren,
 )
 
+interface BSlugRouteChildren {
+  BSlugOfferRoute: typeof BSlugOfferRoute
+}
+
+const BSlugRouteChildren: BSlugRouteChildren = {
+  BSlugOfferRoute: BSlugOfferRoute,
+}
+
+const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CheckoutRoute: CheckoutRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
-  BSlugRoute: BSlugRoute,
+  BSlugRoute: BSlugRouteWithChildren,
   ClaimTokenRoute: ClaimTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
