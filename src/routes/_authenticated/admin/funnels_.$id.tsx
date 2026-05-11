@@ -375,3 +375,95 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+function SizeField({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">{label}</Label>
+        <span className="text-xs text-muted-foreground tabular-nums">{value}px</span>
+      </div>
+      <Slider
+        value={[value]}
+        min={min}
+        max={max}
+        step={1}
+        onValueChange={(v) => onChange(v[0])}
+      />
+    </div>
+  );
+}
+
+const SECTION_LABELS: Record<SectionKey, string> = {
+  hero: "Headline / eyebrow",
+  video: "Video",
+  download: "Download link",
+  email: "Email capture card",
+};
+
+function SectionOrder({
+  order,
+  onChange,
+}: {
+  order: SectionKey[];
+  onChange: (o: SectionKey[]) => void;
+}) {
+  const all: SectionKey[] = ["hero", "video", "download", "email"];
+  const normalized = [...order.filter((k) => all.includes(k)), ...all.filter((k) => !order.includes(k))];
+
+  const move = (idx: number, dir: -1 | 1) => {
+    const next = [...normalized];
+    const swap = idx + dir;
+    if (swap < 0 || swap >= next.length) return;
+    [next[idx], next[swap]] = [next[swap], next[idx]];
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-2">
+      {normalized.map((key, idx) => (
+        <div
+          key={key}
+          className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2"
+        >
+          <span className="text-sm">
+            <span className="text-muted-foreground mr-2 tabular-nums">{idx + 1}.</span>
+            {SECTION_LABELS[key]}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => move(idx, -1)}
+              disabled={idx === 0}
+              className="p-1 rounded hover:bg-secondary disabled:opacity-30"
+              aria-label="Move up"
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => move(idx, 1)}
+              disabled={idx === normalized.length - 1}
+              className="p-1 rounded hover:bg-secondary disabled:opacity-30"
+              aria-label="Move down"
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
