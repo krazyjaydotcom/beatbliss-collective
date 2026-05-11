@@ -30,6 +30,7 @@ import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
 import { Route as AuthenticatedAdminImportRouteImport } from './routes/_authenticated/admin/import'
 import { Route as AuthenticatedAdminGiftRouteImport } from './routes/_authenticated/admin/gift'
+import { Route as AuthenticatedAdminFunnelsRouteImport } from './routes/_authenticated/admin/funnels'
 import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authenticated/admin/beats'
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -143,6 +144,12 @@ const AuthenticatedAdminGiftRoute = AuthenticatedAdminGiftRouteImport.update({
   path: '/gift',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminFunnelsRoute =
+  AuthenticatedAdminFunnelsRouteImport.update({
+    id: '/funnels',
+    path: '/funnels',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminBeatsRoute = AuthenticatedAdminBeatsRouteImport.update({
   id: '/beats',
   path: '/beats',
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
@@ -208,6 +216,7 @@ export interface FileRoutesByTo {
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/claim/$token': typeof ClaimTokenRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/_authenticated/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/claim/$token'
     | '/admin/agreements'
     | '/admin/beats'
+    | '/admin/funnels'
     | '/admin/gift'
     | '/admin/import'
     | '/admin/online'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/claim/$token'
     | '/admin/agreements'
     | '/admin/beats'
+    | '/admin/funnels'
     | '/admin/gift'
     | '/admin/import'
     | '/admin/online'
@@ -316,6 +328,7 @@ export interface FileRouteTypes {
     | '/claim/$token'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/beats'
+    | '/_authenticated/admin/funnels'
     | '/_authenticated/admin/gift'
     | '/_authenticated/admin/import'
     | '/_authenticated/admin/online'
@@ -488,6 +501,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminGiftRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/funnels': {
+      id: '/_authenticated/admin/funnels'
+      path: '/funnels'
+      fullPath: '/admin/funnels'
+      preLoaderRoute: typeof AuthenticatedAdminFunnelsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/beats': {
       id: '/_authenticated/admin/beats'
       path: '/beats'
@@ -522,6 +542,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
   AuthenticatedAdminBeatsRoute: typeof AuthenticatedAdminBeatsRoute
+  AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRoute
   AuthenticatedAdminGiftRoute: typeof AuthenticatedAdminGiftRoute
   AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
@@ -533,6 +554,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
   AuthenticatedAdminBeatsRoute: AuthenticatedAdminBeatsRoute,
+  AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRoute,
   AuthenticatedAdminGiftRoute: AuthenticatedAdminGiftRoute,
   AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
