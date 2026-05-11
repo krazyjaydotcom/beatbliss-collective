@@ -8,6 +8,7 @@ import {
   type StripeEnv,
 } from "@/lib/stripe.server";
 import type { Database } from "@/integrations/supabase/types";
+import { issueInviteAndEmail } from "@/lib/invites.server";
 
 function getAdmin() {
   const url = process.env.SUPABASE_URL!;
@@ -161,14 +162,43 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                   ? session.subscription
                   : session.subscription.id;
                 const sub = await stripe.subscriptions.retrieve(subId);
-                // Ensure userId metadata is on the subscription
+
+                // If checkout had a logged-in user → wire metadata + apply tier
                 if (!sub.metadata?.userId && session.metadata?.userId) {
                   await stripe.subscriptions.update(subId, {
                     metadata: { ...sub.metadata, userId: session.metadata.userId },
                   });
                   sub.metadata = { ...sub.metadata, userId: session.metadata.userId };
                 }
-                await applySubscription(env, sub);
+
+                if (sub.metadata?.userId) {
+                  await applySubscription(env, sub);
+                } else {
+                  // Guest checkout → issue an invite + email claim link
+                  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+                  const customer = await stripe.customers.retrieve(customerId);
+                  const email = !customer.deleted ? customer.email : null;
+                  const item = sub.items.data[0];
+                  let lookupKey = item?.price?.lookup_key ?? null;
+                  if (!lookupKey && item?.price?.id) {
+                    const price = await stripe.prices.retrieve(item.price.id);
+                    lookupKey = price.lookup_key ?? null;
+                  }
+                  const tier = tierFromLookupKey(lookupKey);
+                  if (email && (tier === "artist" || tier === "label")) {
+                    const origin = url.origin;
+                    await issueInviteAndEmail({
+                      email,
+                      stripeCustomerId: customerId,
+                      stripeSubscriptionId: sub.id,
+                      tier,
+                      environment: env,
+                      origin,
+                    });
+                  } else {
+                    console.warn("[webhook] guest checkout without email or tier", { email, tier });
+                  }
+                }
               }
               break;
             }
