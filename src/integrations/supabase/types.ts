@@ -333,6 +333,54 @@ export type Database = {
         }
         Relationships: []
       }
+      invites: {
+        Row: {
+          claimed_by_user_id: string | null
+          created_at: string
+          email: string
+          environment: string
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          stripe_customer_id: string
+          stripe_subscription_id: string | null
+          tier: string
+          token: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          claimed_by_user_id?: string | null
+          created_at?: string
+          email: string
+          environment?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          stripe_customer_id: string
+          stripe_subscription_id?: string | null
+          tier?: string
+          token: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          claimed_by_user_id?: string | null
+          created_at?: string
+          email?: string
+          environment?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          stripe_customer_id?: string
+          stripe_subscription_id?: string | null
+          tier?: string
+          token?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           beat_id: string | null
@@ -577,6 +625,10 @@ export type Database = {
           _title: string
         }
         Returns: string
+      }
+      claim_invite: {
+        Args: { _token: string; _user_id: string }
+        Returns: Json
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
