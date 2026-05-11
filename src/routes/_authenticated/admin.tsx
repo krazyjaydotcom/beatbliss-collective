@@ -14,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
   { to: "/admin/beats", label: "Beats", icon: Music },
+  { to: "/admin/funnels", label: "Beat Funnels", icon: Megaphone },
   { to: "/admin/import", label: "Import beats", icon: Download },
   { to: "/admin/whitelist", label: "Whitelist", icon: ShieldCheck },
   { to: "/admin/gift", label: "Gift credits", icon: Gift },
