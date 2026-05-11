@@ -26,7 +26,8 @@ export const Route = createFileRoute("/checkout")({
 });
 
 function CheckoutPage() {
-  const { plan } = useSearch({ from: "/checkout" });
+  const search = useSearch({ from: "/checkout" });
+  const plan = search.plan;
   const [email, setEmail] = useState("");
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
