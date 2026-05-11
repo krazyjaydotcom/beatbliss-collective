@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { BarChart3, MessageSquare, Users, ArrowLeft, Loader2, Music, Gift, Download, Eye, ShieldCheck } from "lucide-react";
+import { BarChart3, MessageSquare, Users, ArrowLeft, Loader2, Music, Gift, Download, Eye, ShieldCheck, Megaphone } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
