@@ -79,7 +79,7 @@ export const getFunnelBySlug = createServerFn({ method: "GET" })
     const supabase = adminClient();
     const { data: row, error } = await supabase
       .from("beat_funnels")
-      .select("id, slug, title, headline, video_url, audio_url, cover_url, beat_id, is_active")
+      .select("id, slug, title, headline, video_url, audio_url, cover_url, beat_id, is_active, download_url, content")
       .eq("slug", data.slug)
       .eq("is_active", true)
       .maybeSingle();
@@ -109,6 +109,8 @@ export const getFunnelBySlug = createServerFn({ method: "GET" })
         video_url: (row as any).video_url as string | null,
         audio_url: ((row as any).audio_url as string | null) ?? beatAudio,
         cover_url: ((row as any).cover_url as string | null) ?? beatCover,
+        download_url: (row as any).download_url as string,
+        content: ((row as any).content ?? {}) as Record<string, unknown>,
         beat_title: beatTitle,
       },
     };
