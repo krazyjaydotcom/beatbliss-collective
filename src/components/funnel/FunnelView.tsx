@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, Mail, Lock, Play, Pause } from "lucide-react";
+import { Lock, Play, Pause } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
 
 export type SectionKey = "hero" | "video" | "download" | "email";
@@ -115,28 +115,20 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
   };
 
   const heroBlock = (
-    <div key="hero">
-      <h1
-        className="mt-0 text-center font-black tracking-tight leading-[1.05]"
-        style={{ fontSize: `${Math.min(c.hero_title_size, 36)}px` }}
+    <div key="hero" className="text-center px-4 pt-3 pb-2">
+      <p
+        className="font-semibold text-foreground"
+        style={{ fontSize: `${c.hero_title_size > 36 ? 18 : c.hero_title_size}px` }}
       >
-        {c.hero_title}
-      </h1>
-      {(c.hero_subtitle || funnel.headline) && (
-        <p
-          className="mt-2 text-center text-muted-foreground max-w-xl mx-auto"
-          style={{ fontSize: `${c.hero_subtitle_size}px` }}
-        >
-          {funnel.headline || c.hero_subtitle}
-        </p>
-      )}
+        {funnel.headline || c.hero_title}
+      </p>
     </div>
   );
 
   const videoBlock = (
-    <div key="video" className="mt-3">
+    <div key="video" className="w-full">
       {embed ? (
-        <div className="rounded-2xl overflow-hidden border border-border bg-black aspect-video">
+        <div className="overflow-hidden bg-black aspect-video">
           <iframe
             src={embed}
             title="Watch this first"
@@ -146,59 +138,23 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
           />
         </div>
       ) : funnel.cover_url ? (
-        <div className="rounded-2xl overflow-hidden border border-border bg-black aspect-video flex items-center justify-center">
+        <div className="overflow-hidden bg-black aspect-video flex items-center justify-center">
           <img src={funnel.cover_url} alt={funnel.title} className="w-full h-full object-cover opacity-80" />
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-border bg-card aspect-video flex items-center justify-center text-sm text-muted-foreground">
+        <div className="border border-dashed border-border bg-card aspect-video flex items-center justify-center text-sm text-muted-foreground">
           Add a video URL to display a player here
         </div>
       )}
     </div>
   );
 
-  const downloadBlock = (
-    <div key="download" className="mt-6 text-center">
-      {previewMode ? (
-        <span
-          className="inline-flex items-center gap-2 text-primary font-semibold underline underline-offset-4"
-          style={{ fontSize: `${c.body_size}px` }}
-        >
-          <Download className="h-4 w-4" />
-          {c.download_label}
-        </span>
-      ) : (
-        <a
-          href={funnel.download_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          download
-          className="inline-flex items-center gap-2 text-primary font-semibold hover:underline underline-offset-4"
-          style={{ fontSize: `${c.body_size}px` }}
-        >
-          <Download className="h-4 w-4" />
-          {c.download_label}
-        </a>
-      )}
-    </div>
-  );
+  const downloadBlock = <div key="download" className="hidden" />;
 
   const emailBlock = (
-    <form
-      key="email"
-      onSubmit={handleSubmit}
-      className="mt-3 rounded-2xl border border-border bg-card/60 p-4 sm:p-5 backdrop-blur"
-    >
-      <div className="flex justify-center">
-        <Mail className="h-5 w-5 text-primary" />
-      </div>
-      <h2 className="mt-2 font-bold text-center" style={{ fontSize: `${c.email_heading_size}px` }}>
-        {c.email_heading}
-      </h2>
-      <p className="mt-1 text-muted-foreground text-center" style={{ fontSize: `${c.body_size}px` }}>
-        {c.email_subheading}
-      </p>
-      <div className="mt-3">
+    <form key="email" onSubmit={handleSubmit} className="px-4 pt-4 pb-6 max-w-2xl mx-auto w-full">
+      <p className="text-center text-sm font-medium text-foreground mb-3">{c.email_subheading}</p>
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           type="email"
           required
@@ -206,20 +162,20 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
           onChange={(e) => setEmail(e.target.value)}
           placeholder={c.email_placeholder}
           disabled={busy || previewMode}
-          className="h-11"
+          className="h-12 flex-1"
           style={{ fontSize: `${c.body_size}px` }}
         />
+        <Button
+          type="submit"
+          variant="hero"
+          size="lg"
+          className="h-12 px-6 font-bold shrink-0"
+          style={{ fontSize: `${c.body_size}px` }}
+          disabled={busy || previewMode}
+        >
+          {busy ? "Sending..." : c.email_button}
+        </Button>
       </div>
-      <Button
-        type="submit"
-        variant="hero"
-        size="lg"
-        className="mt-2 w-full h-11 font-bold"
-        style={{ fontSize: `${c.body_size}px` }}
-        disabled={busy || previewMode}
-      >
-        {busy ? "Sending..." : c.email_button}
-      </Button>
       {error && <p className="mt-2 text-sm text-destructive text-center">{error}</p>}
       <p className="mt-2 inline-flex items-center justify-center gap-1.5 w-full text-xs text-muted-foreground">
         <Lock className="h-3 w-3" />
@@ -243,9 +199,7 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
         </div>
       </header>
 
-      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-3xl pb-32">
-        {order.map((key) => blocks[key])}
-      </main>
+      <main className="w-full max-w-3xl mx-auto pb-16">{order.map((key) => blocks[key])}</main>
 
       {c.show_sticky_player && funnel.audio_url && (
         <StickyAudio
