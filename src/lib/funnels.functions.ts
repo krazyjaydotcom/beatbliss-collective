@@ -110,7 +110,7 @@ export const getFunnelBySlug = createServerFn({ method: "GET" })
         audio_url: ((row as any).audio_url as string | null) ?? beatAudio,
         cover_url: ((row as any).cover_url as string | null) ?? beatCover,
         download_url: (row as any).download_url as string,
-        content: ((row as any).content ?? {}) as Record<string, unknown>,
+        content: ((row as any).content ?? {}) as Record<string, string | boolean | null>,
         beat_title: beatTitle,
       },
     };
