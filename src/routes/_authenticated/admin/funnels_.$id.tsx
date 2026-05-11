@@ -260,6 +260,44 @@ function EditFunnelPage() {
             </Field>
           </Section>
 
+          <Section title="Typography">
+            <SizeField
+              label="Headline size"
+              value={c.hero_title_size}
+              min={24}
+              max={96}
+              onChange={(v) => setC("hero_title_size", v)}
+            />
+            <SizeField
+              label="Subheadline size"
+              value={c.hero_subtitle_size}
+              min={12}
+              max={28}
+              onChange={(v) => setC("hero_subtitle_size", v)}
+            />
+            <SizeField
+              label="Email card heading size"
+              value={c.email_heading_size}
+              min={14}
+              max={36}
+              onChange={(v) => setC("email_heading_size", v)}
+            />
+            <SizeField
+              label="Body / button text size"
+              value={c.body_size}
+              min={12}
+              max={20}
+              onChange={(v) => setC("body_size", v)}
+            />
+          </Section>
+
+          <Section title="Section order">
+            <SectionOrder
+              order={(content.section_order ?? DEFAULT_CONTENT.section_order) as SectionKey[]}
+              onChange={(o) => setC("section_order", o)}
+            />
+          </Section>
+
           <Section title="Page meta">
             <Field label="Internal title (admin only)">
               <Input value={title} onChange={(e) => setTitle(e.target.value)} />
