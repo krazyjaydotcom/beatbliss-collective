@@ -20,7 +20,7 @@ export function Pricing() {
   const [interval, setInterval] = useState<Interval>("yearly");
 
   const price = interval === "monthly" ? 37 : 599;
-  const planId = interval === "monthly" ? "artist_monthly" : "artist_yearly";
+  const planId = interval === "monthly" ? "artist_monthly_v2" : "artist_yearly";
   const perLabel = interval === "monthly" ? "/month" : "/year";
   const subnote =
     interval === "monthly"
