@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
@@ -66,6 +67,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/return',
   path: '/return',
   getParentRoute: () => CheckoutRoute,
+} as any)
+const BSlugRoute = BSlugRouteImport.update({
+  id: '/b/$slug',
+  path: '/b/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedWhitelistRoute = AuthenticatedWhitelistRouteImport.update({
   id: '/whitelist',
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
+  '/b/$slug': typeof BSlugRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
+  '/b/$slug': typeof BSlugRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
+  '/b/$slug': typeof BSlugRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/beats'
     | '/downloads'
     | '/whitelist'
+    | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
     | '/admin/agreements'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/beats'
     | '/downloads'
     | '/whitelist'
+    | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
     | '/admin/agreements'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/_authenticated/beats'
     | '/_authenticated/downloads'
     | '/_authenticated/whitelist'
+    | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
     | '/_authenticated/admin/agreements'
@@ -309,6 +321,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  BSlugRoute: typeof BSlugRoute
   ClaimTokenRoute: typeof ClaimTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -364,6 +377,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/checkout/return'
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof CheckoutRoute
+    }
+    '/b/$slug': {
+      id: '/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof BSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/whitelist': {
       id: '/_authenticated/whitelist'
@@ -545,6 +565,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  BSlugRoute: BSlugRoute,
   ClaimTokenRoute: ClaimTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
@@ -552,3 +573,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
