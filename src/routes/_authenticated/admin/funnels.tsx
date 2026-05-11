@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, Copy, Check, Trash2, Power } from "lucide-react";
+import { Loader2, Plus, Copy, Check, Trash2, Power, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/funnels")({
   component: AdminFunnelsPage,
@@ -197,7 +197,15 @@ function FunnelRow({
         </span>
       </td>
       <td className="px-4 py-3 text-right">
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-1">
+          <Link
+            to="/admin/funnels/$id"
+            params={{ id: funnel.id }}
+            className="p-2 rounded-md hover:bg-muted/40 text-muted-foreground hover:text-foreground"
+            title="Edit"
+          >
+            <Pencil className="h-4 w-4" />
+          </Link>
           <button
             type="button"
             onClick={onToggle}

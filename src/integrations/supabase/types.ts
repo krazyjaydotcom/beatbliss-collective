@@ -131,6 +131,7 @@ export type Database = {
         Row: {
           audio_url: string | null
           beat_id: string | null
+          content: Json
           cover_url: string | null
           created_at: string
           download_url: string
@@ -146,6 +147,7 @@ export type Database = {
         Insert: {
           audio_url?: string | null
           beat_id?: string | null
+          content?: Json
           cover_url?: string | null
           created_at?: string
           download_url: string
@@ -161,6 +163,7 @@ export type Database = {
         Update: {
           audio_url?: string | null
           beat_id?: string | null
+          content?: Json
           cover_url?: string | null
           created_at?: string
           download_url?: string

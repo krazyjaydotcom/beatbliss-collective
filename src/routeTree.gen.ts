@@ -35,6 +35,7 @@ import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as AuthenticatedAdminFunnelsIdRouteImport } from './routes/_authenticated/admin/funnels.$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -173,6 +174,12 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedAdminFunnelsIdRoute =
+  AuthenticatedAdminFunnelsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAdminFunnelsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -190,7 +197,7 @@ export interface FileRoutesByFullPath {
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
-  '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
+  '/admin/funnels': typeof AuthenticatedAdminFunnelsRouteWithChildren
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -216,7 +224,7 @@ export interface FileRoutesByTo {
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
-  '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
+  '/admin/funnels': typeof AuthenticatedAdminFunnelsRouteWithChildren
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
@@ -224,6 +232,7 @@ export interface FileRoutesByTo {
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -245,7 +254,7 @@ export interface FileRoutesById {
   '/claim/$token': typeof ClaimTokenRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
-  '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
+  '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRouteWithChildren
   '/_authenticated/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
@@ -253,6 +262,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/admin/whitelist'
     | '/b/$slug/offer'
     | '/admin/'
+    | '/admin/funnels/$id'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/admin/whitelist'
     | '/b/$slug/offer'
     | '/admin'
+    | '/admin/funnels/$id'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   id:
@@ -336,6 +348,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/whitelist'
     | '/b/$slug/offer'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/funnels/$id'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
@@ -536,13 +549,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/funnels/$id': {
+      id: '/_authenticated/admin/funnels/$id'
+      path: '/$id'
+      fullPath: '/admin/funnels/$id'
+      preLoaderRoute: typeof AuthenticatedAdminFunnelsIdRouteImport
+      parentRoute: typeof AuthenticatedAdminFunnelsRoute
+    }
   }
 }
+
+interface AuthenticatedAdminFunnelsRouteChildren {
+  AuthenticatedAdminFunnelsIdRoute: typeof AuthenticatedAdminFunnelsIdRoute
+}
+
+const AuthenticatedAdminFunnelsRouteChildren: AuthenticatedAdminFunnelsRouteChildren =
+  {
+    AuthenticatedAdminFunnelsIdRoute: AuthenticatedAdminFunnelsIdRoute,
+  }
+
+const AuthenticatedAdminFunnelsRouteWithChildren =
+  AuthenticatedAdminFunnelsRoute._addFileChildren(
+    AuthenticatedAdminFunnelsRouteChildren,
+  )
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
   AuthenticatedAdminBeatsRoute: typeof AuthenticatedAdminBeatsRoute
-  AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRoute
+  AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRouteWithChildren
   AuthenticatedAdminGiftRoute: typeof AuthenticatedAdminGiftRoute
   AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
@@ -554,7 +588,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
   AuthenticatedAdminBeatsRoute: AuthenticatedAdminBeatsRoute,
-  AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRoute,
+  AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRouteWithChildren,
   AuthenticatedAdminGiftRoute: AuthenticatedAdminGiftRoute,
   AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
