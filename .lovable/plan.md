@@ -1,81 +1,61 @@
+## Beat Funnel — One Page Per Beat
 
-# Invite-Only Access via Stripe Purchase
+A new flow you control from `/admin/funnels`. You create a funnel for each beat you DM out, share the link, capture the email, deliver the beat, and pitch the catalog with a 12-hour timer.
 
-Lock down account creation so only paying customers can sign up. After a successful Stripe purchase, the webhook generates a unique single-use claim link (Skool-style) and emails it to the customer. Existing accounts keep working as-is.
+### 1. Database
 
-## How it works (user POV)
+Two new tables:
 
-1. Visitor lands on the public site, hits "Subscribe", pays through Stripe Checkout (no account required yet).
-2. Stripe webhook fires → backend creates an `invite` record + unique token, emails customer: *"Your invite to KRAZYJAYDOTCOM"* with link `https://krazyjay.com/claim/{token}`.
-3. Customer clicks link → `/claim/{token}` page validates the token and shows a "Create your account" form with email pre-filled and locked.
-4. They set a password → account is created, linked to their Stripe customer, token is burned (`used_at` set), redirected into `/beats`.
-5. Public `/signup` page is removed. Anyone hitting it gets sent to the pricing page.
+- `beat_funnels` — `slug` (unique, URL-friendly), `title`, `headline`, `video_url` (YouTube/Loom embed), `beat_id` (optional FK to beats) OR `audio_url` + `cover_url` for ad-hoc beats, `download_url` (the file you actually deliver), `is_active`, `created_at`.
+- `beat_funnel_leads` — `funnel_id`, `email`, `captured_at`, `forwarded_at` (when the webhook fired). Public INSERT (anyone can opt in); admin-only SELECT.
 
-## What changes
+### 2. Admin: `/admin/funnels`
 
-### Database (new migration)
-- New table `invites`:
-  - `token` (unique, 32-char random), `email`, `stripe_customer_id`, `stripe_subscription_id`, `tier`, `expires_at` (now + 7 days), `used_at`, `claimed_by_user_id`
-- RLS: no client access. All reads/writes happen server-side via service role.
-- New SECURITY DEFINER function `claim_invite(_token text, _user_id uuid)` that atomically validates + marks used + links profile to Stripe customer + sets subscription tier/status.
+- Table of all funnels with view counts + lead counts + a "Copy link" button.
+- "New funnel" form: slug, title, headline, pick a beat from your catalog (or paste audio URL), download URL, video URL.
+- Edit / deactivate.
 
-### Stripe checkout flow (pre-account)
-- `src/lib/payments.functions.ts` — currently `createCheckoutSession` requires auth. Add a new `createGuestCheckoutSession` server fn (no auth middleware) that:
-  - Takes `priceId` + `email` (collected on the pricing page).
-  - Creates Stripe customer with email, no `userId` metadata yet.
-  - Returns embedded checkout `client_secret`.
-- Pricing page (`src/components/pricing.tsx`) → "Get Started" opens an email capture modal → routes to a public `/checkout?plan=...` page (move out of `_authenticated`).
+### 3. Public landing: `/b/$slug`
 
-### Webhook (`src/routes/api/public/payments/webhook.ts`)
-- On `checkout.session.completed` (or `customer.subscription.created`):
-  - If the customer doesn't already have a linked `profiles.id`, generate an invite token, insert into `invites`, send claim email.
-  - If they already have an account (existing user re-subscribing), skip invite — just grant credits as today.
-- Keep existing `invoice.paid` credit-grant logic untouched.
+- Hero with beat title, mini player (uses your existing tagged audio).
+- Below that: the embedded video.
+- Email capture form: "Enter your email to download the beat free".
+- On submit:
+  1. Insert into `beat_funnel_leads`.
+  2. Fire webhook → your external email tool (ConvertKit/Mailchimp/Zapier).
+  3. Redirect to `/b/$slug/offer?e={email}` (also stamps a 12h start time keyed to the email).
 
-### Claim page (new)
-- `src/routes/claim.$token.tsx` — public route.
-  - Loader/server fn `validateInvite(token)` returns `{ email, tier, expired, used }` or 404.
-  - Form: password + confirm. Submits to `claimInvite` server fn that calls `supabase.auth.admin.createUser` (via admin client) with email + password + email_confirm: true, then runs `claim_invite()` SQL fn, then signs the user in client-side.
-  - Error states: expired, already used, invalid → friendly message with "Contact support" + "Resend invite" link (admin can regenerate).
+### 4. Offer page: `/b/$slug/offer`
 
-### Disable open signup
-- `src/routes/signup.tsx` → replace with redirect to `/#pricing` (or delete and add a redirect route).
-- Remove "Sign up" links from `site-nav.tsx` / login page; replace with "Subscribe to get access".
-- Login page stays as-is (existing users still log in normally).
+- Big "Your beat is on the way to {email}" confirmation + download button (uses funnel's `download_url`).
+- Below it, the catalog pitch with a **12-hour countdown timer** keyed off the lead's `captured_at` (server-truth, not just localStorage).
+- CTA → `/checkout?plan=artist_monthly_v2` ($37/mo) and `/checkout?plan=artist_yearly` ($599/yr).
+- After timer expires, the special offer copy switches to a softer evergreen pitch (still functional, no fake "expired" wall).
 
-### Email
-- Need a transactional email for the invite. Use scaffolded transactional email infra (already configured in this project — `email_send_log`, `enqueue_email` exist). Add new template `invite-claim.tsx` and enqueue from the webhook.
-- Email contains: claim link, expiry note ("expires in 7 days"), what they unlocked.
+### 5. Webhook to your email tool
 
-### Admin tooling
-- Add `/admin/invites` page: list invites with status (pending / claimed / expired), "Resend" button (regenerates token + re-emails), "Revoke" button.
+- New secret: `BEAT_FUNNEL_LEAD_WEBHOOK_URL`. You set it once with your ConvertKit/Mailchimp/Zapier hook URL.
+- Server function POSTs JSON: `{ email, funnel_slug, funnel_title, beat_title, captured_at }`.
+- Your external tool runs the 7-email sequence — Lovable just hands off the lead. If the secret isn't set, the lead is still captured in the DB; the webhook step is skipped silently.
 
-## Security notes
+### Out of scope (ask later)
 
-- Tokens: 32-byte cryptographically random, base64url-encoded. Stored hashed? — for v1, store plaintext (it's single-use + 7-day expiry + tied to email). Can upgrade to hashed later.
-- `claim_invite` runs as SECURITY DEFINER so it can write across tables atomically; validates token + expiry + unused inside the function.
-- Webhook signature verification stays as-is (already implemented).
-- Existing `/signup` removal closes the only path to a free account.
+- Built-in 7-email sequence (you opted to use external).
+- Bulk-importing leads into your existing email tool.
+- A/B testing variants of the offer page.
+- Auto-creating funnels from every beat (you chose manual).
 
-## Out of scope for this pass
-- Hashed tokens (defer)
-- Auto-revoking access when subscription cancels (already partially handled by `subscription_status`; a separate pass can enforce in `_authenticated` guard)
-- The beat-funnel landing pages from earlier conversation (separate plan)
+### Files
 
-## Files touched
+New:
+- migration: `beat_funnels`, `beat_funnel_leads`
+- `src/lib/funnels.functions.ts` — public `submitFunnelLead`, admin `createFunnel`/`listFunnels`/`toggleFunnel`
+- `src/lib/funnels.server.ts` — webhook forwarder
+- `src/routes/b.$slug.tsx` — public landing
+- `src/routes/b.$slug.offer.tsx` — upsell with timer
+- `src/routes/_authenticated/admin/funnels.tsx`
+- `src/components/CountdownTimer.tsx`
 
-**New**
-- `supabase/migrations/<ts>_invites.sql`
-- `src/routes/claim.$token.tsx`
-- `src/lib/invites.functions.ts`
-- `src/routes/_authenticated/admin/invites.tsx`
-- `supabase/functions/_shared/email-templates/invite-claim.tsx`
-
-**Edited**
-- `src/lib/payments.functions.ts` (add guest checkout)
-- `src/routes/api/public/payments/webhook.ts` (issue invite + send email)
-- `src/components/pricing.tsx` (email-first checkout flow)
-- `src/routes/checkout.tsx` (move out of `_authenticated`, accept guest)
-- `src/routes/signup.tsx` (redirect to pricing)
-- `src/components/site-nav.tsx` (remove Sign up CTA)
-- `src/routes/_authenticated/admin/index.tsx` (link to invites admin)
+Edited:
+- `src/routes/_authenticated/admin/index.tsx` — add Funnels tile
+- secret added: `BEAT_FUNNEL_LEAD_WEBHOOK_URL`

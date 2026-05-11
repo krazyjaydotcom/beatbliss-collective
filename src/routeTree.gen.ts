@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
@@ -23,11 +24,13 @@ import { Route as AuthenticatedAgreementsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as BSlugOfferRouteImport } from './routes/b.$slug.offer'
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
 import { Route as AuthenticatedAdminImportRouteImport } from './routes/_authenticated/admin/import'
 import { Route as AuthenticatedAdminGiftRouteImport } from './routes/_authenticated/admin/gift'
+import { Route as AuthenticatedAdminFunnelsRouteImport } from './routes/_authenticated/admin/funnels'
 import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authenticated/admin/beats'
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -67,6 +70,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/return',
   getParentRoute: () => CheckoutRoute,
 } as any)
+const BSlugRoute = BSlugRouteImport.update({
+  id: '/b/$slug',
+  path: '/b/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedWhitelistRoute = AuthenticatedWhitelistRouteImport.update({
   id: '/whitelist',
   path: '/whitelist',
@@ -102,6 +110,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const BSlugOfferRoute = BSlugOfferRouteImport.update({
+  id: '/offer',
+  path: '/offer',
+  getParentRoute: () => BSlugRoute,
+} as any)
 const AuthenticatedAdminWhitelistRoute =
   AuthenticatedAdminWhitelistRouteImport.update({
     id: '/whitelist',
@@ -131,6 +144,12 @@ const AuthenticatedAdminGiftRoute = AuthenticatedAdminGiftRouteImport.update({
   path: '/gift',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminFunnelsRoute =
+  AuthenticatedAdminFunnelsRouteImport.update({
+    id: '/funnels',
+    path: '/funnels',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminBeatsRoute = AuthenticatedAdminBeatsRouteImport.update({
   id: '/beats',
   path: '/beats',
@@ -166,15 +185,18 @@ export interface FileRoutesByFullPath {
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -189,15 +211,18 @@ export interface FileRoutesByTo {
   '/beats': typeof AuthenticatedBeatsRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -215,15 +240,18 @@ export interface FileRoutesById {
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/_authenticated/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/b/$slug/offer': typeof BSlugOfferRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -241,15 +269,18 @@ export interface FileRouteTypes {
     | '/beats'
     | '/downloads'
     | '/whitelist'
+    | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
     | '/admin/agreements'
     | '/admin/beats'
+    | '/admin/funnels'
     | '/admin/gift'
     | '/admin/import'
     | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
+    | '/b/$slug/offer'
     | '/admin/'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -264,15 +295,18 @@ export interface FileRouteTypes {
     | '/beats'
     | '/downloads'
     | '/whitelist'
+    | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
     | '/admin/agreements'
     | '/admin/beats'
+    | '/admin/funnels'
     | '/admin/gift'
     | '/admin/import'
     | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
+    | '/b/$slug/offer'
     | '/admin'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -289,15 +323,18 @@ export interface FileRouteTypes {
     | '/_authenticated/beats'
     | '/_authenticated/downloads'
     | '/_authenticated/whitelist'
+    | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/beats'
+    | '/_authenticated/admin/funnels'
     | '/_authenticated/admin/gift'
     | '/_authenticated/admin/import'
     | '/_authenticated/admin/online'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/whitelist'
+    | '/b/$slug/offer'
     | '/_authenticated/admin/'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
@@ -309,6 +346,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  BSlugRoute: typeof BSlugRouteWithChildren
   ClaimTokenRoute: typeof ClaimTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -365,6 +403,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof CheckoutRoute
     }
+    '/b/$slug': {
+      id: '/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof BSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/whitelist': {
       id: '/_authenticated/whitelist'
       path: '/whitelist'
@@ -414,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/b/$slug/offer': {
+      id: '/b/$slug/offer'
+      path: '/offer'
+      fullPath: '/b/$slug/offer'
+      preLoaderRoute: typeof BSlugOfferRouteImport
+      parentRoute: typeof BSlugRoute
+    }
     '/_authenticated/admin/whitelist': {
       id: '/_authenticated/admin/whitelist'
       path: '/whitelist'
@@ -447,6 +499,13 @@ declare module '@tanstack/react-router' {
       path: '/gift'
       fullPath: '/admin/gift'
       preLoaderRoute: typeof AuthenticatedAdminGiftRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/funnels': {
+      id: '/_authenticated/admin/funnels'
+      path: '/funnels'
+      fullPath: '/admin/funnels'
+      preLoaderRoute: typeof AuthenticatedAdminFunnelsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/beats': {
@@ -483,6 +542,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
   AuthenticatedAdminBeatsRoute: typeof AuthenticatedAdminBeatsRoute
+  AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRoute
   AuthenticatedAdminGiftRoute: typeof AuthenticatedAdminGiftRoute
   AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
@@ -494,6 +554,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
   AuthenticatedAdminBeatsRoute: AuthenticatedAdminBeatsRoute,
+  AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRoute,
   AuthenticatedAdminGiftRoute: AuthenticatedAdminGiftRoute,
   AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
@@ -539,12 +600,23 @@ const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
   CheckoutRouteChildren,
 )
 
+interface BSlugRouteChildren {
+  BSlugOfferRoute: typeof BSlugOfferRoute
+}
+
+const BSlugRouteChildren: BSlugRouteChildren = {
+  BSlugOfferRoute: BSlugOfferRoute,
+}
+
+const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CheckoutRoute: CheckoutRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  BSlugRoute: BSlugRouteWithChildren,
   ClaimTokenRoute: ClaimTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
