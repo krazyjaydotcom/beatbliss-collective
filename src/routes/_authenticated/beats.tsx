@@ -699,11 +699,23 @@ function AudioPlayer({ beat, playing, onToggle, progress, duration, onProgress, 
 
 /* ============ DOWNLOAD CONFIRM ============ */
 
-function DownloadDialog({ beat, credits, onClose, onSuccess }: {
-  beat: Beat | null; credits: number; onClose: () => void; onSuccess: () => void;
+function DownloadDialog({ beat, credits, profile, onClose, onSuccess }: {
+  beat: Beat | null; credits: number; profile: Profile | null; onClose: () => void; onSuccess: () => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [fileType, setFileType] = useState<"MP3" | "WAV">("MP3");
   const cost = 1;
+
+  const isPaid =
+    !!profile?.subscription_tier &&
+    profile.subscription_tier !== "none" &&
+    ["active", "trialing", "past_due"].includes(profile.subscription_status ?? "");
+  const wavAvailable = !!beat?.audio_url_wav;
+
+  useEffect(() => {
+    // Reset to MP3 each time the dialog opens
+    if (beat) setFileType("MP3");
+  }, [beat?.id]);
 
   const handleConfirm = async () => {
     if (!beat) return;
@@ -711,15 +723,26 @@ function DownloadDialog({ beat, credits, onClose, onSuccess }: {
     setBusy(true);
     try {
       const { data, error } = await supabase.rpc("process_beat_download", {
-        _beat_id: beat.id, _file_type: "MP3",
+        _beat_id: beat.id, _file_type: isPaid ? fileType : "MP3",
       });
       if (error) throw error;
-      const result = data as { agreement_id: string; agreement_code: string };
+      const result = data as { agreement_id: string; agreement_code: string; audio_url?: string };
 
       const { data: agr } = await supabase.from("agreements").select("*").eq("id", result.agreement_id).single();
       if (agr) {
         const pdf = generateAgreementPdf(agr as AgreementData);
         pdf.save(`KRAZYJAYDOTCOM-${(agr as AgreementData).agreement_id}.pdf`);
+      }
+      if (result.audio_url) {
+        // Trigger the actual audio download
+        const a = document.createElement("a");
+        a.href = result.audio_url;
+        a.download = `${beat.title}.${(isPaid ? fileType : "MP3").toLowerCase()}`;
+        a.target = "_blank";
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       }
       toast.success("Download ready", { description: "License agreement saved to your downloads." });
       onSuccess();
@@ -738,6 +761,42 @@ function DownloadDialog({ beat, credits, onClose, onSuccess }: {
           <DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-electric" /> Confirm download</DialogTitle>
           <DialogDescription>{beat?.title} by {beat?.producer_name}</DialogDescription>
         </DialogHeader>
+
+        {isPaid && (
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">File format</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setFileType("MP3")}
+                className={`rounded-lg border px-3 py-3 text-left transition-colors ${
+                  fileType === "MP3"
+                    ? "border-electric bg-electric/10"
+                    : "border-border hover:border-electric/50"
+                }`}
+              >
+                <div className="text-sm font-bold">MP3</div>
+                <div className="text-[11px] text-muted-foreground">Compressed · smaller file</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => wavAvailable && setFileType("WAV")}
+                disabled={!wavAvailable}
+                className={`rounded-lg border px-3 py-3 text-left transition-colors ${
+                  fileType === "WAV"
+                    ? "border-electric bg-electric/10"
+                    : "border-border hover:border-electric/50"
+                } ${!wavAvailable ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div className="text-sm font-bold">WAV</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {wavAvailable ? "Studio quality · larger file" : "Not available for this beat"}
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2 text-sm">
           <div className="flex justify-between"><span className="text-muted-foreground">Available credits</span><span className="font-semibold">{credits}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">This download will use</span><span className="font-semibold text-electric">{cost} credit</span></div>
@@ -747,7 +806,7 @@ function DownloadDialog({ beat, credits, onClose, onSuccess }: {
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
           <Button className="bg-electric hover:bg-electric/90 text-electric-foreground" onClick={handleConfirm} disabled={busy || credits < cost}>
-            {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Confirm Download
+            {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Download {isPaid ? fileType : "MP3"}
           </Button>
         </DialogFooter>
       </DialogContent>
