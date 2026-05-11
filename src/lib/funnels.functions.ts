@@ -31,7 +31,7 @@ export const submitFunnelLead = createServerFn({ method: "POST" })
   }> => {
     const supabase = adminClient();
 
-    const { data: rpc, error } = await supabase.rpc("capture_funnel_lead", {
+    const { data: rpc, error } = await (supabase.rpc as any)("capture_funnel_lead", {
       _slug: data.slug,
       _email: data.email,
       _ua: null,
