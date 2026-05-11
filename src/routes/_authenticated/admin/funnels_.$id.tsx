@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Loader2, Monitor, Smartphone, ExternalLink, Save } from "lucide-react";
-import { FunnelView, DEFAULT_CONTENT, type FunnelContent } from "@/components/funnel/FunnelView";
+import { ArrowLeft, Loader2, Monitor, Smartphone, ExternalLink, Save, ArrowUp, ArrowDown } from "lucide-react";
+import { FunnelView, DEFAULT_CONTENT, type FunnelContent, type SectionKey } from "@/components/funnel/FunnelView";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/funnels_/$id")({
