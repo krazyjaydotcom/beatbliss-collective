@@ -7,11 +7,12 @@ import { createGuestCheckoutSession } from "@/lib/payments.functions";
 import { Button } from "@/components/ui/button";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
-const VALID_PLANS = ["artist_monthly", "artist_yearly", "label_monthly", "label_yearly"] as const;
+const VALID_PLANS = ["artist_monthly", "artist_monthly_v2", "artist_yearly", "label_monthly", "label_yearly"] as const;
 type PlanId = typeof VALID_PLANS[number];
 
 const PLAN_LABEL: Record<PlanId, string> = {
-  artist_monthly: "Catalog Membership — $37/mo",
+  artist_monthly: "Catalog Membership — $49.99/mo",
+  artist_monthly_v2: "Catalog Membership — $37/mo",
   artist_yearly: "Catalog Membership — $599/yr",
   label_monthly: "Label — $97/mo",
   label_yearly: "Label — $970/yr",
