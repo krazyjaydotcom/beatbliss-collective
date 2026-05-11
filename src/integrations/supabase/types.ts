@@ -86,6 +86,103 @@ export type Database = {
           },
         ]
       }
+      beat_funnel_leads: {
+        Row: {
+          captured_at: string
+          email: string
+          forward_error: string | null
+          forwarded_at: string | null
+          funnel_id: string
+          id: string
+          ip: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          captured_at?: string
+          email: string
+          forward_error?: string | null
+          forwarded_at?: string | null
+          funnel_id: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          captured_at?: string
+          email?: string
+          forward_error?: string | null
+          forwarded_at?: string | null
+          funnel_id?: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_funnel_leads_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "beat_funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      beat_funnels: {
+        Row: {
+          audio_url: string | null
+          beat_id: string | null
+          cover_url: string | null
+          created_at: string
+          download_url: string
+          headline: string | null
+          id: string
+          is_active: boolean
+          slug: string
+          title: string
+          updated_at: string
+          video_url: string | null
+          view_count: number
+        }
+        Insert: {
+          audio_url?: string | null
+          beat_id?: string | null
+          cover_url?: string | null
+          created_at?: string
+          download_url: string
+          headline?: string | null
+          id?: string
+          is_active?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+          video_url?: string | null
+          view_count?: number
+        }
+        Update: {
+          audio_url?: string | null
+          beat_id?: string | null
+          cover_url?: string | null
+          created_at?: string
+          download_url?: string
+          headline?: string | null
+          id?: string
+          is_active?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_funnels_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beats: {
         Row: {
           audio_url: string | null
@@ -626,6 +723,10 @@ export type Database = {
         }
         Returns: string
       }
+      capture_funnel_lead: {
+        Args: { _email: string; _ip?: string; _slug: string; _ua?: string }
+        Returns: Json
+      }
       claim_invite: {
         Args: { _token: string; _user_id: string }
         Returns: Json
@@ -645,6 +746,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      mark_funnel_lead_forwarded: {
+        Args: { _error?: string; _lead_id: string }
+        Returns: undefined
       }
       mark_thread_read: {
         Args: { _as_admin?: boolean; _thread_id: string }
