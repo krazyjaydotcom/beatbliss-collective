@@ -11,8 +11,8 @@ const VALID_PLANS = ["artist_monthly", "artist_yearly", "label_monthly", "label_
 type PlanId = typeof VALID_PLANS[number];
 
 const PLAN_LABEL: Record<PlanId, string> = {
-  artist_monthly: "Artist / Creator — $49.99/mo",
-  artist_yearly: "Artist / Creator — $599/yr",
+  artist_monthly: "Catalog Membership — $37/mo",
+  artist_yearly: "Catalog Membership — $599/yr",
   label_monthly: "Label — $97/mo",
   label_yearly: "Label — $970/yr",
 };
