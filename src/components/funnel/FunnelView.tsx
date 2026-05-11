@@ -116,22 +116,15 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
 
   const heroBlock = (
     <div key="hero">
-      {c.hero_eyebrow && (
-        <div className="text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[10px] font-bold tracking-[0.2em] text-primary">
-            {c.hero_eyebrow}
-          </span>
-        </div>
-      )}
       <h1
-        className="mt-4 text-center font-black tracking-tight leading-[1.05]"
-        style={{ fontSize: `${c.hero_title_size}px` }}
+        className="mt-0 text-center font-black tracking-tight leading-[1.05]"
+        style={{ fontSize: `${Math.min(c.hero_title_size, 36)}px` }}
       >
         {c.hero_title}
       </h1>
       {(c.hero_subtitle || funnel.headline) && (
         <p
-          className="mt-4 text-center text-muted-foreground max-w-xl mx-auto"
+          className="mt-2 text-center text-muted-foreground max-w-xl mx-auto"
           style={{ fontSize: `${c.hero_subtitle_size}px` }}
         >
           {funnel.headline || c.hero_subtitle}
@@ -141,7 +134,7 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
   );
 
   const videoBlock = (
-    <div key="video" className="mt-8">
+    <div key="video" className="mt-3">
       {embed ? (
         <div className="rounded-2xl overflow-hidden border border-border bg-black aspect-video">
           <iframe
@@ -194,7 +187,7 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
     <form
       key="email"
       onSubmit={handleSubmit}
-      className="mt-8 rounded-2xl border border-border bg-card/60 p-4 sm:p-5 backdrop-blur"
+      className="mt-3 rounded-2xl border border-border bg-card/60 p-4 sm:p-5 backdrop-blur"
     >
       <div className="flex justify-center">
         <Mail className="h-5 w-5 text-primary" />
@@ -245,12 +238,12 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
   return (
     <div className={embedded ? "bg-background" : "min-h-screen bg-background"}>
       <header className="border-b border-border">
-        <div className="container mx-auto px-6 py-5 flex justify-center">
-          <KrazyLogo className="text-xl md:text-2xl" />
+        <div className="container mx-auto px-6 py-3 flex justify-center">
+          <KrazyLogo className="text-lg" />
         </div>
       </header>
 
-      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-3xl pb-32">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-3xl pb-32">
         {order.map((key) => blocks[key])}
       </main>
 
