@@ -40,13 +40,17 @@ export const Route = createFileRoute("/_authenticated/beats")({
 type Beat = {
   id: string; title: string; producer_name: string; genre: string; mood: string;
   music_key: string; bpm: number; duration_seconds: number; cover_url: string | null;
-  audio_url: string | null; is_member_only: boolean;
+  audio_url: string | null; audio_url_wav: string | null; audio_url_tagged: string | null;
+  is_member_only: boolean;
 };
 type Note = {
   id: string; title: string; content: string; is_pinned: boolean;
   beat_id: string | null; updated_at: string;
 };
-type Profile = { credits_balance: number; display_name: string | null; full_name: string | null; email: string | null };
+type Profile = {
+  credits_balance: number; display_name: string | null; full_name: string | null; email: string | null;
+  subscription_tier: string | null; subscription_status: string | null;
+};
 
 type SidebarAction = "beats" | "new" | "filterGenre" | "filterMood" | "filterKey" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
 
