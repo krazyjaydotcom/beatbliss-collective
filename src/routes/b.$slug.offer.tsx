@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Check, Download, Crown } from "lucide-react";
+import { Check, Crown } from "lucide-react";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { getFunnelBySlug } from "@/lib/funnels.functions";
 import { KrazyLogo } from "@/components/krazy-logo";
@@ -56,14 +56,19 @@ function OfferPage() {
         {/* Confirmation */}
         <div className="rounded-2xl border border-border bg-card p-6 text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-bold tracking-wider text-primary">
-            BEAT DELIVERED
+            YOU'RE IN
           </span>
           <h1 className="mt-4 text-3xl md:text-4xl font-black">
-            Your beat is on the way
-            {email ? <> to <span className="text-primary">{email}</span></> : null}
+            {email ? (
+              <>
+                <span className="text-primary">{email}</span> — you're on the list
+              </>
+            ) : (
+              "You're on the list"
+            )}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Check your inbox in the next minute or two. While you're here — read this:
+            Before you go — this offer is only available right now. Read carefully.
           </p>
         </div>
 
@@ -82,7 +87,7 @@ function OfferPage() {
             <h2 className="text-2xl md:text-3xl font-bold">Unlock the full catalog</h2>
           </div>
           <p className="mt-3 text-muted-foreground">
-            You just got one beat. Members get the whole vault — plus monetization rights and direct access to me.
+            Get private access to my full catalog — cinematic, inspirational beats built for artists with a message.
           </p>
 
           <ul className="mt-6 space-y-3">
@@ -132,17 +137,6 @@ function OfferPage() {
               Get Catalog Access
             </Link>
           </Button>
-        </div>
-
-        <div className="mt-8 text-center">
-          <Link
-            to="/b/$slug"
-            params={{ slug: params.slug }}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <Download className="h-4 w-4" />
-            Re-send the free beat
-          </Link>
         </div>
       </main>
     </div>

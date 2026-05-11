@@ -12,8 +12,11 @@ export const Route = createFileRoute("/b/$slug")({
     const f = loaderData?.funnel;
     return {
       meta: [
-        { title: f ? `${f.title} — Free Beat by KRAZYJAY` : "Beat — KRAZYJAYDOTCOM" },
-        { name: "description", content: f?.headline ?? "Get the beat free. Then unlock the full catalog." },
+        { title: f ? `${f.title} — KRAZYJAY` : "My Beat Catalog — KRAZYJAYDOTCOM" },
+        {
+          name: "description",
+          content: f?.headline ?? "Private access to cinematic, inspirational beats for artists with a message.",
+        },
       ],
     };
   },

@@ -30,21 +30,21 @@ export interface FunnelContent {
 }
 
 export const DEFAULT_CONTENT: Required<FunnelContent> = {
-  hero_eyebrow: "FREE BEAT",
-  hero_title: "Watch This Before You Download",
-  hero_subtitle: "Before you grab this beat, watch this quick video so you know how the catalog access works.",
+  hero_eyebrow: "PRIVATE ACCESS",
+  hero_title: "Watch This Before You Join",
+  hero_subtitle: "Watch the video below, then enter your email to get access to the exclusive membership offer.",
   download_label: "Download this beat",
-  email_heading: "Want access to more beats like this?",
-  email_subheading: "Enter your email to get access to my beat subscription offer.",
+  email_heading: "Ready to hear more?",
+  email_subheading: "Enter your email and I'll send you the full details on the membership offer.",
   email_placeholder: "Enter your email",
-  email_button: "Show Me The Beat Subscription Offer",
+  email_button: "Show Me The Offer",
   privacy_text: "We respect your privacy. No spam, ever.",
-  show_sticky_player: true,
+  show_sticky_player: false,
   hero_title_size: 56,
   hero_subtitle_size: 16,
   email_heading_size: 22,
   body_size: 14,
-  section_order: ["hero", "video", "download", "email"],
+  section_order: ["hero", "video", "email"],
 };
 
 export interface FunnelViewProps {
@@ -199,16 +199,10 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
       <div className="flex justify-center">
         <Mail className="h-5 w-5 text-primary" />
       </div>
-      <h2
-        className="mt-2 font-bold text-center"
-        style={{ fontSize: `${c.email_heading_size}px` }}
-      >
+      <h2 className="mt-2 font-bold text-center" style={{ fontSize: `${c.email_heading_size}px` }}>
         {c.email_heading}
       </h2>
-      <p
-        className="mt-1 text-muted-foreground text-center"
-        style={{ fontSize: `${c.body_size}px` }}
-      >
+      <p className="mt-1 text-muted-foreground text-center" style={{ fontSize: `${c.body_size}px` }}>
         {c.email_subheading}
       </p>
       <div className="mt-3">
