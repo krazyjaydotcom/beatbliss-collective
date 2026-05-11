@@ -354,6 +354,7 @@ function BeatsDashboard() {
       {/* DOWNLOAD CONFIRM */}
       <DownloadDialog
         beat={confirmBeat} credits={profile?.credits_balance ?? 0}
+        profile={profile ?? null}
         onClose={() => setConfirmBeat(null)}
         onSuccess={() => qc.invalidateQueries({ queryKey: ["profile"] })}
       />
