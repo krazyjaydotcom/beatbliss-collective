@@ -59,7 +59,7 @@ export const submitFunnelLead = createServerFn({ method: "POST" })
         beat_title: beatTitle,
         captured_at: result.captured_at,
       });
-      await supabase.rpc("mark_funnel_lead_forwarded", {
+      await (supabase.rpc as any)("mark_funnel_lead_forwarded", {
         _lead_id: result.lead_id,
         _error: fwd.ok ? null : fwd.error ?? "unknown",
       });
