@@ -1,0 +1,1 @@
+ALTER TABLE public.beat_funnels ADD COLUMN IF NOT EXISTS content jsonb NOT NULL DEFAULT '{}'::jsonb;
