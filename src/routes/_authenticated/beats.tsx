@@ -822,3 +822,89 @@ function DownloadDialog({ beat, credits, profile, onClose, onSuccess }: {
     </Dialog>
   );
 }
+
+/* ============ NOTIFICATIONS BELL ============ */
+
+type Notif = { id: string; title: string; body: string; is_read: boolean; created_at: string };
+
+function NotificationsBell({ userId }: { userId?: string }) {
+  const qc = useQueryClient();
+  const { data: notifs = [] } = useQuery({
+    queryKey: ["notifications", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notifications").select("*")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as Notif[];
+    },
+  });
+
+  useEffect(() => {
+    if (!userId) return;
+    const ch = supabase
+      .channel(`notifs-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        () => qc.invalidateQueries({ queryKey: ["notifications", userId] }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [userId, qc]);
+
+  const unread = notifs.filter((n) => !n.is_read).length;
+
+  const markAll = async () => {
+    if (!userId) return;
+    const { error } = await supabase.from("notifications").update({ is_read: true })
+      .eq("user_id", userId).eq("is_read", false);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["notifications", userId] });
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {unread > 0 && (
+            <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <span className="font-semibold text-sm">Notifications</span>
+          {unread > 0 && (
+            <button onClick={markAll} className="text-xs text-electric hover:underline flex items-center gap-1">
+              <CheckCheck className="h-3 w-3" /> Mark all as read
+            </button>
+          )}
+        </div>
+        <ScrollArea className="max-h-96">
+          {notifs.length === 0 ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">You're all caught up</div>
+          ) : (
+            <div className="divide-y divide-border">
+              {notifs.map((n) => (
+                <div key={n.id} className={`px-4 py-3 ${n.is_read ? "" : "bg-electric/5"}`}>
+                  <div className="flex items-start gap-2">
+                    {!n.is_read && <span className="mt-1.5 h-2 w-2 rounded-full bg-electric shrink-0" />}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-sm">{n.title}</div>
+                      {n.body && <div className="text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.body}</div>}
+                      <div className="text-[10px] text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
+  );
+}
