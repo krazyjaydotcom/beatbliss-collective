@@ -163,9 +163,11 @@ function BeatsDashboard() {
         setSort("newest"); setFavOnly(false);
         window.scrollTo({ top: 0, behavior: "smooth" });
         break;
-      case "filterGenre": case "filterMood": case "filterKey": case "filterBpm":
+      case "filterBpm":
         toast.info("Use the filter dropdowns above to narrow results.");
         break;
+      case "classroom":
+        navigate({ to: "/classroom" }); break;
       case "myBeats":
       case "playlists":
         toast.info("Coming soon.");
