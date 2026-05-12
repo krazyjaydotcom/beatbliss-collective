@@ -6,8 +6,9 @@ import {
   CreditCard, Receipt, NotebookPen, Settings, LifeBuoy, LogOut, Search,
   ShoppingCart, Bell, SlidersHorizontal, Play, Pause, SkipBack, SkipForward,
   Shuffle, Repeat, Volume2, MoreHorizontal, Plus, Pin, Trash2, Edit3,
-  LayoutGrid, List as ListIcon, FileText, Loader2, X,
+  LayoutGrid, List as ListIcon, FileText, Loader2, X, GraduationCap, Music2, CheckCheck,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -52,14 +53,12 @@ type Profile = {
   subscription_tier: string | null; subscription_status: string | null;
 };
 
-type SidebarAction = "beats" | "new" | "filterGenre" | "filterMood" | "filterKey" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
+type SidebarAction = "beats" | "new" | "classroom" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
 
 const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge?: string }[] = [
   { icon: Music, label: "Beats", action: "beats" },
   { icon: Sparkles, label: "New Releases", action: "new", badge: "NEW" },
-  { icon: Disc3, label: "By Genre", action: "filterGenre" },
-  { icon: Smile, label: "By Mood", action: "filterMood" },
-  { icon: Hash, label: "By Key", action: "filterKey" },
+  { icon: GraduationCap, label: "Classroom", action: "classroom" },
   { icon: Gauge, label: "By BPM", action: "filterBpm" },
   { icon: Music, label: "My Beats", action: "myBeats" },
   { icon: ListMusic, label: "My Playlists", action: "playlists" },
@@ -164,9 +163,11 @@ function BeatsDashboard() {
         setSort("newest"); setFavOnly(false);
         window.scrollTo({ top: 0, behavior: "smooth" });
         break;
-      case "filterGenre": case "filterMood": case "filterKey": case "filterBpm":
+      case "filterBpm":
         toast.info("Use the filter dropdowns above to narrow results.");
         break;
+      case "classroom":
+        navigate({ to: "/classroom" }); break;
       case "myBeats":
       case "playlists":
         toast.info("Coming soon.");
@@ -189,10 +190,11 @@ function BeatsDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="h-screen overflow-hidden bg-background text-foreground flex flex-col">
       <div className="flex flex-1 min-h-0">
         {/* SIDEBAR */}
-        <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-card/40 p-4 gap-2">
+        <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-card/40 p-4 gap-2 overflow-y-auto">
+
           <div className="px-2 pb-4">
             <Link to="/"><KrazyLogo className="text-xl" /></Link>
           </div>
@@ -247,10 +249,7 @@ function BeatsDashboard() {
                 <span className="text-sm font-medium">{profile?.credits_balance ?? 0} Credits</span>
               </div>
               <Button variant="ghost" size="icon"><ShoppingCart className="h-5 w-5" /></Button>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">3</span>
-              </Button>
+              <NotificationsBell userId={user?.id} />
               <div className="flex items-center gap-2">
                 <Avatar className="h-9 w-9"><AvatarFallback className="bg-electric/20 text-electric">{(profile?.display_name || user?.email || "U")[0].toUpperCase()}</AvatarFallback></Avatar>
                 <span className="hidden md:inline text-sm font-medium">{profile?.display_name ?? user?.email?.split("@")[0]}</span>
@@ -273,31 +272,33 @@ function BeatsDashboard() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-6 items-center">
-                  <FilterSelect value={genre} onChange={setGenre} placeholder="All Genres" options={uniq("genre")} />
-                  <FilterSelect value={mood} onChange={setMood} placeholder="All Moods" options={uniq("mood")} />
-                  <FilterSelect value={musicKey} onChange={setMusicKey} placeholder="All Keys" options={uniq("music_key")} />
-                  <Select value={bpm} onValueChange={setBpm}>
-                    <SelectTrigger className="w-[140px] bg-secondary border-border"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All BPM</SelectItem>
-                      <SelectItem value="slow">Under 120</SelectItem>
-                      <SelectItem value="mid">120–140</SelectItem>
-                      <SelectItem value="fast">Over 140</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className="flex-1" />
-                  <Select value={sort} onValueChange={setSort}>
-                    <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Sort by: Newest</SelectItem>
-                      <SelectItem value="bpm">Sort by: BPM</SelectItem>
-                      <SelectItem value="title">Sort by: Title</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className="flex border border-border rounded-md overflow-hidden">
-                    <button onClick={() => setView("list")} className={`p-2 ${view === "list" ? "bg-electric text-electric-foreground" : "bg-secondary text-muted-foreground"}`}><ListIcon className="h-4 w-4" /></button>
-                    <button onClick={() => setView("grid")} className={`p-2 ${view === "grid" ? "bg-electric text-electric-foreground" : "bg-secondary text-muted-foreground"}`}><LayoutGrid className="h-4 w-4" /></button>
+                <div className="sticky top-[65px] z-10 bg-background/90 backdrop-blur border-b border-border px-4 lg:px-8 py-3 -mx-4 lg:-mx-8 mb-4">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <FilterSelect value={genre} onChange={setGenre} placeholder="All Genres" options={uniq("genre")} />
+                    <FilterSelect value={mood} onChange={setMood} placeholder="All Moods" options={uniq("mood")} />
+                    <FilterSelect value={musicKey} onChange={setMusicKey} placeholder="All Keys" options={uniq("music_key")} />
+                    <Select value={bpm} onValueChange={setBpm}>
+                      <SelectTrigger className="w-[140px] bg-secondary border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All BPM</SelectItem>
+                        <SelectItem value="slow">Under 120</SelectItem>
+                        <SelectItem value="mid">120–140</SelectItem>
+                        <SelectItem value="fast">Over 140</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex-1" />
+                    <Select value={sort} onValueChange={setSort}>
+                      <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">Sort by: Newest</SelectItem>
+                        <SelectItem value="bpm">Sort by: BPM</SelectItem>
+                        <SelectItem value="title">Sort by: Title</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex border border-border rounded-md overflow-hidden">
+                      <button onClick={() => setView("list")} className={`p-2 ${view === "list" ? "bg-electric text-electric-foreground" : "bg-secondary text-muted-foreground"}`}><ListIcon className="h-4 w-4" /></button>
+                      <button onClick={() => setView("grid")} className={`p-2 ${view === "grid" ? "bg-electric text-electric-foreground" : "bg-secondary text-muted-foreground"}`}><LayoutGrid className="h-4 w-4" /></button>
+                    </div>
                   </div>
                 </div>
 
@@ -569,6 +570,14 @@ function NotepadPanel({ userId, beats, onClose }: { userId?: string; beats: Beat
                 <div className="text-[10px] text-muted-foreground">{new Date(n.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</div>
               </div>
               <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans">{n.content}</pre>
+              {n.beat_id && (() => {
+                const b = beats.find((x) => x.id === n.beat_id);
+                return b ? (
+                  <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-electric/30 bg-electric/10 px-2 py-0.5 text-[10px] font-medium text-electric">
+                    <Music2 className="h-3 w-3" /> {b.title}
+                  </div>
+                ) : null;
+              })()}
               <div className="flex items-center justify-end gap-1 mt-2">
                 <button onClick={() => togglePin.mutate(n)} className={`p-1 rounded hover:bg-secondary ${n.is_pinned ? "text-electric" : "text-muted-foreground"}`}><Pin className="h-3.5 w-3.5" /></button>
                 <button onClick={() => setEditing(n)} className="p-1 rounded hover:bg-secondary text-muted-foreground"><Edit3 className="h-3.5 w-3.5" /></button>
@@ -811,5 +820,91 @@ function DownloadDialog({ beat, credits, profile, onClose, onSuccess }: {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ============ NOTIFICATIONS BELL ============ */
+
+type Notif = { id: string; title: string; body: string; is_read: boolean; created_at: string };
+
+function NotificationsBell({ userId }: { userId?: string }) {
+  const qc = useQueryClient();
+  const { data: notifs = [] } = useQuery({
+    queryKey: ["notifications", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notifications").select("*")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as Notif[];
+    },
+  });
+
+  useEffect(() => {
+    if (!userId) return;
+    const ch = supabase
+      .channel(`notifs-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        () => qc.invalidateQueries({ queryKey: ["notifications", userId] }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [userId, qc]);
+
+  const unread = notifs.filter((n) => !n.is_read).length;
+
+  const markAll = async () => {
+    if (!userId) return;
+    const { error } = await supabase.from("notifications").update({ is_read: true })
+      .eq("user_id", userId).eq("is_read", false);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["notifications", userId] });
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {unread > 0 && (
+            <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <span className="font-semibold text-sm">Notifications</span>
+          {unread > 0 && (
+            <button onClick={markAll} className="text-xs text-electric hover:underline flex items-center gap-1">
+              <CheckCheck className="h-3 w-3" /> Mark all as read
+            </button>
+          )}
+        </div>
+        <ScrollArea className="max-h-96">
+          {notifs.length === 0 ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">You're all caught up</div>
+          ) : (
+            <div className="divide-y divide-border">
+              {notifs.map((n) => (
+                <div key={n.id} className={`px-4 py-3 ${n.is_read ? "" : "bg-electric/5"}`}>
+                  <div className="flex items-start gap-2">
+                    {!n.is_read && <span className="mt-1.5 h-2 w-2 rounded-full bg-electric shrink-0" />}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-sm">{n.title}</div>
+                      {n.body && <div className="text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.body}</div>}
+                      <div className="text-[10px] text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
   );
 }

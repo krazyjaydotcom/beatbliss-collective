@@ -552,8 +552,38 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_read: boolean
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
+          birthday: string | null
           created_at: string
           credits_balance: number
           current_period_end: string | null
@@ -561,12 +591,16 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          music_link: string | null
           stripe_customer_id: string | null
           subscription_status: string | null
           subscription_tier: string
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          birthday?: string | null
           created_at?: string
           credits_balance?: number
           current_period_end?: string | null
@@ -574,12 +608,16 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          music_link?: string | null
           stripe_customer_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          birthday?: string | null
           created_at?: string
           credits_balance?: number
           current_period_end?: string | null
@@ -587,6 +625,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          music_link?: string | null
           stripe_customer_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string

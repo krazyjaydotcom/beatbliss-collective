@@ -30,6 +30,9 @@ export function SiteNav() {
               <Button variant="heroOutline" size="sm" asChild>
                 <Link to="/account">My Account</Link>
               </Button>
+              <Button variant="heroOutline" size="sm" asChild>
+                <Link to="/classroom">Classroom</Link>
+              </Button>
               <Button variant="hero" size="sm" asChild>
                 <Link to="/beats">Browse Beats</Link>
               </Button>
