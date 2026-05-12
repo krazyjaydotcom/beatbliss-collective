@@ -272,31 +272,33 @@ function BeatsDashboard() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-6 items-center">
-                  <FilterSelect value={genre} onChange={setGenre} placeholder="All Genres" options={uniq("genre")} />
-                  <FilterSelect value={mood} onChange={setMood} placeholder="All Moods" options={uniq("mood")} />
-                  <FilterSelect value={musicKey} onChange={setMusicKey} placeholder="All Keys" options={uniq("music_key")} />
-                  <Select value={bpm} onValueChange={setBpm}>
-                    <SelectTrigger className="w-[140px] bg-secondary border-border"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All BPM</SelectItem>
-                      <SelectItem value="slow">Under 120</SelectItem>
-                      <SelectItem value="mid">120–140</SelectItem>
-                      <SelectItem value="fast">Over 140</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className="flex-1" />
-                  <Select value={sort} onValueChange={setSort}>
-                    <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Sort by: Newest</SelectItem>
-                      <SelectItem value="bpm">Sort by: BPM</SelectItem>
-                      <SelectItem value="title">Sort by: Title</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className="flex border border-border rounded-md overflow-hidden">
-                    <button onClick={() => setView("list")} className={`p-2 ${view === "list" ? "bg-electric text-electric-foreground" : "bg-secondary text-muted-foreground"}`}><ListIcon className="h-4 w-4" /></button>
-                    <button onClick={() => setView("grid")} className={`p-2 ${view === "grid" ? "bg-electric text-electric-foreground" : "bg-secondary text-muted-foreground"}`}><LayoutGrid className="h-4 w-4" /></button>
+                <div className="sticky top-[65px] z-10 bg-background/90 backdrop-blur border-b border-border px-4 lg:px-8 py-3 -mx-4 lg:-mx-8 mb-4">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <FilterSelect value={genre} onChange={setGenre} placeholder="All Genres" options={uniq("genre")} />
+                    <FilterSelect value={mood} onChange={setMood} placeholder="All Moods" options={uniq("mood")} />
+                    <FilterSelect value={musicKey} onChange={setMusicKey} placeholder="All Keys" options={uniq("music_key")} />
+                    <Select value={bpm} onValueChange={setBpm}>
+                      <SelectTrigger className="w-[140px] bg-secondary border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All BPM</SelectItem>
+                        <SelectItem value="slow">Under 120</SelectItem>
+                        <SelectItem value="mid">120–140</SelectItem>
+                        <SelectItem value="fast">Over 140</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex-1" />
+                    <Select value={sort} onValueChange={setSort}>
+                      <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">Sort by: Newest</SelectItem>
+                        <SelectItem value="bpm">Sort by: BPM</SelectItem>
+                        <SelectItem value="title">Sort by: Title</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex border border-border rounded-md overflow-hidden">
+                      <button onClick={() => setView("list")} className={`p-2 ${view === "list" ? "bg-electric text-electric-foreground" : "bg-secondary text-muted-foreground"}`}><ListIcon className="h-4 w-4" /></button>
+                      <button onClick={() => setView("grid")} className={`p-2 ${view === "grid" ? "bg-electric text-electric-foreground" : "bg-secondary text-muted-foreground"}`}><LayoutGrid className="h-4 w-4" /></button>
+                    </div>
                   </div>
                 </div>
 
