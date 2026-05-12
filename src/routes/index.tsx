@@ -13,7 +13,8 @@ export const Route = createFileRoute("/")({
       { title: "KrazyJayDotCom — Premium Beats for Artists & Labels" },
       {
         name: "description",
-        content: "Subscription beat store with unlimited streaming. $37/mo for artists, $97/mo for labels. Royalty-free, industry ready.",
+        content:
+          "Subscription beat store with unlimited streaming. $49.99/mo for artists, $97/mo for labels. Royalty-free, industry ready.",
       },
     ],
   }),
