@@ -570,6 +570,14 @@ function NotepadPanel({ userId, beats, onClose }: { userId?: string; beats: Beat
                 <div className="text-[10px] text-muted-foreground">{new Date(n.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</div>
               </div>
               <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans">{n.content}</pre>
+              {n.beat_id && (() => {
+                const b = beats.find((x) => x.id === n.beat_id);
+                return b ? (
+                  <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-electric/30 bg-electric/10 px-2 py-0.5 text-[10px] font-medium text-electric">
+                    <Music2 className="h-3 w-3" /> {b.title}
+                  </div>
+                ) : null;
+              })()}
               <div className="flex items-center justify-end gap-1 mt-2">
                 <button onClick={() => togglePin.mutate(n)} className={`p-1 rounded hover:bg-secondary ${n.is_pinned ? "text-electric" : "text-muted-foreground"}`}><Pin className="h-3.5 w-3.5" /></button>
                 <button onClick={() => setEditing(n)} className="p-1 rounded hover:bg-secondary text-muted-foreground"><Edit3 className="h-3.5 w-3.5" /></button>
