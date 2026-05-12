@@ -20,6 +20,7 @@ import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
 import { Route as AuthenticatedLicenseExampleRouteImport } from './routes/_authenticated/license-example'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
+import { Route as AuthenticatedClassroomRouteImport } from './routes/_authenticated/classroom'
 import { Route as AuthenticatedBeatsRouteImport } from './routes/_authenticated/beats'
 import { Route as AuthenticatedAgreementsRouteImport } from './routes/_authenticated/agreements'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -29,11 +30,14 @@ import { Route as BSlugOfferRouteImport } from './routes/b.$slug.offer'
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
+import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
 import { Route as AuthenticatedAdminImportRouteImport } from './routes/_authenticated/admin/import'
 import { Route as AuthenticatedAdminGiftRouteImport } from './routes/_authenticated/admin/gift'
 import { Route as AuthenticatedAdminFunnelsRouteImport } from './routes/_authenticated/admin/funnels'
+import { Route as AuthenticatedAdminClassroomRouteImport } from './routes/_authenticated/admin/classroom'
 import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authenticated/admin/beats'
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
+import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenticated/admin/access'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAdminFunnelsIdRouteImport } from './routes/_authenticated/admin/funnels_.$id'
@@ -93,6 +97,11 @@ const AuthenticatedDownloadsRoute = AuthenticatedDownloadsRouteImport.update({
   path: '/downloads',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedClassroomRoute = AuthenticatedClassroomRouteImport.update({
+  id: '/classroom',
+  path: '/classroom',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedBeatsRoute = AuthenticatedBeatsRouteImport.update({
   id: '/beats',
   path: '/beats',
@@ -141,6 +150,12 @@ const AuthenticatedAdminOnlineRoute =
     path: '/online',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminMembersRoute =
+  AuthenticatedAdminMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminImportRoute =
   AuthenticatedAdminImportRouteImport.update({
     id: '/import',
@@ -158,6 +173,12 @@ const AuthenticatedAdminFunnelsRoute =
     path: '/funnels',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminClassroomRoute =
+  AuthenticatedAdminClassroomRouteImport.update({
+    id: '/classroom',
+    path: '/classroom',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminBeatsRoute = AuthenticatedAdminBeatsRouteImport.update({
   id: '/beats',
   path: '/beats',
@@ -167,6 +188,12 @@ const AuthenticatedAdminAgreementsRoute =
   AuthenticatedAdminAgreementsRouteImport.update({
     id: '/agreements',
     path: '/agreements',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAccessRoute =
+  AuthenticatedAdminAccessRouteImport.update({
+    id: '/access',
+    path: '/access',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const LovableEmailQueueProcessRoute =
@@ -197,17 +224,21 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
+  '/classroom': typeof AuthenticatedClassroomRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/license-example': typeof AuthenticatedLicenseExampleRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
+  '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
@@ -225,17 +256,21 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/agreements': typeof AuthenticatedAgreementsRoute
   '/beats': typeof AuthenticatedBeatsRoute
+  '/classroom': typeof AuthenticatedClassroomRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/license-example': typeof AuthenticatedLicenseExampleRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
+  '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
+  '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
@@ -256,17 +291,21 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/agreements': typeof AuthenticatedAgreementsRoute
   '/_authenticated/beats': typeof AuthenticatedBeatsRoute
+  '/_authenticated/classroom': typeof AuthenticatedClassroomRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/_authenticated/license-example': typeof AuthenticatedLicenseExampleRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
+  '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
+  '/_authenticated/admin/classroom': typeof AuthenticatedAdminClassroomRoute
   '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/_authenticated/admin/gift': typeof AuthenticatedAdminGiftRoute
   '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
+  '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
@@ -287,17 +326,21 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agreements'
     | '/beats'
+    | '/classroom'
     | '/downloads'
     | '/license-example'
     | '/whitelist'
     | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
+    | '/admin/access'
     | '/admin/agreements'
     | '/admin/beats'
+    | '/admin/classroom'
     | '/admin/funnels'
     | '/admin/gift'
     | '/admin/import'
+    | '/admin/members'
     | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
@@ -315,17 +358,21 @@ export interface FileRouteTypes {
     | '/account'
     | '/agreements'
     | '/beats'
+    | '/classroom'
     | '/downloads'
     | '/license-example'
     | '/whitelist'
     | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
+    | '/admin/access'
     | '/admin/agreements'
     | '/admin/beats'
+    | '/admin/classroom'
     | '/admin/funnels'
     | '/admin/gift'
     | '/admin/import'
+    | '/admin/members'
     | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
@@ -345,17 +392,21 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/agreements'
     | '/_authenticated/beats'
+    | '/_authenticated/classroom'
     | '/_authenticated/downloads'
     | '/_authenticated/license-example'
     | '/_authenticated/whitelist'
     | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
+    | '/_authenticated/admin/access'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/beats'
+    | '/_authenticated/admin/classroom'
     | '/_authenticated/admin/funnels'
     | '/_authenticated/admin/gift'
     | '/_authenticated/admin/import'
+    | '/_authenticated/admin/members'
     | '/_authenticated/admin/online'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/whitelist'
@@ -457,6 +508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDownloadsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/classroom': {
+      id: '/_authenticated/classroom'
+      path: '/classroom'
+      fullPath: '/classroom'
+      preLoaderRoute: typeof AuthenticatedClassroomRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/beats': {
       id: '/_authenticated/beats'
       path: '/beats'
@@ -520,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOnlineRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/members': {
+      id: '/_authenticated/admin/members'
+      path: '/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AuthenticatedAdminMembersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/import': {
       id: '/_authenticated/admin/import'
       path: '/import'
@@ -541,6 +606,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFunnelsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/classroom': {
+      id: '/_authenticated/admin/classroom'
+      path: '/classroom'
+      fullPath: '/admin/classroom'
+      preLoaderRoute: typeof AuthenticatedAdminClassroomRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/beats': {
       id: '/_authenticated/admin/beats'
       path: '/beats'
@@ -553,6 +625,13 @@ declare module '@tanstack/react-router' {
       path: '/agreements'
       fullPath: '/admin/agreements'
       preLoaderRoute: typeof AuthenticatedAdminAgreementsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/access': {
+      id: '/_authenticated/admin/access'
+      path: '/access'
+      fullPath: '/admin/access'
+      preLoaderRoute: typeof AuthenticatedAdminAccessRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/lovable/email/queue/process': {
@@ -580,11 +659,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAccessRoute: typeof AuthenticatedAdminAccessRoute
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
   AuthenticatedAdminBeatsRoute: typeof AuthenticatedAdminBeatsRoute
+  AuthenticatedAdminClassroomRoute: typeof AuthenticatedAdminClassroomRoute
   AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRoute
   AuthenticatedAdminGiftRoute: typeof AuthenticatedAdminGiftRoute
   AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
+  AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
   AuthenticatedAdminWhitelistRoute: typeof AuthenticatedAdminWhitelistRoute
@@ -593,11 +675,14 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAccessRoute: AuthenticatedAdminAccessRoute,
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
   AuthenticatedAdminBeatsRoute: AuthenticatedAdminBeatsRoute,
+  AuthenticatedAdminClassroomRoute: AuthenticatedAdminClassroomRoute,
   AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRoute,
   AuthenticatedAdminGiftRoute: AuthenticatedAdminGiftRoute,
   AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
+  AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
   AuthenticatedAdminWhitelistRoute: AuthenticatedAdminWhitelistRoute,
@@ -613,6 +698,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAgreementsRoute: typeof AuthenticatedAgreementsRoute
   AuthenticatedBeatsRoute: typeof AuthenticatedBeatsRoute
+  AuthenticatedClassroomRoute: typeof AuthenticatedClassroomRoute
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
   AuthenticatedLicenseExampleRoute: typeof AuthenticatedLicenseExampleRoute
   AuthenticatedWhitelistRoute: typeof AuthenticatedWhitelistRoute
@@ -623,6 +709,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAgreementsRoute: AuthenticatedAgreementsRoute,
   AuthenticatedBeatsRoute: AuthenticatedBeatsRoute,
+  AuthenticatedClassroomRoute: AuthenticatedClassroomRoute,
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
   AuthenticatedLicenseExampleRoute: AuthenticatedLicenseExampleRoute,
   AuthenticatedWhitelistRoute: AuthenticatedWhitelistRoute,
