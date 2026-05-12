@@ -1,6 +1,20 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { BarChart3, MessageSquare, Users, ArrowLeft, Loader2, Music, Gift, Download, Eye, ShieldCheck, Megaphone } from "lucide-react";
+import {
+  BarChart3,
+  MessageSquare,
+  Users,
+  ArrowLeft,
+  Loader2,
+  Music,
+  Gift,
+  Download,
+  Eye,
+  ShieldCheck,
+  Megaphone,
+  UserCheck,
+  GraduationCap,
+} from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +29,9 @@ const NAV = [
   { to: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
   { to: "/admin/beats", label: "Beats", icon: Music },
   { to: "/admin/funnels", label: "Beat Funnels", icon: Megaphone },
+  { to: "/admin/members", label: "Members", icon: Users },
+  { to: "/admin/access", label: "Manual Access", icon: UserCheck },
+  { to: "/admin/classroom", label: "Classroom", icon: GraduationCap },
   { to: "/admin/import", label: "Import beats", icon: Download },
   { to: "/admin/whitelist", label: "Whitelist", icon: ShieldCheck },
   { to: "/admin/gift", label: "Gift credits", icon: Gift },
@@ -34,7 +51,11 @@ function AdminLayout() {
   }, [isAdmin, navigate]);
 
   if (isAdmin !== true) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
@@ -42,8 +63,12 @@ function AdminLayout() {
       <header className="border-b border-border">
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link to="/beats" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link>
-            <Link to="/"><KrazyLogo className="text-xl" /></Link>
+            <Link to="/beats" className="text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <Link to="/">
+              <KrazyLogo className="text-xl" />
+            </Link>
             <Badge variant="secondary">ADMIN</Badge>
           </div>
         </div>
@@ -59,7 +84,9 @@ function AdminLayout() {
                 to={item.to}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  active ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                  active
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -68,7 +95,9 @@ function AdminLayout() {
             );
           })}
         </nav>
-        <main><Outlet /></main>
+        <main>
+          <Outlet />
+        </main>
       </div>
     </div>
   );
