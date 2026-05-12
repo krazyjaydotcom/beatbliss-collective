@@ -19,13 +19,11 @@ const FEATURES = [
 export function Pricing() {
   const [interval, setInterval] = useState<Interval>("yearly");
 
-  const price = interval === "monthly" ? 37 : 599;
-  const planId = interval === "monthly" ? "artist_monthly_v2" : "artist_yearly";
+  const price = interval === "monthly" ? "49.99" : "599";
+  const planId = interval === "monthly" ? "artist_monthly" : "artist_yearly";
   const perLabel = interval === "monthly" ? "/month" : "/year";
   const subnote =
-    interval === "monthly"
-      ? "Billed monthly. Cancel anytime."
-      : "Billed yearly — save over $44/yr vs monthly.";
+    interval === "monthly" ? "Billed monthly. Cancel anytime." : "Billed yearly — save over $100/yr vs monthly.";
 
   return (
     <section id="pricing" className="container mx-auto px-6 py-20">
@@ -36,9 +34,7 @@ export function Pricing() {
         <h2 className="mt-5 text-4xl md:text-5xl font-black tracking-tight">
           ONE PRICE. <span className="text-primary">UNLIMITED SOUND.</span>
         </h2>
-        <p className="mt-4 text-muted-foreground">
-          Simple, fair pricing. Pick monthly or save big with yearly.
-        </p>
+        <p className="mt-4 text-muted-foreground">Simple, fair pricing. Pick monthly or save big with yearly.</p>
 
         <div className="mt-8 inline-flex items-center rounded-full border border-border bg-card p-1">
           {(["monthly", "yearly"] as const).map((opt) => (
@@ -46,9 +42,7 @@ export function Pricing() {
               key={opt}
               onClick={() => setInterval(opt)}
               className={`px-5 py-2 rounded-full text-sm font-bold tracking-wide transition-colors ${
-                interval === opt
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                interval === opt ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {opt === "monthly" ? "Monthly" : "Yearly · best value"}
