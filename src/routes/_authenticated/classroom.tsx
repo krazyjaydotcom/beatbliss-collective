@@ -35,8 +35,7 @@ function ClassroomPage() {
       return data;
     },
   });
-  const isActive = profile?.subscription_status === "active" || (profile?.subscription_tier && profile.subscription_tier !== "none");
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const isActive = !!(profile && (profile.subscription_status === "active" || (profile.subscription_tier && profile.subscription_tier !== "none")));
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const { data: courses = [], isLoading } = useQuery({
