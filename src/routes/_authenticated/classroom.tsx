@@ -21,8 +21,22 @@ function toEmbed(url: string): string | null {
 }
 
 function ClassroomPage() {
-  const { profile } = useAuth();
-  const isActive = profile?.subscription_status === "active";
+  const { user } = useAuth();
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("subscription_status, subscription_tier")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const isActive = profile?.subscription_status === "active" || (profile?.subscription_tier && profile.subscription_tier !== "none");
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const { data: courses = [], isLoading } = useQuery({
