@@ -79,13 +79,13 @@ function ProfilePage() {
     if (bio.length > 160) { toast.error("Bio must be 160 characters or fewer."); return; }
     setSaving(true);
     try {
-      const update: Record<string, unknown> = {
+      const update = {
         display_name: displayName || null,
         bio: bio || null,
         music_link: musicLink || null,
         avatar_url: avatarUrl,
+        ...(!birthdayLocked && birthday ? { birthday } : {}),
       };
-      if (!birthdayLocked && birthday) update.birthday = birthday;
       const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
       if (error) throw error;
       if (!birthdayLocked && birthday) setBirthdayLocked(true);

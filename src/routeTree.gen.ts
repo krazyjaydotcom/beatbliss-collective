@@ -18,6 +18,7 @@ import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedLicenseExampleRouteImport } from './routes/_authenticated/license-example'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedClassroomRouteImport } from './routes/_authenticated/classroom'
@@ -84,6 +85,11 @@ const BSlugRoute = BSlugRouteImport.update({
 const AuthenticatedWhitelistRoute = AuthenticatedWhitelistRouteImport.update({
   id: '/whitelist',
   path: '/whitelist',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedLicenseExampleRoute =
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/classroom': typeof AuthenticatedClassroomRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/license-example': typeof AuthenticatedLicenseExampleRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
@@ -259,6 +266,7 @@ export interface FileRoutesByTo {
   '/classroom': typeof AuthenticatedClassroomRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/license-example': typeof AuthenticatedLicenseExampleRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/_authenticated/classroom': typeof AuthenticatedClassroomRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/_authenticated/license-example': typeof AuthenticatedLicenseExampleRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
@@ -329,6 +338,7 @@ export interface FileRouteTypes {
     | '/classroom'
     | '/downloads'
     | '/license-example'
+    | '/profile'
     | '/whitelist'
     | '/b/$slug'
     | '/checkout/return'
@@ -361,6 +371,7 @@ export interface FileRouteTypes {
     | '/classroom'
     | '/downloads'
     | '/license-example'
+    | '/profile'
     | '/whitelist'
     | '/b/$slug'
     | '/checkout/return'
@@ -395,6 +406,7 @@ export interface FileRouteTypes {
     | '/_authenticated/classroom'
     | '/_authenticated/downloads'
     | '/_authenticated/license-example'
+    | '/_authenticated/profile'
     | '/_authenticated/whitelist'
     | '/b/$slug'
     | '/checkout/return'
@@ -492,6 +504,13 @@ declare module '@tanstack/react-router' {
       path: '/whitelist'
       fullPath: '/whitelist'
       preLoaderRoute: typeof AuthenticatedWhitelistRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/license-example': {
@@ -701,6 +720,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedClassroomRoute: typeof AuthenticatedClassroomRoute
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
   AuthenticatedLicenseExampleRoute: typeof AuthenticatedLicenseExampleRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedWhitelistRoute: typeof AuthenticatedWhitelistRoute
 }
 
@@ -712,6 +732,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedClassroomRoute: AuthenticatedClassroomRoute,
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
   AuthenticatedLicenseExampleRoute: AuthenticatedLicenseExampleRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedWhitelistRoute: AuthenticatedWhitelistRoute,
 }
 
