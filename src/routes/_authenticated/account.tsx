@@ -139,6 +139,34 @@ function AccountPage() {
           </div>
         </div>
 
+        {isSubscribed && (
+          <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <p className="font-semibold">Classroom</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Watch member-only lessons and walkthroughs from KRAZYJAY.
+                </p>
+              </div>
+              <Button variant="heroOutline" asChild>
+                <Link to="/classroom">Open classroom</Link>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-semibold">Profile</p>
+              <p className="text-sm text-muted-foreground mt-1">Update your photo, bio, music link, and more.</p>
+            </div>
+            <Button variant="heroOutline" asChild>
+              <Link to="/profile">Edit profile</Link>
+            </Button>
+          </div>
+        </div>
+
         <div className="mt-6 flex justify-end">
           <Button variant="ghost" onClick={handleSignOut}>Sign out</Button>
         </div>
