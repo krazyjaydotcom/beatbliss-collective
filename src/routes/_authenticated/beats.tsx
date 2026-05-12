@@ -6,8 +6,9 @@ import {
   CreditCard, Receipt, NotebookPen, Settings, LifeBuoy, LogOut, Search,
   ShoppingCart, Bell, SlidersHorizontal, Play, Pause, SkipBack, SkipForward,
   Shuffle, Repeat, Volume2, MoreHorizontal, Plus, Pin, Trash2, Edit3,
-  LayoutGrid, List as ListIcon, FileText, Loader2, X,
+  LayoutGrid, List as ListIcon, FileText, Loader2, X, GraduationCap, Music2, CheckCheck,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
