@@ -249,10 +249,7 @@ function BeatsDashboard() {
                 <span className="text-sm font-medium">{profile?.credits_balance ?? 0} Credits</span>
               </div>
               <Button variant="ghost" size="icon"><ShoppingCart className="h-5 w-5" /></Button>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">3</span>
-              </Button>
+              <NotificationsBell userId={user?.id} />
               <div className="flex items-center gap-2">
                 <Avatar className="h-9 w-9"><AvatarFallback className="bg-electric/20 text-electric">{(profile?.display_name || user?.email || "U")[0].toUpperCase()}</AvatarFallback></Avatar>
                 <span className="hidden md:inline text-sm font-medium">{profile?.display_name ?? user?.email?.split("@")[0]}</span>
