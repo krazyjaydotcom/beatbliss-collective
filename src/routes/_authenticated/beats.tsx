@@ -190,10 +190,11 @@ function BeatsDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="h-screen overflow-hidden bg-background text-foreground flex flex-col">
       <div className="flex flex-1 min-h-0">
         {/* SIDEBAR */}
-        <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-card/40 p-4 gap-2">
+        <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-card/40 p-4 gap-2 overflow-y-auto">
+
           <div className="px-2 pb-4">
             <Link to="/"><KrazyLogo className="text-xl" /></Link>
           </div>
