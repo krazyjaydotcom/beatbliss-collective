@@ -53,14 +53,12 @@ type Profile = {
   subscription_tier: string | null; subscription_status: string | null;
 };
 
-type SidebarAction = "beats" | "new" | "filterGenre" | "filterMood" | "filterKey" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
+type SidebarAction = "beats" | "new" | "classroom" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
 
 const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge?: string }[] = [
   { icon: Music, label: "Beats", action: "beats" },
   { icon: Sparkles, label: "New Releases", action: "new", badge: "NEW" },
-  { icon: Disc3, label: "By Genre", action: "filterGenre" },
-  { icon: Smile, label: "By Mood", action: "filterMood" },
-  { icon: Hash, label: "By Key", action: "filterKey" },
+  { icon: GraduationCap, label: "Classroom", action: "classroom" },
   { icon: Gauge, label: "By BPM", action: "filterBpm" },
   { icon: Music, label: "My Beats", action: "myBeats" },
   { icon: ListMusic, label: "My Playlists", action: "playlists" },
