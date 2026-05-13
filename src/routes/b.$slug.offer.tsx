@@ -125,7 +125,7 @@ function OfferPage() {
                 <span className="text-xs uppercase tracking-wider font-bold text-muted-foreground">Monthly</span>
               </div>
               <div className="mt-2 flex items-baseline gap-1">
-                <span className="text-4xl font-black">$37</span>
+                <span className="text-4xl font-black">$49.99</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">Billed monthly. Cancel anytime.</p>
