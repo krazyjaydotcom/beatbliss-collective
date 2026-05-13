@@ -218,8 +218,8 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       if (!taggedOnly) {
         const mp3Blob = sourceIsMp3 ? p.audio : encodeMp3(buf, 192);
         const wavBlob = isWav(p.audio) ? p.audio : encodeWav(buf);
-        const mp3Path = `${stamp}-${safe}.mp3`;
-        const wavPath = `${stamp}-${safe}.wav`;
+        const mp3Path = `KRAZYJAYDOTCOM_${safe}.mp3`;
+        const wavPath = `KRAZYJAYDOTCOM_${safe}.wav`;
         const up1 = await supabase.storage.from("beat-audio").upload(mp3Path, mp3Blob, { upsert: false, contentType: "audio/mpeg" });
         if (up1.error) throw up1.error;
         const up2 = await supabase.storage.from("beat-audio").upload(wavPath, wavBlob, { upsert: false, contentType: "audio/wav" });
