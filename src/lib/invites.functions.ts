@@ -160,6 +160,7 @@ export const createManualInvite = createServerFn({ method: "POST" })
         tier: data.tier,
         environment: data.environment,
         expires_at: expiresAt,
+        stripe_customer_id: "",
       });
 
       if (error) {
