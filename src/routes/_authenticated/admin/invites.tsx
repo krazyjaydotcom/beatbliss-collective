@@ -11,13 +11,12 @@ export const Route = createFileRoute("/_authenticated/admin/invites")({
   component: AdminInvitesPage,
 });
 
-const INVITE_BASE = "https://mybeatcatalog.com/join/";
+const INVITE_BASE = "https://mybeatcatalog.com/claim/";
 
 function makeToken() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID().replace(/-/g, "") + Math.random().toString(36).slice(2, 10);
-  }
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const part = () => Array.from({ length: 4 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+  return `${part()}-${part()}-${part()}`;
 }
 
 function AdminInvitesPage() {
@@ -85,7 +84,7 @@ function AdminInvitesPage() {
         <div>
           <h1 className="text-3xl font-black tracking-tight">Invites</h1>
           <p className="mt-1 text-muted-foreground">
-            Generate invite links. Each link grants free active member access on signup.
+            Generate clean claim links for approved members and copy them instantly.
           </p>
         </div>
         <Button onClick={generateInvite}>

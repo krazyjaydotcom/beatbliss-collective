@@ -10,7 +10,7 @@ const TIER_LABEL: Record<string, string> = {
 };
 
 export const validateInvite = createServerFn({ method: "POST" })
-  .inputValidator((input: { token: string }) => z.object({ token: z.string().min(10).max(128) }).parse(input))
+  .inputValidator((input: { token: string }) => z.object({ token: z.string().min(6).max(20).regex(/^[a-z0-9-]+$/) }).parse(input))
   .handler(async ({ data }) => {
     const { data: invite } = await supabaseAdmin
       .from("invites")

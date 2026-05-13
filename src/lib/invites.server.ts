@@ -3,7 +3,10 @@ import { randomBytes } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export function generateInviteToken(): string {
-  return randomBytes(24).toString("base64url");
+  const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const bytes = randomBytes(12);
+  const chars = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]);
+  return `${chars.slice(0, 4).join("")}-${chars.slice(4, 8).join("")}-${chars.slice(8, 12).join("")}`;
 }
 
 export interface IssueInviteParams {
@@ -70,12 +73,12 @@ const TIER_LABEL: Record<string, string> = {
 
 async function sendInviteEmail(opts: { to: string; url: string; tier: string }) {
   const tierLabel = TIER_LABEL[opts.tier] ?? opts.tier;
-  const subject = "Your KRAZYJAYDOTCOM invite — claim your account";
+  const subject = "Your MyBeatCatalog invite — claim your account";
   const html = `<!DOCTYPE html>
 <html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;margin:0;padding:0">
   <div style="max-width:560px;margin:0 auto;padding:40px 24px">
     <h1 style="font-size:28px;font-weight:900;letter-spacing:-0.02em;margin:0 0 8px">
-      KRAZYJAY<span style="color:#ff3b3b">DOTCOM</span>
+      My<span style="color:#ff3b3b">Beat</span>Catalog
     </h1>
     <p style="color:#a1a1aa;margin:0 0 32px">Welcome to the catalog.</p>
 
@@ -102,7 +105,7 @@ async function sendInviteEmail(opts: { to: string; url: string; tier: string }) 
   </div>
 </body></html>`;
 
-  const text = `Welcome to KRAZYJAYDOTCOM.
+  const text = `Welcome to MyBeatCatalog.
 
 Claim your ${tierLabel} membership and set your password:
 ${opts.url}
