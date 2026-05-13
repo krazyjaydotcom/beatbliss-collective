@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 const VALID_PLANS = ["artist_monthly", "artist_monthly_v2", "artist_yearly", "label_monthly", "label_yearly"] as const;
-type PlanId = typeof VALID_PLANS[number];
+type PlanId = (typeof VALID_PLANS)[number];
 
 const PLAN_LABEL: Record<PlanId, string> = {
   artist_monthly: "Catalog Membership — $49.99/mo",
-  artist_monthly_v2: "Catalog Membership — $37/mo",
+  artist_monthly_v2: "Catalog Membership — $49.99/mo",
   artist_yearly: "Catalog Membership — $599/yr",
   label_monthly: "Label — $97/mo",
   label_yearly: "Label — $970/yr",
@@ -83,18 +83,17 @@ function CheckoutPage() {
               Continue to payment
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              Already a member? <Link to="/login" className="text-primary hover:underline">Log in</Link>
+              Already a member?{" "}
+              <Link to="/login" className="text-primary hover:underline">
+                Log in
+              </Link>
             </p>
           </form>
         ) : (
           <div className="mt-8 rounded-2xl border border-border bg-card p-2 md:p-4">
             <p className="px-4 pt-2 text-sm text-muted-foreground">
               Paying as <span className="text-foreground font-medium">{submittedEmail}</span> ·{" "}
-              <button
-                type="button"
-                onClick={() => setSubmittedEmail(null)}
-                className="text-primary hover:underline"
-              >
+              <button type="button" onClick={() => setSubmittedEmail(null)} className="text-primary hover:underline">
                 change
               </button>
             </p>
