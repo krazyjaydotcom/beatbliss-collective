@@ -231,7 +231,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       if (p.tagged) {
         const tBuf = p.tagged === p.audio ? buf : await decodeAudioFile(p.tagged);
         const tBlob = isMp3(p.tagged) ? p.tagged : encodeMp3(tBuf, 192);
-        const tPath = `${stamp}-${safe}-tagged.mp3`;
+        const tPath = `KRAZYJAYDOTCOM_${safe}_Tagged.mp3`;
         const upT = await supabase.storage.from("beat-audio").upload(tPath, tBlob, { upsert: false, contentType: "audio/mpeg" });
         if (upT.error) throw upT.error;
         audio_url_tagged = supabase.storage.from("beat-audio").getPublicUrl(tPath).data.publicUrl;
