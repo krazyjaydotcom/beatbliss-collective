@@ -155,6 +155,22 @@ function AccountPage() {
           </div>
         )}
 
+        {isSubscribed && (
+          <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <p className="font-semibold">My Store</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Build your public artist storefront with artwork, tracks, and external payment links.
+                </p>
+              </div>
+              <Button variant="heroOutline" asChild>
+                <Link to="/store">Open my store</Link>
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>

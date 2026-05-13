@@ -6,7 +6,7 @@ import {
   CreditCard, Receipt, NotebookPen, Settings, LifeBuoy, LogOut, Search,
   ShoppingCart, Bell, SlidersHorizontal, Play, Pause, SkipBack, SkipForward,
   Shuffle, Repeat, Volume2, MoreHorizontal, Plus, Pin, Trash2, Edit3,
-  LayoutGrid, List as ListIcon, FileText, Loader2, X, GraduationCap, Music2, CheckCheck,
+  LayoutGrid, List as ListIcon, FileText, Loader2, X, GraduationCap, Music2, Store, CheckCheck,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
@@ -53,7 +53,7 @@ type Profile = {
   subscription_tier: string | null; subscription_status: string | null;
 };
 
-type SidebarAction = "beats" | "new" | "classroom" | "beatRequest" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
+type SidebarAction = "beats" | "new" | "classroom" | "beatRequest" | "store" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
 
 const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge?: string }[] = [
   { icon: Music, label: "Beats", action: "beats" },
@@ -131,6 +131,7 @@ function BeatsDashboard() {
     return [
       ...SIDEBAR.slice(0, 3),
       { icon: Music2, label: "Beat Request", action: "beatRequest" as SidebarAction },
+      { icon: Store, label: "My Store", action: "store" as SidebarAction },
       ...SIDEBAR.slice(3),
     ];
   }, [profile?.subscription_status]);
@@ -211,6 +212,8 @@ function BeatsDashboard() {
         navigate({ to: "/classroom" }); break;
       case "beatRequest":
         navigate({ to: "/beat-request" }); break;
+      case "store":
+        navigate({ to: "/store" }); break;
       case "myBeats":
       case "playlists":
         toast.info("Coming soon.");
