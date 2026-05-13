@@ -23,7 +23,7 @@ interface ProfileRow {
 
 const TIER_LABEL: Record<string, string> = {
   none: "Free",
-  artist: "Artist / Creator — $37/mo",
+  artist: "Artist / Creator — $49.99/mo",
   label: "Label — $97/mo",
 };
 
@@ -45,9 +45,13 @@ function AccountPage() {
 
     const channel = supabase
       .channel(`profile-${user.id}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` }, (payload) => {
-        setProfile(payload.new as ProfileRow);
-      })
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        (payload) => {
+          setProfile(payload.new as ProfileRow);
+        },
+      )
       .subscribe();
 
     return () => {
@@ -103,7 +107,9 @@ function AccountPage() {
               </Button>
             ) : (
               <Button variant="hero" asChild>
-                <Link to="/" hash="pricing">Choose a plan</Link>
+                <Link to="/" hash="pricing">
+                  Choose a plan
+                </Link>
               </Button>
             )}
           </div>
@@ -130,7 +136,8 @@ function AccountPage() {
             <div>
               <p className="font-semibold">Unlimited License — preview</p>
               <p className="text-sm text-muted-foreground mt-1">
-                See exactly what rights, credits, and split requirements apply to every beat you download as a paid member.
+                See exactly what rights, credits, and split requirements apply to every beat you download as a paid
+                member.
               </p>
             </div>
             <Button variant="heroOutline" asChild>
@@ -184,7 +191,9 @@ function AccountPage() {
         </div>
 
         <div className="mt-6 flex justify-end">
-          <Button variant="ghost" onClick={handleSignOut}>Sign out</Button>
+          <Button variant="ghost" onClick={handleSignOut}>
+            Sign out
+          </Button>
         </div>
       </main>
     </div>
