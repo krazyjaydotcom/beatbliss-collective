@@ -56,9 +56,12 @@ function AdminAgreementsPage() {
     );
   });
 
-  const download = (a: AgreementData) => {
+  const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
+  const download = (a: AgreementData & { licensed_to?: string }) => {
     const pdf = generateAgreementPdf(a);
-    pdf.save(`agreement-${a.agreement_id}.pdf`);
+    const beat = a.beat_title ? slugify(a.beat_title) : a.agreement_id;
+    const who = a.licensed_to ? slugify(a.licensed_to) : (a.user_name ? slugify(a.user_name) : a.agreement_id);
+    pdf.save(`License_${beat}_${who}.pdf`);
   };
 
   if (isAdmin === null) {
