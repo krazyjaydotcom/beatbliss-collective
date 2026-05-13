@@ -42,7 +42,7 @@ type Beat = {
   id: string; title: string; producer_name: string; genre: string; mood: string;
   music_key: string; bpm: number; duration_seconds: number; cover_url: string | null;
   audio_url: string | null; audio_url_wav: string | null; audio_url_tagged: string | null;
-  is_member_only: boolean;
+  is_member_only: boolean; release_at: string | null;
 };
 type Note = {
   id: string; title: string; content: string; is_pinned: boolean;
@@ -53,7 +53,7 @@ type Profile = {
   subscription_tier: string | null; subscription_status: string | null;
 };
 
-type SidebarAction = "beats" | "new" | "classroom" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
+type SidebarAction = "beats" | "new" | "classroom" | "beatRequest" | "filterBpm" | "myBeats" | "playlists" | "downloads" | "favorites" | "credits" | "transactions" | "notepad" | "whitelist" | "settings" | "support";
 
 const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge?: string }[] = [
   { icon: Music, label: "Beats", action: "beats" },
@@ -96,9 +96,10 @@ function BeatsDashboard() {
   const { data: beats = [] } = useQuery({
     queryKey: ["beats"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("beats").select("*").order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any).from("beats").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Beat[];
+      const now = Date.now();
+      return ((data ?? []) as Beat[]).filter((beat) => !beat.release_at || new Date(beat.release_at).getTime() <= now);
     },
   });
 
@@ -124,6 +125,46 @@ function BeatsDashboard() {
       return raw ? (JSON.parse(raw) as string[]) : [];
     },
   });
+
+  const sidebarItems = useMemo(() => {
+    if (profile?.subscription_status !== "active") return SIDEBAR;
+    return [
+      ...SIDEBAR.slice(0, 3),
+      { icon: Music2, label: "Beat Request", action: "beatRequest" as SidebarAction },
+      ...SIDEBAR.slice(3),
+    ];
+  }, [profile?.subscription_status]);
+
+  useEffect(() => {
+    if (!user) return;
+    const token = window.localStorage.getItem("pendingInviteToken");
+    if (!token) return;
+
+    const markInviteUsed = async () => {
+      const { data, error } = await (supabase as any)
+        .from("invites")
+        .select("id, used_at")
+        .eq("token", token)
+        .maybeSingle();
+
+      if (error || !data) return;
+      if (data.used_at) {
+        window.localStorage.removeItem("pendingInviteToken");
+        return;
+      }
+
+      const { error: updateError } = await (supabase as any)
+        .from("invites")
+        .update({ used_by: user.id, used_at: new Date().toISOString() })
+        .eq("id", data.id);
+
+      if (!updateError) {
+        window.localStorage.removeItem("pendingInviteToken");
+      }
+    };
+
+    void markInviteUsed();
+  }, [user]);
 
   const toggleFav = (id: string) => {
     if (!user) return;
@@ -168,6 +209,8 @@ function BeatsDashboard() {
         break;
       case "classroom":
         navigate({ to: "/classroom" }); break;
+      case "beatRequest":
+        navigate({ to: "/beat-request" }); break;
       case "myBeats":
       case "playlists":
         toast.info("Coming soon.");
@@ -199,7 +242,7 @@ function BeatsDashboard() {
             <Link to="/"><KrazyLogo className="text-xl" /></Link>
           </div>
           <nav className="flex-1 space-y-1">
-            {SIDEBAR.map((item) => {
+            {sidebarItems.map((item) => {
               const active = activeNav === item.action || (item.action === "favorites" && favOnly);
               return (
                 <button

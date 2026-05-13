@@ -14,6 +14,7 @@ import {
   Megaphone,
   UserCheck,
   GraduationCap,
+  Link2,
 } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
@@ -28,9 +29,11 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
   { to: "/admin/beats", label: "Beats", icon: Music },
+  { to: "/admin/beat-requests", label: "Beat Requests", icon: Music },
   { to: "/admin/funnels", label: "Beat Funnels", icon: Megaphone },
   { to: "/admin/members", label: "Members", icon: Users },
   { to: "/admin/access", label: "Manual Access", icon: UserCheck },
+  { to: "/admin/invites", label: "Invites", icon: Link2 },
   { to: "/admin/classroom", label: "Classroom", icon: GraduationCap },
   { to: "/admin/import", label: "Import beats", icon: Download },
   { to: "/admin/whitelist", label: "Whitelist", icon: ShieldCheck },

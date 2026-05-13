@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { decodeAudioFile, encodeMp3, encodeWav, isMp3, isWav } from "@/lib/audio-convert";
 
@@ -103,23 +104,34 @@ function AdminBeatsPage() {
         </div>
         {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
           <div className="divide-y divide-border">
-            {beats.map((b: any) => (
+            {beats.map((b: any) => {
+              const scheduled = !!b.release_at && new Date(b.release_at).getTime() > Date.now();
+              return (
               <div key={b.id} className="py-3 flex items-center gap-4">
                 <Checkbox checked={selected.has(b.id)} onCheckedChange={() => toggle(b.id)} />
                 {b.cover_url ? <img src={b.cover_url} className="h-12 w-12 rounded object-cover" alt="" /> : <div className="h-12 w-12 rounded bg-muted" />}
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{b.title}</div>
+                  <div className="flex items-center gap-2 font-medium truncate">
+                    <span className="truncate">{b.title}</span>
+                    {scheduled ? (
+                      <Badge variant="secondary" className="border border-amber-500/30 bg-amber-500/10 text-amber-300">
+                        Scheduled
+                      </Badge>
+                    ) : null}
+                  </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {b.genre} · {b.bpm} BPM · {b.music_key}
                     {b.audio_url ? <span className="ml-2 inline-flex items-center gap-1"><FileMusic className="h-3 w-3" />MP3</span> : null}
                     {b.audio_url_wav ? <span className="ml-2 inline-flex items-center gap-1"><FileAudio className="h-3 w-3" />WAV</span> : null}
                     {b.audio_url_tagged ? <span className="ml-2 inline-flex items-center gap-1 text-electric"><FileMusic className="h-3 w-3" />TAGGED</span> : <span className="ml-2 text-amber-500">· no tagged file (free users blocked)</span>}
                     {b.is_member_only ? " · Members" : ""}
+                    {scheduled ? <span className="ml-2 text-amber-400">· releases {new Date(b.release_at).toLocaleString()}</span> : null}
                   </div>
                 </div>
                 <Button size="sm" variant="ghost" onClick={() => handleDelete(b.id, b.title)}><Trash2 className="h-4 w-4" /></Button>
               </div>
-            ))}
+            );
+            })}
             {beats.length === 0 && <p className="text-sm text-muted-foreground py-4">No beats yet.</p>}
           </div>
         )}
@@ -136,6 +148,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
   const [genre, setGenre] = useState("Trap");
   const [bpm, setBpm] = useState("140");
   const [memberOnly, setMemberOnly] = useState(false);
+  const [releaseAt, setReleaseAt] = useState("");
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -233,11 +246,12 @@ function DropUploader({ onDone }: { onDone: () => void }) {
 
       const duration_seconds = Math.round(buf.duration);
 
-      const { error: insErr } = await supabase.from("beats").insert({
+      const { error: insErr } = await (supabase as any).from("beats").insert({
         title: p.title, genre, mood: "Unknown", bpm: parseInt(bpm) || 0,
         music_key: "C", producer_name: "KRAZYJAY",
         duration_seconds, audio_url, audio_url_wav, audio_url_tagged, cover_url,
         is_member_only: memberOnly,
+        release_at: releaseAt ? new Date(releaseAt).toISOString() : null,
       });
       if (insErr) throw insErr;
 
@@ -292,10 +306,13 @@ function DropUploader({ onDone }: { onDone: () => void }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <Field label="Default genre"><Input value={genre} onChange={(e) => setGenre(e.target.value)} /></Field>
         <Field label="Default BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
-        <label className="flex items-end gap-2 text-sm pb-2">
+        <Field label="Release Date">
+          <Input type="datetime-local" value={releaseAt} onChange={(e) => setReleaseAt(e.target.value)} />
+        </Field>
+        <label className="flex items-end gap-2 pb-2 text-sm">
           <Checkbox checked={memberOnly} onCheckedChange={(v) => setMemberOnly(!!v)} />
           Members only
         </label>
