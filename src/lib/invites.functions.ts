@@ -58,6 +58,10 @@ export const claimInvite = createServerFn({ method: "POST" })
 
     let userId: string | undefined;
 
+    if (!invite.email) {
+      return { ok: false, error: "This invite is missing an email. Use the new join link instead." };
+    }
+
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: invite.email,
       password: data.password,
@@ -88,7 +92,7 @@ export const claimInvite = createServerFn({ method: "POST" })
       return { ok: false, error: claimErr.message };
     }
 
-    return { ok: true, email: invite.email };
+    return { ok: true, email: invite.email ?? undefined };
   });
 
 export const createManualInvite = createServerFn({ method: "POST" })
