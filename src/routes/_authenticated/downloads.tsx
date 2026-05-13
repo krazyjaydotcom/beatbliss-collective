@@ -42,11 +42,13 @@ function DownloadsPage() {
     if (!audioUrl) return;
     const a = document.createElement("a");
     a.href = audioUrl;
-    a.download = `${title}.mp3`;
+    const safeTitle = (title || "beat").replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+    a.download = `KRAZYJAYDOTCOM_${safeTitle}.mp3`;
     a.target = "_blank";
     a.click();
   };
 
+  const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
   const downloadAgreement = async (agreementRowId: string) => {
     const { data, error } = await supabase
       .from("agreements")
@@ -54,8 +56,11 @@ function DownloadsPage() {
       .eq("id", agreementRowId)
       .maybeSingle();
     if (error || !data) return;
-    const pdf = generateAgreementPdf(data as unknown as AgreementData);
-    pdf.save(`agreement-${data.agreement_id}.pdf`);
+    const a = data as unknown as AgreementData & { licensed_to?: string };
+    const pdf = generateAgreementPdf(a);
+    const beat = a.beat_title ? slugify(a.beat_title) : a.agreement_id;
+    const who = a.licensed_to ? slugify(a.licensed_to) : (a.user_name ? slugify(a.user_name) : a.agreement_id);
+    pdf.save(`License_${beat}_${who}.pdf`);
   };
 
   return (
