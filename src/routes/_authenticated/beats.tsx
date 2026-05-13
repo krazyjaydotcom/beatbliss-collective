@@ -789,7 +789,9 @@ function DownloadDialog({ beat, credits, profile, onClose, onSuccess }: {
         // Trigger the actual audio download
         const a = document.createElement("a");
         a.href = result.audio_url;
-        a.download = `${beat.title}.${(isPaid ? fileType : "MP3").toLowerCase()}`;
+        const safeTitle = beat.title.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+        const suffix = fileType === "WAV" ? ".wav" : ".mp3";
+        a.download = `KRAZYJAYDOTCOM_${safeTitle}${suffix}`;
         a.target = "_blank";
         a.rel = "noopener";
         document.body.appendChild(a);
