@@ -16,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/beat-request")({
 
 function BeatRequestPage() {
   const { user } = useAuth();
+  const userId = user?.id ?? null;
   const qc = useQueryClient();
   const [style, setStyle] = useState("");
   const [referenceArtists, setReferenceArtists] = useState("");
@@ -33,13 +34,13 @@ function BeatRequestPage() {
   }, []);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ["beat-request-profile", user?.id],
-    enabled: !!user,
+    queryKey: ["beat-request-profile", userId],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("subscription_status, display_name, full_name")
-        .eq("id", user!.id)
+        .eq("id", userId as string)
         .maybeSingle();
       if (error) throw error;
       return data as { subscription_status: string | null; display_name: string | null; full_name: string | null } | null;
@@ -47,13 +48,13 @@ function BeatRequestPage() {
   });
 
   const { data: existingRequest, isLoading: requestLoading } = useQuery({
-    queryKey: ["beat-request", user?.id, monthRange.start],
-    enabled: !!user,
+    queryKey: ["beat-request", userId, monthRange.start],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("beat_requests")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", userId as string)
         .gte("created_at", monthRange.start)
         .lt("created_at", monthRange.end)
         .order("created_at", { ascending: false })
@@ -64,7 +65,7 @@ function BeatRequestPage() {
     },
   });
 
-  if (!user) return null;
+  if (!userId) return null;
 
   const active = profile?.subscription_status === "active";
 
@@ -76,7 +77,7 @@ function BeatRequestPage() {
     }
     setSubmitting(true);
     const { error } = await (supabase as any).from("beat_requests").insert({
-      user_id: user.id,
+      user_id: userId,
       style: style.trim(),
       reference_artists: referenceArtists.trim(),
       tempo,
@@ -92,7 +93,7 @@ function BeatRequestPage() {
     setReferenceArtists("");
     setTempo("mid");
     setNotes("");
-    qc.invalidateQueries({ queryKey: ["beat-request", user.id, monthRange.start] });
+    qc.invalidateQueries({ queryKey: ["beat-request", userId, monthRange.start] });
   }
 
   return (
