@@ -1,56 +1,52 @@
 import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 
-export function SiteFooter() {
+export function SiteNav() {
+  const { user, loading } = useAuth();
+  const isAdmin = useIsAdmin();
+
   return (
-    <footer id="contact" className="border-t border-border bg-card/40">
-      <div className="container mx-auto px-6 py-12 grid md:grid-cols-4 gap-8">
-        <div className="md:col-span-2">
-          <div className="text-xl font-black">
-            KRAZYJAY<span className="text-primary">DOTCOM</span>
-          </div>
-          <p className="mt-3 text-sm text-muted-foreground max-w-sm">
-            Private access to cinematic, inspirational beats for artists with a message.
-          </p>
+    <header className="absolute left-0 right-0 top-0 z-50">
+      <nav className="container mx-auto flex items-center justify-between px-6 py-6">
+        <Link to="/" className="text-2xl font-black tracking-tight">
+          KRAZYJAY<span className="text-primary">DOTCOM</span>
+        </Link>
+        <div className="hidden items-center gap-8 text-sm font-medium md:flex">
+          <a href="/#pricing" className="transition-colors hover:text-primary">Pricing</a>
+          <a href="/#contact" className="transition-colors hover:text-primary">Contact</a>
         </div>
-        <div>
-          <h4 className="text-sm font-bold">Membership</h4>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>
-              <a href="#membership" className="hover:text-foreground">
-                Overview
-              </a>
-            </li>
-            <li>
-              <a href="#pricing" className="hover:text-foreground">
-                Pricing
-              </a>
-            </li>
-            <li>
-              <Link to="/login" className="hover:text-foreground">
-                Member Login
-              </Link>
-            </li>
-          </ul>
+        <div className="flex items-center gap-3">
+          {loading ? null : user ? (
+            <>
+              {isAdmin && (
+                <Button variant="heroOutline" size="sm" asChild>
+                  <Link to="/admin">Admin</Link>
+                </Button>
+              )}
+              <Button variant="heroOutline" size="sm" asChild>
+                <Link to="/account">My Account</Link>
+              </Button>
+              <Button variant="heroOutline" size="sm" asChild>
+                <Link to="/classroom">Classroom</Link>
+              </Button>
+              <Button variant="hero" size="sm" asChild>
+                <Link to="/beats">Beat Catalog</Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="heroOutline" size="sm" asChild>
+                <Link to="/login">Log In</Link>
+              </Button>
+              <Button variant="hero" size="sm" asChild>
+                <Link to="/" hash="pricing">Apply For Access</Link>
+              </Button>
+            </>
+          )}
         </div>
-        <div>
-          <h4 className="text-sm font-bold">Support</h4>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>
-              <a href="#contact" className="hover:text-foreground">
-                Contact
-              </a>
-            </li>
-            <li>
-              <Link to="/signup" className="hover:text-foreground">
-                Invite-only access
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} KrazyJayDotCom. All rights reserved.
-      </div>
-    </footer>
+      </nav>
+    </header>
   );
 }
