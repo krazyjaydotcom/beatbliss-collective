@@ -210,7 +210,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
 
       setStatus("uploading");
       const stamp = Date.now();
-      const safe = (p.title || "beat").replace(/[^\w-]+/g, "_");
+      const safe = (p.title || "beat").replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "");
       let audio_url: string | null = null;
       let audio_url_wav: string | null = null;
       let audio_url_tagged: string | null = null;
