@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Music, Trash2, FolderUp, FileAudio, FileMusic, Pencil, X } from "lucide-react";
+import { Image, Loader2, Music, Save, Trash2, FolderUp, FileAudio, FileMusic, Pencil, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { decodeAudioFile, encodeMp3, encodeWav, isMp3, isWav } from "@/lib/audio-convert";
 
@@ -54,6 +55,7 @@ function AdminBeatsPage() {
   });
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [editingBeat, setEditingBeat] = useState<any | null>(null);
   const toggle = (id: string) => {
     setSelected((s) => {
       const n = new Set(s);
@@ -109,7 +111,7 @@ function AdminBeatsPage() {
               return (
               <div key={b.id} className="py-3 flex items-center gap-4">
                 <Checkbox checked={selected.has(b.id)} onCheckedChange={() => toggle(b.id)} />
-                {b.cover_url ? <img src={b.cover_url} className="h-12 w-12 rounded object-cover" alt="" /> : <div className="h-12 w-12 rounded bg-muted" />}
+                {b.cover_url ? <img src={b.cover_url} className="h-14 w-14 rounded-md object-cover border border-border" alt={b.title} /> : <div className="h-14 w-14 rounded-md bg-muted border border-border flex items-center justify-center"><Image className="h-5 w-5 text-muted-foreground" /></div>}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 font-medium truncate">
                     <span className="truncate">{b.title}</span>
@@ -128,7 +130,10 @@ function AdminBeatsPage() {
                     {scheduled ? <span className="ml-2 text-amber-400">· releases {new Date(b.release_at).toLocaleString()}</span> : null}
                   </div>
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => handleDelete(b.id, b.title)}><Trash2 className="h-4 w-4" /></Button>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => setEditingBeat(b)}><Pencil className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleDelete(b.id, b.title)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
               </div>
             );
             })}
@@ -136,6 +141,15 @@ function AdminBeatsPage() {
           </div>
         )}
       </div>
+
+      <EditBeatDialog
+        beat={editingBeat}
+        onClose={() => setEditingBeat(null)}
+        onDone={() => {
+          setEditingBeat(null);
+          qc.invalidateQueries({ queryKey: ["admin-beats"] });
+        }}
+      />
     </div>
   );
 }
@@ -348,6 +362,131 @@ function DropUploader({ onDone }: { onDone: () => void }) {
         {busy ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</> : `Upload ${items.length || ""} beat${items.length === 1 ? "" : "s"}`}
       </Button>
     </form>
+  );
+}
+
+// ---------------- Single beat editor ----------------
+
+function toDateTimeLocal(value: string | null | undefined): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const offset = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: () => void; onDone: () => void }) {
+  const [title, setTitle] = useState("");
+  const [producer, setProducer] = useState("");
+  const [genre, setGenre] = useState("");
+  const [mood, setMood] = useState("");
+  const [bpm, setBpm] = useState("");
+  const [musicKey, setMusicKey] = useState("");
+  const [duration, setDuration] = useState("");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [memberOnly, setMemberOnly] = useState(false);
+  const [releaseAt, setReleaseAt] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!beat) return;
+    setTitle(beat.title ?? "");
+    setProducer(beat.producer_name ?? "");
+    setGenre(beat.genre ?? "");
+    setMood(beat.mood ?? "");
+    setBpm(String(beat.bpm ?? ""));
+    setMusicKey(beat.music_key ?? "");
+    setDuration(String(beat.duration_seconds ?? ""));
+    setCoverUrl(beat.cover_url ?? "");
+    setThumbnailFile(null);
+    setMemberOnly(!!beat.is_member_only);
+    setReleaseAt(toDateTimeLocal(beat.release_at));
+  }, [beat?.id]);
+
+  async function save() {
+    if (!beat) return;
+    if (!title.trim()) return toast.error("Title is required");
+    setSaving(true);
+    try {
+      let nextCoverUrl = coverUrl.trim() || null;
+      if (thumbnailFile) {
+        const ext = thumbnailFile.name.split(".").pop() || "jpg";
+        const safeTitle = (title || "beat").replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "") || "beat";
+        const coverPath = "primary_" + beat.id + "_" + Date.now() + "_" + safeTitle + "." + ext;
+        const upload = await supabase.storage.from("beat-covers").upload(coverPath, thumbnailFile, {
+          upsert: false,
+          contentType: thumbnailFile.type || "image/jpeg",
+        });
+        if (upload.error) throw upload.error;
+        nextCoverUrl = supabase.storage.from("beat-covers").getPublicUrl(coverPath).data.publicUrl;
+      }
+
+      const { error } = await (supabase as any).from("beats").update({
+        title: title.trim(),
+        producer_name: producer.trim() || null,
+        genre: genre.trim() || null,
+        mood: mood.trim() || null,
+        bpm: bpm ? parseInt(bpm, 10) || 0 : 0,
+        music_key: musicKey.trim() || null,
+        duration_seconds: duration ? parseInt(duration, 10) || 0 : 0,
+        cover_url: nextCoverUrl,
+        is_member_only: memberOnly,
+        release_at: releaseAt ? new Date(releaseAt).toISOString() : null,
+      }).eq("id", beat.id);
+
+      if (error) throw error;
+      toast.success("Beat updated");
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message ?? "Could not update beat");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const previewUrl = thumbnailFile ? URL.createObjectURL(thumbnailFile) : coverUrl;
+
+  return (
+    <Dialog open={!!beat} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Pencil className="h-5 w-5" /> Edit beat information</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-5 md:grid-cols-[180px_1fr]">
+          <div className="space-y-3">
+            <div className="aspect-square rounded-lg border border-border bg-muted overflow-hidden flex items-center justify-center">
+              {previewUrl ? <img src={previewUrl} alt="Thumbnail preview" className="h-full w-full object-cover" /> : <Image className="h-8 w-8 text-muted-foreground" />}
+            </div>
+            <Field label="Primary thumbnail URL"><Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://..." /></Field>
+            <Field label="Upload new thumbnail"><Input type="file" accept="image/*" onChange={(e) => setThumbnailFile(e.target.files?.[0] ?? null)} /></Field>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Title"><Input value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
+            <Field label="Producer"><Input value={producer} onChange={(e) => setProducer(e.target.value)} /></Field>
+            <Field label="Genre"><Input value={genre} onChange={(e) => setGenre(e.target.value)} /></Field>
+            <Field label="Mood"><Input value={mood} onChange={(e) => setMood(e.target.value)} /></Field>
+            <Field label="BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
+            <Field label="Key"><Input value={musicKey} onChange={(e) => setMusicKey(e.target.value)} /></Field>
+            <Field label="Duration seconds"><Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} /></Field>
+            <Field label="Release date"><Input type="datetime-local" value={releaseAt} onChange={(e) => setReleaseAt(e.target.value)} /></Field>
+            <label className="flex items-center gap-2 pt-6 text-sm">
+              <Checkbox checked={memberOnly} onCheckedChange={(v) => setMemberOnly(!!v)} />
+              Members only
+            </label>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : <><Save className="h-4 w-4 mr-2" /> Save beat</>}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
