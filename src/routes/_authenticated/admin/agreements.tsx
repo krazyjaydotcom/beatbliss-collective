@@ -8,7 +8,7 @@ import { KrazyLogo } from "@/components/krazy-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { generateAgreementPdf, type AgreementData } from "@/lib/agreement-pdf";
+import { generateAgreementPdf, buildAgreementFilename, type AgreementData } from "@/lib/agreement-pdf";
 
 export const Route = createFileRoute("/_authenticated/admin/agreements")({
   head: () => ({ meta: [{ title: "Admin · Agreements — MYBEATCATALOG" }] }),
@@ -56,12 +56,9 @@ function AdminAgreementsPage() {
     );
   });
 
-  const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
-  const download = (a: AgreementData & { licensed_to?: string }) => {
+  const download = (a: AgreementData) => {
     const pdf = generateAgreementPdf(a);
-    const beat = a.beat_title ? slugify(a.beat_title) : a.agreement_id;
-    const who = a.licensed_to ? slugify(a.licensed_to) : (a.user_name ? slugify(a.user_name) : a.agreement_id);
-    pdf.save(`License_${beat}_${who}.pdf`);
+    pdf.save(buildAgreementFilename(a));
   };
 
   if (isAdmin === null) {
@@ -92,7 +89,7 @@ function AdminAgreementsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-10 max-w-6xl">
+      <main className="container mx-auto px-4 sm:px-6 py-10 max-w-6xl">
         <h1 className="text-3xl font-black tracking-tight">All License Agreements</h1>
         <p className="mt-2 text-muted-foreground">{rows.length} total · showing latest 500</p>
 
@@ -111,10 +108,10 @@ function AdminAgreementsPage() {
               <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="text-left px-5 py-3 font-medium">Agreement ID</th>
-                  <th className="text-left px-5 py-3 font-medium">User</th>
-                  <th className="text-left px-5 py-3 font-medium">Beat</th>
-                  <th className="text-left px-5 py-3 font-medium">License</th>
-                  <th className="text-left px-5 py-3 font-medium">Accepted</th>
+                  <th className="text-left px-5 py-3 font-medium hidden md:table-cell">User</th>
+                  <th className="text-left px-5 py-3 font-medium hidden sm:table-cell">Beat</th>
+                  <th className="text-left px-5 py-3 font-medium hidden lg:table-cell">License</th>
+                  <th className="text-left px-5 py-3 font-medium hidden md:table-cell">Accepted</th>
                   <th className="text-right px-5 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
@@ -122,13 +119,13 @@ function AdminAgreementsPage() {
                 {filtered.map((r: any) => (
                   <tr key={r.id} className="border-t border-border hover:bg-muted/20">
                     <td className="px-5 py-4 font-mono text-xs">{r.agreement_id}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 hidden md:table-cell">
                       <div className="font-medium">{r.user_name}</div>
                       <div className="text-xs text-muted-foreground">{r.user_email}</div>
                     </td>
-                    <td className="px-5 py-4">{r.beat_title}</td>
-                    <td className="px-5 py-4"><Badge variant="secondary">{r.license_type}</Badge></td>
-                    <td className="px-5 py-4 text-muted-foreground">{new Date(r.accepted_at).toLocaleDateString()}</td>
+                    <td className="px-5 py-4 hidden sm:table-cell">{r.beat_title}</td>
+                    <td className="px-5 py-4 hidden lg:table-cell"><Badge variant="secondary">{r.license_type}</Badge></td>
+                    <td className="px-5 py-4 text-muted-foreground hidden md:table-cell">{new Date(r.accepted_at).toLocaleDateString()}</td>
                     <td className="px-5 py-4 text-right">
                       <Button size="sm" variant="ghost" onClick={() => download(r as AgreementData)}>
                         <FileText className="h-4 w-4 mr-1" /> PDF

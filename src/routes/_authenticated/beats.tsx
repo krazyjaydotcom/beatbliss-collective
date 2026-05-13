@@ -41,7 +41,11 @@ import {
   GraduationCap,
   Music2,
   CheckCheck,
+  Store,
+  Menu,
+  User,
 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +69,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
 import { formatDuration } from "@/lib/format";
-import { generateAgreementPdf, type AgreementData } from "@/lib/agreement-pdf";
+import { generateAgreementPdf, buildAgreementFilename, type AgreementData } from "@/lib/agreement-pdf";
 
 export const Route = createFileRoute("/_authenticated/beats")({
   head: () => ({
@@ -115,6 +119,7 @@ type SidebarAction =
   | "new"
   | "classroom"
   | "beatRequest"
+  | "store"
   | "filterBpm"
   | "myBeats"
   | "playlists"
@@ -206,6 +211,7 @@ function BeatsDashboard() {
     return [
       ...SIDEBAR.slice(0, 3),
       { icon: Music2, label: "Beat Request", action: "beatRequest" as SidebarAction },
+      { icon: Store, label: "My Store", action: "store" as SidebarAction },
       ...SIDEBAR.slice(3),
     ];
   }, [profile?.subscription_status]);
@@ -301,6 +307,9 @@ function BeatsDashboard() {
       case "beatRequest":
         navigate({ to: "/beat-request" });
         break;
+      case "store":
+        navigate({ to: "/store" });
+        break;
       case "myBeats":
       case "playlists":
         toast.info("Coming soon.");
@@ -382,6 +391,32 @@ function BeatsDashboard() {
           <div className="flex-1 min-w-0 flex flex-col">
             {/* TOP BAR */}
             <header className="flex items-center gap-3 px-4 lg:px-8 py-4 border-b border-border bg-background/80 backdrop-blur sticky top-0 z-10">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="lg:hidden p-1 text-muted-foreground hover:text-foreground shrink-0">
+                    <Menu className="h-5 w-5" />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-4 bg-card border-r border-border">
+                  <div className="mb-4"><KrazyLogo className="text-base" /></div>
+                  <nav className="space-y-1">
+                    {sidebarItems.map((item) => {
+                      const Icon = item.icon;
+                      const active = activeNav === item.action;
+                      return (
+                        <button
+                          key={item.action}
+                          onClick={() => handleNav(item.action)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="flex-1 text-left">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </SheetContent>
+              </Sheet>
               <div className="lg:hidden">
                 <KrazyLogo className="text-base" />
               </div>
@@ -416,8 +451,8 @@ function BeatsDashboard() {
             </header>
 
             {/* CATALOG */}
-            <ScrollArea className="flex-1">
-              <div className="px-4 lg:px-8 py-6 pb-32">
+            <ScrollArea className="flex-1" style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
+              <div className="px-4 lg:px-8 py-6 pb-40 lg:pb-32">
                 {isAdmin && (
                   <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-electric/30 bg-electric/10 px-4 py-2 text-sm">
                     <span className="text-electric font-medium">Viewing as user (admin preview)</span>
@@ -553,6 +588,29 @@ function BeatsDashboard() {
         onDownload={() => now && setConfirmBeat(now)}
       />
 
+      {/* MOBILE BOTTOM NAV */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur border-t border-border flex items-center justify-around px-2 py-2">
+        {[
+          { icon: Music, label: "Beats", action: "beats" as const },
+          { icon: Sparkles, label: "New", action: "new" as const },
+          { icon: Heart, label: "Favorites", action: "favorites" as const },
+          { icon: Download, label: "Downloads", action: "downloads" as const },
+          { icon: User, label: "Account", action: "settings" as const },
+        ].map(({ icon: Icon, label, action }) => {
+          const active = activeNav === action;
+          return (
+            <button
+              key={action}
+              onClick={() => handleNav(action)}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${active ? "text-primary" : "text-muted-foreground"}`}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="text-[10px] font-medium">{label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
       {/* DOWNLOAD CONFIRM */}
       <DownloadDialog
         beat={confirmBeat}
@@ -640,7 +698,7 @@ function BeatRow({
 }) {
   return (
     <div
-      className={`grid grid-cols-[1fr_50px_50px] md:grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px] gap-4 px-4 py-3 items-center border-b border-border last:border-0 hover:bg-secondary/40 transition-colors ${
+      className={`grid grid-cols-[1fr_50px_50px] md:grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px] gap-4 px-4 py-4 md:py-3 items-center border-b border-border last:border-0 hover:bg-secondary/40 transition-colors ${
         isCurrent ? "bg-electric/5 ring-1 ring-electric/40" : ""
       }`}
     >
@@ -1008,51 +1066,57 @@ function AudioPlayer({
   if (!beat) return null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 border-t border-border bg-card/95 backdrop-blur z-20">
+    <div className="fixed bottom-12 lg:bottom-0 inset-x-0 border-t border-border bg-card/95 backdrop-blur z-20">
       <audio
         ref={audioRef}
         src={beat.audio_url ?? undefined}
         onTimeUpdate={(e) => onProgress(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => onDuration(e.currentTarget.duration || beat.duration_seconds)}
       />
-      <div className="flex items-center gap-4 px-4 py-3">
-        <div className="flex items-center gap-3 min-w-0 w-64">
+      {/* Full-width progress bar at top of player */}
+      <div
+        className="w-full h-1 bg-secondary cursor-pointer"
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const pct = (e.clientX - rect.left) / rect.width;
+          const t = pct * (duration || beat.duration_seconds);
+          if (audioRef.current) audioRef.current.currentTime = t;
+          onProgress(t);
+        }}
+      >
+        <div
+          className="h-full bg-electric transition-all"
+          style={{ width: `${Math.min(100, (progress / (duration || beat.duration_seconds)) * 100)}%` }}
+        />
+      </div>
+      <div className="flex items-center gap-3 px-4 py-3">
+        {/* Beat info */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <BeatCover beat={beat} size="lg" />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm truncate">{beat.title}</span>
               {beat.is_member_only && (
-                <Badge className="bg-electric text-electric-foreground text-[10px]">MEMBER</Badge>
+                <Badge className="bg-electric text-electric-foreground text-[10px] hidden sm:inline-flex">MEMBER</Badge>
               )}
             </div>
             <div className="text-xs text-muted-foreground truncate">{beat.producer_name}</div>
           </div>
         </div>
-        <div className="flex-1 flex flex-col gap-1 min-w-0">
+
+        {/* Desktop controls */}
+        <div className="hidden md:flex flex-col gap-1 min-w-0 flex-1">
           <div className="flex items-center justify-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Shuffle className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <SkipBack className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={onToggle}
-              className="h-10 w-10 rounded-full bg-electric hover:bg-electric/90 text-electric-foreground p-0"
-            >
+            <Button variant="ghost" size="icon" className="h-8 w-8"><Shuffle className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8"><SkipBack className="h-4 w-4" /></Button>
+            <Button onClick={onToggle} className="h-10 w-10 rounded-full bg-electric hover:bg-electric/90 text-electric-foreground p-0">
               {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <SkipForward className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Repeat className="h-4 w-4" />
-            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8"><SkipForward className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8"><Repeat className="h-4 w-4" /></Button>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">
-              {formatDuration(Math.floor(progress))}
-            </span>
+            <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">{formatDuration(Math.floor(progress))}</span>
             <div
               className="flex-1 h-2 bg-secondary rounded-full overflow-hidden cursor-pointer"
               onClick={(e) => {
@@ -1063,40 +1127,23 @@ function AudioPlayer({
                 onProgress(t);
               }}
             >
-              <div
-                className="h-full bg-electric"
-                style={{ width: `${Math.min(100, (progress / (duration || beat.duration_seconds)) * 100)}%` }}
-              />
+              <div className="h-full bg-electric" style={{ width: `${Math.min(100, (progress / (duration || beat.duration_seconds)) * 100)}%` }} />
             </div>
-            <span className="text-xs text-muted-foreground tabular-nums w-10">
-              {formatDuration(beat.duration_seconds)}
-            </span>
+            <span className="text-xs text-muted-foreground tabular-nums w-10">{formatDuration(beat.duration_seconds)}</span>
           </div>
         </div>
-        <div className="hidden md:flex items-center gap-2 w-64 justify-end">
+
+        {/* Desktop right controls */}
+        <div className="hidden md:flex items-center gap-2 w-64 justify-end shrink-0">
           <Volume2 className="h-4 w-4 text-muted-foreground" />
-          <Slider
-            value={[volume * 100]}
-            onValueChange={(v) => setVolume(v[0] / 100)}
-            max={100}
-            step={1}
-            className="w-24"
-          />
-          <button
-            onClick={onFav}
-            className={`p-2 rounded hover:bg-secondary ${isFav ? "text-primary" : "text-muted-foreground"}`}
-          >
+          <Slider value={[volume * 100]} onValueChange={(v) => setVolume(v[0] / 100)} max={100} step={1} className="w-24" />
+          <button onClick={onFav} className={`p-2 rounded hover:bg-secondary ${isFav ? "text-primary" : "text-muted-foreground"}`}>
             <Heart className={`h-4 w-4 ${isFav ? "fill-primary" : ""}`} />
           </button>
-          <button
-            onClick={onDownload}
-            className="p-2 rounded hover:bg-secondary text-muted-foreground hover:text-electric"
-          >
+          <button onClick={onDownload} className="p-2 rounded hover:bg-secondary text-muted-foreground hover:text-electric">
             <Download className="h-4 w-4" />
           </button>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
         </div>
       </div>
     </div>
@@ -1151,13 +1198,15 @@ function DownloadDialog({
       const { data: agr } = await supabase.from("agreements").select("*").eq("id", result.agreement_id).single();
       if (agr) {
         const pdf = generateAgreementPdf(agr as AgreementData);
-        pdf.save(`KRAZYJAYDOTCOM-${(agr as AgreementData).agreement_id}.pdf`);
+        pdf.save(buildAgreementFilename(agr as AgreementData));
       }
       if (result.audio_url) {
         // Trigger the actual audio download
         const a = document.createElement("a");
         a.href = result.audio_url;
-        a.download = `${beat.title}.${(isPaid ? fileType : "MP3").toLowerCase()}`;
+        const safeTitle = beat.title.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+        const suffix = fileType === "WAV" ? ".wav" : ".mp3";
+        a.download = `KRAZYJAYDOTCOM_${safeTitle}${suffix}`;
         a.target = "_blank";
         a.rel = "noopener";
         document.body.appendChild(a);
