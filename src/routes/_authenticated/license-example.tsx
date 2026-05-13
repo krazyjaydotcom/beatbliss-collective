@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/license-example")({
-  head: () => ({ meta: [{ title: "Unlimited License Example — KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "Unlimited License Example — MYBEATCATALOG" }] }),
   component: LicenseExamplePage,
 });
 
@@ -38,7 +38,7 @@ function LicenseExamplePage() {
           </div>
 
           <p className="text-sm leading-relaxed">
-            This agreement confirms that the user, as an active paid member of KRAZYJAYDOTCOM, has downloaded the
+            This agreement confirms that the user, as an active paid member of MYBEATCATALOG, has downloaded the
             selected beat using their available membership credits. The user is granted unlimited, non-exclusive
             rights to record, release, distribute, perform, and <strong>monetize</strong> music created with this
             beat across all streaming platforms, social media, sync, live performance, and physical/digital sales.
@@ -77,7 +77,7 @@ function LicenseExamplePage() {
               original beat itself.
             </p>
             <p>
-              KRAZYJAYDOTCOM retains ownership of the underlying composition and production. This license remains
+              MYBEATCATALOG retains ownership of the underlying composition and production. This license remains
               valid for music released during the active membership period.
             </p>
           </div>

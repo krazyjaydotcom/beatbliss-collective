@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/artist/$username")({
   head: ({ params }) => ({
-    meta: [{ title: `${params.username} — MyBeatCatalog` }],
+    meta: [{ title: `${params.username} — MYBEATCATALOG` }],
   }),
   component: ArtistStorePage,
 });
@@ -89,7 +89,7 @@ function ArtistStorePage() {
         <h1 className="text-2xl font-black">Artist not found</h1>
         <p className="text-muted-foreground mt-2">This store doesn't exist or the link may have changed.</p>
         <Button variant="hero" className="mt-6" asChild>
-          <Link to="/">Back to MyBeatCatalog</Link>
+          <Link to="/" className="inline-flex items-start"><span className="text-foreground">MY</span><span className="text-primary">BEAT</span><span className="text-foreground">CATALOG</span><sup className="ml-0.5 align-super text-[0.45em] font-bold text-foreground">™</sup></Link>
         </Button>
       </div>
     );
@@ -104,8 +104,8 @@ function ArtistStorePage() {
       <header className="border-b border-border/40 backdrop-blur bg-background/80 sticky top-0 z-50">
         <div className="container mx-auto px-6 py-3 flex items-center justify-between">
           <Link to="/" className="text-xs font-bold tracking-wider text-muted-foreground hover:text-foreground transition-colors">
-            MyBeatCatalog
-          </Link>
+              <span className="text-foreground">MY</span><span className="text-primary">BEAT</span><span className="text-foreground">CATALOG</span><sup className="ml-0.5 align-super text-[0.45em] font-bold text-foreground">™</sup>
+            </Link>
           <Button variant="heroOutline" size="sm" asChild>
             <a href="/#pricing">Apply For Access</a>
           </Button>
@@ -260,7 +260,7 @@ function ArtistStorePage() {
           <p className="text-xs text-muted-foreground">
             Powered by{" "}
             <Link to="/" className="text-primary font-medium hover:underline">
-              MyBeatCatalog
+              <span className="text-foreground">MY</span><span className="text-primary">BEAT</span><span className="text-foreground">CATALOG</span><sup className="ml-0.5 align-super text-[0.45em] font-bold text-foreground">™</sup>
             </Link>
           </p>
         </div>

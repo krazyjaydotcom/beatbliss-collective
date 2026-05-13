@@ -12,7 +12,7 @@ export const Route = createFileRoute("/b/$slug")({
     const f = loaderData?.funnel;
     return {
       meta: [
-        { title: f ? `${f.title} — KRAZYJAY` : "My Beat Catalog — KRAZYJAYDOTCOM" },
+        { title: f ? `${f.title} — KRAZYJAY` : "MYBEATCATALOG — MYBEATCATALOG" },
         {
           name: "description",
           content: f?.headline ?? "Private access to cinematic, inspirational beats for artists with a message.",

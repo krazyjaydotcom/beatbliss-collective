@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { generateAgreementPdf, type AgreementData } from "@/lib/agreement-pdf";
 
 export const Route = createFileRoute("/_authenticated/admin/agreements")({
-  head: () => ({ meta: [{ title: "Admin · Agreements — KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "Admin · Agreements — MYBEATCATALOG" }] }),
   component: AdminAgreementsPage,
 });
 

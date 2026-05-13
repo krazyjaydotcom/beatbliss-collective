@@ -31,7 +31,7 @@ import { generateAgreementPdf, type AgreementData } from "@/lib/agreement-pdf";
 export const Route = createFileRoute("/_authenticated/beats")({
   head: () => ({
     meta: [
-      { title: "Beat Catalog — KRAZYJAYDOTCOM" },
+      { title: "Beat Catalog — MYBEATCATALOG" },
       { name: "description", content: "Browse premium beats, save notes, and download with member credits." },
     ],
   }),
@@ -786,7 +786,7 @@ function DownloadDialog({ beat, credits, profile, onClose, onSuccess }: {
       const { data: agr } = await supabase.from("agreements").select("*").eq("id", result.agreement_id).single();
       if (agr) {
         const pdf = generateAgreementPdf(agr as AgreementData);
-        pdf.save(`KRAZYJAYDOTCOM-${(agr as AgreementData).agreement_id}.pdf`);
+        pdf.save(`MYBEATCATALOG-${(agr as AgreementData).agreement_id}.pdf`);
       }
       if (result.audio_url) {
         // Trigger the actual audio download

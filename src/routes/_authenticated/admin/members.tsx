@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/admin/members")({
-  head: () => ({ meta: [{ title: "Admin · Members — KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "Admin · Members — MYBEATCATALOG" }] }),
   component: AdminMembersPage,
 });
 

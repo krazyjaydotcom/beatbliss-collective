@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { validateJoinToken, claimJoinInvite } from "@/lib/join.functions";
 
 export const Route = createFileRoute("/join/$token")({
-  head: () => ({ meta: [{ title: "Join — KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "Join — MYBEATCATALOG" }] }),
   component: JoinPage,
 });
 

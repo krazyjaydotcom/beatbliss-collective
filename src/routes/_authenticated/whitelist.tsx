@@ -14,7 +14,7 @@ import { SiteNav } from "@/components/site-nav";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/whitelist")({
-  head: () => ({ meta: [{ title: "Whitelist Submissions — KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "Whitelist Submissions — MYBEATCATALOG" }] }),
   component: WhitelistPage,
 });
 

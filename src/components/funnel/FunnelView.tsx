@@ -302,7 +302,7 @@ function StickyAudio({
         )}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold truncate">{title}</p>
-          <p className="text-[11px] text-muted-foreground truncate">by KRAZYJAYDOTCOM</p>
+          <p className="text-[11px] text-muted-foreground truncate">by MYBEATCATALOG</p>
         </div>
         <button
           type="button"

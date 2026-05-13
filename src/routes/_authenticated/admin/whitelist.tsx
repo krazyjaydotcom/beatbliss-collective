@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/whitelist")({
-  head: () => ({ meta: [{ title: "Admin · Whitelist — KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "Admin · Whitelist — MYBEATCATALOG" }] }),
   component: AdminWhitelistPage,
 });
 

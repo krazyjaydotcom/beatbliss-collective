@@ -4,7 +4,7 @@ export function SiteFooter() {
       <div className="container mx-auto grid gap-8 px-6 py-12 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="text-xl font-black">
-            My<span className="text-primary">Beat</span>Catalog
+            <span className="text-foreground">MY</span><span className="text-primary">BEAT</span><span className="text-foreground">CATALOG</span><sup className="ml-0.5 align-super text-[0.45em] font-bold text-foreground">™</sup>
           </div>
           <p className="mt-3 max-w-sm text-sm text-muted-foreground">
             Private membership access to cinematic, inspirational beats for artists with a message.
@@ -26,7 +26,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} MyBeatCatalog. All rights reserved.
+        © {new Date().getFullYear()} MYBEATCATALOG. All rights reserved.
       </div>
     </footer>
   );

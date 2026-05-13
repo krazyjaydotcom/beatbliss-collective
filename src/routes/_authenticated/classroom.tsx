@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/classroom")({
-  head: () => ({ meta: [{ title: "Classroom — KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "Classroom — MYBEATCATALOG" }] }),
   component: ClassroomPage,
 });
 

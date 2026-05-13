@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { generateAgreementPdf, type AgreementData } from "@/lib/agreement-pdf";
 
 export const Route = createFileRoute("/_authenticated/downloads")({
-  head: () => ({ meta: [{ title: "My Downloads — KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "My Downloads — MYBEATCATALOG" }] }),
   component: DownloadsPage,
 });
 

@@ -12,7 +12,7 @@ export function Features() {
     <section id="about" className="container mx-auto px-6 py-20">
       <div className="text-center">
         <h2 className="text-3xl md:text-4xl font-black tracking-tight">
-          WHY ARTISTS CHOOSE KRAZYJAYDOTCOM
+          WHY ARTISTS CHOOSE MYBEATCATALOG
         </h2>
         <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-primary" />
       </div>

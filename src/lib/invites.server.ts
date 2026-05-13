@@ -73,12 +73,12 @@ const TIER_LABEL: Record<string, string> = {
 
 async function sendInviteEmail(opts: { to: string; url: string; tier: string }) {
   const tierLabel = TIER_LABEL[opts.tier] ?? opts.tier;
-  const subject = "Your MyBeatCatalog invite — claim your account";
+  const subject = "Your MYBEATCATALOG invite - claim your account";
   const html = `<!DOCTYPE html>
 <html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;margin:0;padding:0">
   <div style="max-width:560px;margin:0 auto;padding:40px 24px">
     <h1 style="font-size:28px;font-weight:900;letter-spacing:-0.02em;margin:0 0 8px">
-      My<span style="color:#ff3b3b">Beat</span>Catalog
+      MY<span style="color:#ff3b3b">BEAT</span>CATALOG<sup style="font-size:10px;vertical-align:super;margin-left:2px">™</sup>
     </h1>
     <p style="color:#a1a1aa;margin:0 0 32px">Welcome to the catalog.</p>
 
@@ -105,7 +105,7 @@ async function sendInviteEmail(opts: { to: string; url: string; tier: string }) 
   </div>
 </body></html>`;
 
-  const text = `Welcome to MyBeatCatalog.
+  const text = `Welcome to MYBEATCATALOG.
 
 Claim your ${tierLabel} membership and set your password:
 ${opts.url}
@@ -117,7 +117,7 @@ This link works once and expires in 7 days.`;
       queue_name: "transactional_emails",
       payload: {
         to: opts.to,
-        from: "KRAZYJAYDOTCOM <noreply@notify.krazyjay.com>",
+        from: "MYBEATCATALOG <noreply@notify.krazyjay.com>",
         sender_domain: "notify.krazyjay.com",
         subject,
         html,

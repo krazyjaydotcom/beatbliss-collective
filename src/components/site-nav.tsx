@@ -11,7 +11,7 @@ export function SiteNav() {
     <header className="absolute left-0 right-0 top-0 z-50">
       <nav className="container mx-auto flex items-center justify-between px-6 py-6">
         <Link to="/" className="text-2xl font-black tracking-tight">
-          My<span className="text-primary">Beat</span>Catalog
+          <span className="text-foreground">MY</span><span className="text-primary">BEAT</span><span className="text-foreground">CATALOG</span><sup className="ml-0.5 align-super text-[0.45em] font-bold text-foreground">™</sup>
         </Link>
         <div className="hidden items-center gap-8 text-sm font-medium md:flex">
           <a href="/#pricing" className="transition-colors hover:text-primary">Pricing</a>

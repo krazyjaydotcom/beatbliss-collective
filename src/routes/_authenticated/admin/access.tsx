@@ -12,7 +12,7 @@ import { getStripeEnvironment } from "@/lib/stripe";
 import { createManualInvite } from "@/lib/invites.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/access")({
-  head: () => ({ meta: [{ title: "Admin · Manual Access - KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "Admin · Manual Access - MYBEATCATALOG" }] }),
   component: AdminAccessPage,
 });
 

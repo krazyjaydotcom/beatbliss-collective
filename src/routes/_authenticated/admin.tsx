@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — KRAZYJAYDOTCOM" }] }),
+  head: () => ({ meta: [{ title: "Admin — MYBEATCATALOG" }] }),
   component: AdminLayout,
 });
 
