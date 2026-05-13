@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
@@ -69,6 +70,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinTokenRoute = JoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
@@ -267,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/join/$token': typeof JoinTokenRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -304,6 +311,7 @@ export interface FileRoutesByTo {
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/join/$token': typeof JoinTokenRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -344,6 +352,7 @@ export interface FileRoutesById {
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/join/$token': typeof JoinTokenRoute
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -384,6 +393,7 @@ export interface FileRouteTypes {
     | '/checkout/return'
     | '/claim/$token'
     | '/invite/$token'
+    | '/join/$token'
     | '/admin/access'
     | '/admin/agreements'
     | '/admin/beat-requests'
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/checkout/return'
     | '/claim/$token'
     | '/invite/$token'
+    | '/join/$token'
     | '/admin/access'
     | '/admin/agreements'
     | '/admin/beat-requests'
@@ -460,6 +471,7 @@ export interface FileRouteTypes {
     | '/checkout/return'
     | '/claim/$token'
     | '/invite/$token'
+    | '/join/$token'
     | '/_authenticated/admin/access'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/beat-requests'
@@ -489,6 +501,7 @@ export interface RootRouteChildren {
   BSlugRoute: typeof BSlugRouteWithChildren
   ClaimTokenRoute: typeof ClaimTokenRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  JoinTokenRoute: typeof JoinTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
@@ -528,6 +541,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join/$token': {
+      id: '/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof JoinTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
@@ -857,6 +877,7 @@ const rootRouteChildren: RootRouteChildren = {
   BSlugRoute: BSlugRouteWithChildren,
   ClaimTokenRoute: ClaimTokenRoute,
   InviteTokenRoute: InviteTokenRoute,
+  JoinTokenRoute: JoinTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
