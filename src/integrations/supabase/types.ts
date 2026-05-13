@@ -467,47 +467,53 @@ export type Database = {
         Row: {
           claimed_by_user_id: string | null
           created_at: string
-          email: string
+          created_by: string | null
+          email: string | null
           environment: string
           expires_at: string
           id: string
           revoked_at: string | null
-          stripe_customer_id: string
+          stripe_customer_id: string | null
           stripe_subscription_id: string | null
           tier: string
           token: string
           updated_at: string
           used_at: string | null
+          used_by: string | null
         }
         Insert: {
           claimed_by_user_id?: string | null
           created_at?: string
-          email: string
+          created_by?: string | null
+          email?: string | null
           environment?: string
           expires_at?: string
           id?: string
           revoked_at?: string | null
-          stripe_customer_id: string
+          stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tier?: string
           token: string
           updated_at?: string
           used_at?: string | null
+          used_by?: string | null
         }
         Update: {
           claimed_by_user_id?: string | null
           created_at?: string
-          email?: string
+          created_by?: string | null
+          email?: string | null
           environment?: string
           expires_at?: string
           id?: string
           revoked_at?: string | null
-          stripe_customer_id?: string
+          stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tier?: string
           token?: string
           updated_at?: string
           used_at?: string | null
+          used_by?: string | null
         }
         Relationships: []
       }
