@@ -44,7 +44,7 @@ function ArtistStorePage() {
       .select("store_name, store_bio, store_artwork_url, store_tracks, store_buy_url, store_donate_url, display_name, avatar_url")
       .eq("store_username", username)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: { data: any | null }) => {
         if (!data) { setNotFound(true); }
         else { setProfile({ ...data, store_tracks: (data.store_tracks as Track[]) ?? [] }); }
         setLoading(false);

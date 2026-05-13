@@ -19,7 +19,9 @@ import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
+import { Route as ArtistUsernameRouteImport } from './routes/artist.$username'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
+import { Route as AuthenticatedStoreRouteImport } from './routes/_authenticated/store'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedLicenseExampleRouteImport } from './routes/_authenticated/license-example'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
@@ -97,9 +99,19 @@ const BSlugRoute = BSlugRouteImport.update({
   path: '/b/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ArtistUsernameRoute = ArtistUsernameRouteImport.update({
+  id: '/artist/$username',
+  path: '/artist/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedWhitelistRoute = AuthenticatedWhitelistRouteImport.update({
   id: '/whitelist',
   path: '/whitelist',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStoreRoute = AuthenticatedStoreRouteImport.update({
+  id: '/store',
+  path: '/store',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
@@ -268,7 +280,9 @@ export interface FileRoutesByFullPath {
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/license-example': typeof AuthenticatedLicenseExampleRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/store': typeof AuthenticatedStoreRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
+  '/artist/$username': typeof ArtistUsernameRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
@@ -306,7 +320,9 @@ export interface FileRoutesByTo {
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/license-example': typeof AuthenticatedLicenseExampleRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/store': typeof AuthenticatedStoreRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
+  '/artist/$username': typeof ArtistUsernameRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
@@ -347,7 +363,9 @@ export interface FileRoutesById {
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/_authenticated/license-example': typeof AuthenticatedLicenseExampleRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/store': typeof AuthenticatedStoreRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
+  '/artist/$username': typeof ArtistUsernameRoute
   '/b/$slug': typeof BSlugRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
@@ -388,7 +406,9 @@ export interface FileRouteTypes {
     | '/downloads'
     | '/license-example'
     | '/profile'
+    | '/store'
     | '/whitelist'
+    | '/artist/$username'
     | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
@@ -426,7 +446,9 @@ export interface FileRouteTypes {
     | '/downloads'
     | '/license-example'
     | '/profile'
+    | '/store'
     | '/whitelist'
+    | '/artist/$username'
     | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
@@ -466,7 +488,9 @@ export interface FileRouteTypes {
     | '/_authenticated/downloads'
     | '/_authenticated/license-example'
     | '/_authenticated/profile'
+    | '/_authenticated/store'
     | '/_authenticated/whitelist'
+    | '/artist/$username'
     | '/b/$slug'
     | '/checkout/return'
     | '/claim/$token'
@@ -498,6 +522,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  ArtistUsernameRoute: typeof ArtistUsernameRoute
   BSlugRoute: typeof BSlugRouteWithChildren
   ClaimTokenRoute: typeof ClaimTokenRoute
   InviteTokenRoute: typeof InviteTokenRoute
@@ -578,11 +603,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/artist/$username': {
+      id: '/artist/$username'
+      path: '/artist/$username'
+      fullPath: '/artist/$username'
+      preLoaderRoute: typeof ArtistUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/whitelist': {
       id: '/_authenticated/whitelist'
       path: '/whitelist'
       fullPath: '/whitelist'
       preLoaderRoute: typeof AuthenticatedWhitelistRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/store': {
+      id: '/_authenticated/store'
+      path: '/store'
+      fullPath: '/store'
+      preLoaderRoute: typeof AuthenticatedStoreRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/profile': {
@@ -826,6 +865,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
   AuthenticatedLicenseExampleRoute: typeof AuthenticatedLicenseExampleRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedStoreRoute: typeof AuthenticatedStoreRoute
   AuthenticatedWhitelistRoute: typeof AuthenticatedWhitelistRoute
 }
 
@@ -839,6 +879,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
   AuthenticatedLicenseExampleRoute: AuthenticatedLicenseExampleRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedStoreRoute: AuthenticatedStoreRoute,
   AuthenticatedWhitelistRoute: AuthenticatedWhitelistRoute,
 }
 
@@ -874,6 +915,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  ArtistUsernameRoute: ArtistUsernameRoute,
   BSlugRoute: BSlugRouteWithChildren,
   ClaimTokenRoute: ClaimTokenRoute,
   InviteTokenRoute: InviteTokenRoute,

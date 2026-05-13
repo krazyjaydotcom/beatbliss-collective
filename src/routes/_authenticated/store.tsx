@@ -63,7 +63,7 @@ function StoreEditorPage() {
       .select("store_name, store_bio, store_artwork_url, store_tracks, store_buy_url, store_donate_url, store_username, display_name")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: { data: any | null }) => {
         if (data) {
           setStore({
             store_name: data.store_name ?? data.display_name ?? "",
