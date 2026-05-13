@@ -92,7 +92,7 @@ export const claimInvite = createServerFn({ method: "POST" })
       return { ok: false, error: claimErr.message };
     }
 
-    return { ok: true, email: invite.email };
+    return { ok: true, email: invite.email ?? undefined };
   });
 
 export const createManualInvite = createServerFn({ method: "POST" })
