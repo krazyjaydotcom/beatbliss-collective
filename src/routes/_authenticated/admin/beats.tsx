@@ -210,7 +210,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
 
       setStatus("uploading");
       const stamp = Date.now();
-      const safe = (p.title || "beat").replace(/[^\w-]+/g, "_");
+      const safe = (p.title || "beat").replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "");
       let audio_url: string | null = null;
       let audio_url_wav: string | null = null;
       let audio_url_tagged: string | null = null;
@@ -218,8 +218,8 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       if (!taggedOnly) {
         const mp3Blob = sourceIsMp3 ? p.audio : encodeMp3(buf, 192);
         const wavBlob = isWav(p.audio) ? p.audio : encodeWav(buf);
-        const mp3Path = `${stamp}-${safe}.mp3`;
-        const wavPath = `${stamp}-${safe}.wav`;
+        const mp3Path = `KRAZYJAYDOTCOM_${safe}.mp3`;
+        const wavPath = `KRAZYJAYDOTCOM_${safe}.wav`;
         const up1 = await supabase.storage.from("beat-audio").upload(mp3Path, mp3Blob, { upsert: false, contentType: "audio/mpeg" });
         if (up1.error) throw up1.error;
         const up2 = await supabase.storage.from("beat-audio").upload(wavPath, wavBlob, { upsert: false, contentType: "audio/wav" });
@@ -231,7 +231,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       if (p.tagged) {
         const tBuf = p.tagged === p.audio ? buf : await decodeAudioFile(p.tagged);
         const tBlob = isMp3(p.tagged) ? p.tagged : encodeMp3(tBuf, 192);
-        const tPath = `${stamp}-${safe}-tagged.mp3`;
+        const tPath = `KRAZYJAYDOTCOM_${safe}_Tagged.mp3`;
         const upT = await supabase.storage.from("beat-audio").upload(tPath, tBlob, { upsert: false, contentType: "audio/mpeg" });
         if (upT.error) throw upT.error;
         audio_url_tagged = supabase.storage.from("beat-audio").getPublicUrl(tPath).data.publicUrl;
