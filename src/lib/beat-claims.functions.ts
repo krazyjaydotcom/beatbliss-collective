@@ -58,8 +58,8 @@ async function sendToSendy(params: {
       list: listId,
       email: params.email,
       boolean: "true",
-      Beat: params.beatTitle,
-      OfferURL: params.offerUrl,
+      BeatTitle: params.beatTitle,
+      OfferUrl: params.offerUrl,
       Source: params.source || "beat-claim",
       referrer: params.source || "beat-claim",
     });
@@ -91,6 +91,7 @@ export const claimBeatAndSendFox = createServerFn({ method: "POST" })
     offerUrl: string | null;
     expiresAt: string | null;
     sendfox: EmailProviderResult;
+    sendy: EmailProviderResult;
     error: string | null;
   }> => {
     try {
@@ -125,6 +126,7 @@ export const claimBeatAndSendFox = createServerFn({ method: "POST" })
         offerUrl,
         expiresAt: claim.expires_at,
         sendfox: sendy,
+        sendy,
         error: null,
       };
     } catch (err) {
@@ -134,6 +136,10 @@ export const claimBeatAndSendFox = createServerFn({ method: "POST" })
         offerUrl: null,
         expiresAt: null,
         sendfox: {
+          configured: !!process.env.SENDY_BASE_URL && !!process.env.SENDY_API_KEY && !!process.env.SENDY_LIST_ID,
+          ok: false,
+        },
+        sendy: {
           configured: !!process.env.SENDY_BASE_URL && !!process.env.SENDY_API_KEY && !!process.env.SENDY_LIST_ID,
           ok: false,
         },
