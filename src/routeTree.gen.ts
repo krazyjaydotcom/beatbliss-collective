@@ -35,6 +35,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugOfferRouteImport } from './routes/b.$slug.offer'
+import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat-claim'
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
@@ -50,7 +51,6 @@ import { Route as AuthenticatedAdminBeatClaimsRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenticated/admin/access'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat-claim'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAdminFunnelsIdRouteImport } from './routes/_authenticated/admin/funnels_.$id'
 
@@ -185,6 +185,11 @@ const BSlugOfferRoute = BSlugOfferRouteImport.update({
   path: '/offer',
   getParentRoute: () => BSlugRoute,
 } as any)
+const ApiPublicBeatClaimRoute = ApiPublicBeatClaimRouteImport.update({
+  id: '/api/public/beat-claim',
+  path: '/api/public/beat-claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminWhitelistRoute =
   AuthenticatedAdminWhitelistRouteImport.update({
     id: '/whitelist',
@@ -273,12 +278,6 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicBeatClaimRoute =
-  ApiPublicBeatClaimRouteImport.update({
-    id: '/api/public/beat-claim',
-    path: '/api/public/beat-claim',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -330,10 +329,10 @@ export interface FileRoutesByFullPath {
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
-  '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -374,10 +373,10 @@ export interface FileRoutesByTo {
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
-  '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -421,10 +420,10 @@ export interface FileRoutesById {
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/funnels_/$id': typeof AuthenticatedAdminFunnelsIdRoute
-  '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -468,10 +467,10 @@ export interface FileRouteTypes {
     | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
+    | '/api/public/beat-claim'
     | '/b/$slug/offer'
     | '/admin/'
     | '/admin/funnels/$id'
-    | '/api/public/beat-claim'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
@@ -512,10 +511,10 @@ export interface FileRouteTypes {
     | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
+    | '/api/public/beat-claim'
     | '/b/$slug/offer'
     | '/admin'
     | '/admin/funnels/$id'
-    | '/api/public/beat-claim'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   id:
@@ -558,10 +557,10 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/online'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/whitelist'
+    | '/api/public/beat-claim'
     | '/b/$slug/offer'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/funnels_/$id'
-    | '/api/public/beat-claim'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
@@ -768,6 +767,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BSlugOfferRouteImport
       parentRoute: typeof BSlugRoute
     }
+    '/api/public/beat-claim': {
+      id: '/api/public/beat-claim'
+      path: '/api/public/beat-claim'
+      fullPath: '/api/public/beat-claim'
+      preLoaderRoute: typeof ApiPublicBeatClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/whitelist': {
       id: '/_authenticated/admin/whitelist'
       path: '/whitelist'
@@ -871,13 +877,6 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/queue/process'
       fullPath: '/lovable/email/queue/process'
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/beat-claim': {
-      id: '/api/public/beat-claim'
-      path: '/api/public/beat-claim'
-      fullPath: '/api/public/beat-claim'
-      preLoaderRoute: typeof ApiPublicBeatClaimRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/payments/webhook': {
@@ -1012,4 +1011,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-

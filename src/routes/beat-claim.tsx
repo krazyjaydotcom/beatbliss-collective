@@ -37,6 +37,15 @@ type ClaimableBeat = {
   audio_url_tagged: string | null;
   created_at: string;
 };
+type ClaimBeatApiResponse = {
+  ok: boolean;
+  token: string | null;
+  offerUrl: string | null;
+  expiresAt: string | null;
+  sendy?: { configured: boolean; ok: boolean; error?: string };
+  sendfox?: { configured: boolean; ok: boolean; error?: string };
+  error: string | null;
+};
 
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
