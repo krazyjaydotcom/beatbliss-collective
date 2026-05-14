@@ -33,7 +33,8 @@ const inputSchema = z.object({
 });
 
 function getPublicOrigin(inputOrigin?: string) {
-  return (inputOrigin || process.env.PUBLIC_SITE_URL || process.env.SITE_URL || "https://mybeatcatalog.com").replace(//$/, "");
+  const origin = inputOrigin || process.env.PUBLIC_SITE_URL || process.env.SITE_URL || "https://mybeatcatalog.com";
+  return origin.endsWith("/") ? origin.slice(0, -1) : origin;
 }
 
 async function sendToSendFox(params: {
