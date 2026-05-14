@@ -1,5 +1,4 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDownToLine, Loader2, Lock, Mail, Pause, Play, Search, SkipBack, SkipForward, Waves } from "lucide-react";
@@ -9,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { claimBeatAndSendFox } from "@/lib/beat-claims.functions";
 
 export const Route = createFileRoute("/beat-claim")({
   validateSearch: (s: Record<string, unknown>): { beat?: string; source?: string } => ({
@@ -62,9 +60,7 @@ function beatAudio(beat: ClaimableBeat | null) {
 
 function BeatClaimPage() {
   const navigate = useNavigate();
-  const search = Route.useSearch();
-  const claimBeat = useServerFn(claimBeatAndSendFox);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const search = Route.useSearch();  const audioRef = useRef<HTMLAudioElement>(null);
   const [selectedId, setSelectedId] = useState("");
   const [playingId, setPlayingId] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -170,17 +166,23 @@ function BeatClaimPage() {
 
     setSubmitting(true);
     try {
-      const result = await claimBeat({
-        data: {
+      const response = await fetch("/api/public/beat-claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           email: cleanEmail,
           beatId: selectedBeat.id,
           source: search.source ?? "beat-claim",
           origin: window.location.origin,
-        },
+        }),
       });
-      if (!result.ok || !result.token) throw new Error(result.error ?? "Unable to reserve this beat.");
-      if (result.sendfox.configured && !result.sendfox.ok) {
-        toast.message("Beat reserved. Email provider needs attention, but your lead was saved.");
+      const result = (await response.json()) as ClaimBeatApiResponse;
+      if (!response.ok || !result.ok || !result.token) {
+        throw new Error(result.error ?? "Unable to reserve this beat.");
+      }
+      const provider = result.sendy ?? result.sendfox;
+      if (provider?.configured && !provider.ok) {
+        toast.message(`Beat reserved, but Sendy needs attention: ${provider.error ?? "unknown error"}`);
       }
       navigate({ to: "/offer/$token", params: { token: result.token } });
     } catch (err) {
@@ -342,3 +344,4 @@ function MiniWave({ active }: { active: boolean }) {
     </div>
   );
 }
+

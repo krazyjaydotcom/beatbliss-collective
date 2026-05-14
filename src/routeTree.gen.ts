@@ -50,6 +50,7 @@ import { Route as AuthenticatedAdminBeatClaimsRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenticated/admin/access'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat-claim'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAdminFunnelsIdRouteImport } from './routes/_authenticated/admin/funnels_.$id'
 
@@ -272,6 +273,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBeatClaimRoute =
+  ApiPublicBeatClaimRouteImport.update({
+    id: '/api/public/beat-claim',
+    path: '/api/public/beat-claim',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -326,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
+  '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -369,6 +377,7 @@ export interface FileRoutesByTo {
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
+  '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -415,6 +424,7 @@ export interface FileRoutesById {
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/funnels_/$id': typeof AuthenticatedAdminFunnelsIdRoute
+  '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -461,6 +471,7 @@ export interface FileRouteTypes {
     | '/b/$slug/offer'
     | '/admin/'
     | '/admin/funnels/$id'
+    | '/api/public/beat-claim'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
@@ -504,6 +515,7 @@ export interface FileRouteTypes {
     | '/b/$slug/offer'
     | '/admin'
     | '/admin/funnels/$id'
+    | '/api/public/beat-claim'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   id:
@@ -549,6 +561,7 @@ export interface FileRouteTypes {
     | '/b/$slug/offer'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/funnels_/$id'
+    | '/api/public/beat-claim'
     | '/api/public/payments/webhook'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
@@ -566,6 +579,7 @@ export interface RootRouteChildren {
   InviteTokenRoute: typeof InviteTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  ApiPublicBeatClaimRoute: typeof ApiPublicBeatClaimRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
@@ -859,6 +873,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/beat-claim': {
+      id: '/api/public/beat-claim'
+      path: '/api/public/beat-claim'
+      fullPath: '/api/public/beat-claim'
+      preLoaderRoute: typeof ApiPublicBeatClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -984,9 +1005,11 @@ const rootRouteChildren: RootRouteChildren = {
   InviteTokenRoute: InviteTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
   OfferTokenRoute: OfferTokenRoute,
+  ApiPublicBeatClaimRoute: ApiPublicBeatClaimRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
