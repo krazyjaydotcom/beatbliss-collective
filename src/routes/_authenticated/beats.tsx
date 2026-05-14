@@ -1134,11 +1134,6 @@ function AudioPlayer({
                       {beat.bpm} BPM
                     </span>
                   )}
-                  {beat.key && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
-                      {beat.key}
-                    </span>
-                  )}
                   {beat.genre && (
                     <span className="text-[11px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
                       {beat.genre}
