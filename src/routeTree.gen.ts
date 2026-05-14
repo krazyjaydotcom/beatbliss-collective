@@ -333,8 +333,8 @@ export interface FileRoutesByFullPath {
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
-  '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
+  '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
@@ -378,8 +378,8 @@ export interface FileRoutesByTo {
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
-  '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
+  '/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
@@ -426,6 +426,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
   '/_authenticated/admin/invites': typeof AuthenticatedAdminInvitesRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
+  '/_authenticated/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
@@ -473,8 +474,8 @@ export interface FileRouteTypes {
     | '/admin/import'
     | '/admin/invites'
     | '/admin/members'
-    | '/admin/online'
     | '/admin/offer-page'
+    | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
@@ -518,8 +519,8 @@ export interface FileRouteTypes {
     | '/admin/import'
     | '/admin/invites'
     | '/admin/members'
-    | '/admin/online'
     | '/admin/offer-page'
+    | '/admin/online'
     | '/admin/support'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
@@ -565,8 +566,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/import'
     | '/_authenticated/admin/invites'
     | '/_authenticated/admin/members'
-    | '/_authenticated/admin/online'
     | '/_authenticated/admin/offer-page'
+    | '/_authenticated/admin/online'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/whitelist'
     | '/api/public/beat-claim'
@@ -927,8 +928,8 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
   AuthenticatedAdminInvitesRoute: typeof AuthenticatedAdminInvitesRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
-  AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
   AuthenticatedAdminOfferPageRoute: typeof AuthenticatedAdminOfferPageRoute
+  AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
   AuthenticatedAdminWhitelistRoute: typeof AuthenticatedAdminWhitelistRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -947,8 +948,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
   AuthenticatedAdminInvitesRoute: AuthenticatedAdminInvitesRoute,
   AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
-  AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
   AuthenticatedAdminOfferPageRoute: AuthenticatedAdminOfferPageRoute,
+  AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
   AuthenticatedAdminWhitelistRoute: AuthenticatedAdminWhitelistRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,

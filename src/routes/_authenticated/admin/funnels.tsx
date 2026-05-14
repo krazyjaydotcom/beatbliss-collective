@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Plus, Copy, Check, Trash2, Power, Pencil } from "lucide-react";
+import { OfferPageEditor } from "@/routes/_authenticated/admin/offer-page";
 
 export const Route = createFileRoute("/_authenticated/admin/funnels")({
   component: AdminFunnelsPage,
@@ -89,7 +90,9 @@ function AdminFunnelsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
+      <OfferPageEditor />
+      <div className="border-t border-slate-200 pt-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight">Beat Funnels</h1>
@@ -145,6 +148,7 @@ function AdminFunnelsPage() {
           </p>
         </div>
       )}
+      </div>
     </div>
   );
 }

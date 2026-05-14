@@ -56,7 +56,7 @@ function normalize(row: Partial<OfferSettings> | null | undefined): OfferSetting
   };
 }
 
-function OfferPageEditor() {
+export function OfferPageEditor() {
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState<OfferSettings>(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);
