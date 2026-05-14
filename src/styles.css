@@ -154,3 +154,111 @@
     color: var(--color-foreground);
   }
 }
+
+@layer components {
+  .admin-console {
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  .admin-console header,
+  .admin-console main,
+  .admin-console section,
+  .admin-console article {
+    color: #0f172a;
+  }
+
+  .admin-console .bg-background,
+  .admin-console [class*="bg-background"] {
+    background-color: #f8fafc !important;
+  }
+
+  .admin-console .bg-card,
+  .admin-console [class*="bg-card"] {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  .admin-console .bg-muted,
+  .admin-console [class*="bg-muted"] {
+    background-color: #f1f5f9 !important;
+  }
+
+  .admin-console .border-border,
+  .admin-console [class*="border-border"] {
+    border-color: #e2e8f0 !important;
+  }
+
+  .admin-console .text-foreground,
+  .admin-console [class*="text-foreground"] {
+    color: #0f172a !important;
+  }
+
+  .admin-console .text-muted-foreground,
+  .admin-console [class*="text-muted-foreground"] {
+    color: #475569 !important;
+  }
+
+  .admin-console input,
+  .admin-console textarea,
+  .admin-console select {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+
+  .admin-console input::placeholder,
+  .admin-console textarea::placeholder {
+    color: #64748b !important;
+  }
+
+  .admin-console table {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+
+  .admin-console thead,
+  .admin-console thead tr,
+  .admin-console thead th {
+    background-color: #f1f5f9 !important;
+    color: #334155 !important;
+  }
+
+  .admin-console tbody tr {
+    background-color: #ffffff;
+    border-color: #e2e8f0 !important;
+  }
+
+  .admin-console tbody tr:hover {
+    background-color: #f8fafc !important;
+  }
+
+  .admin-console td,
+  .admin-console th {
+    border-color: #e2e8f0 !important;
+  }
+
+  .admin-console .shadow-\[var\(--shadow-glow\)\],
+  .admin-console .shadow-2xl,
+  .admin-console .shadow-xl,
+  .admin-console .shadow-lg,
+  .admin-console .shadow {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06) !important;
+  }
+
+  .admin-console .rounded-2xl,
+  .admin-console .rounded-3xl {
+    border-color: #e2e8f0;
+  }
+
+  .admin-console .bg-secondary,
+  .admin-console [class*="bg-secondary"] {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+
+  .admin-console .bg-primary,
+  .admin-console [class*="bg-primary/10"] {
+    background-color: #eff6ff !important;
+  }
+}

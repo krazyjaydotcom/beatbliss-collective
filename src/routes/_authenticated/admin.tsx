@@ -64,7 +64,7 @@ function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="admin-console min-h-screen bg-slate-50 text-slate-950">
       <header className="border-b border-border">
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
