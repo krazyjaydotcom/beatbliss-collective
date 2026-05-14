@@ -39,6 +39,7 @@ import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
+import { Route as AuthenticatedAdminOfferPageRouteImport } from './routes/_authenticated/admin/offer-page'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
 import { Route as AuthenticatedAdminInvitesRouteImport } from './routes/_authenticated/admin/invites'
 import { Route as AuthenticatedAdminImportRouteImport } from './routes/_authenticated/admin/import'
@@ -208,6 +209,12 @@ const AuthenticatedAdminOnlineRoute =
     path: '/online',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminOfferPageRoute =
+  AuthenticatedAdminOfferPageRouteImport.update({
+    id: '/offer-page',
+    path: '/offer-page',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminMembersRoute =
   AuthenticatedAdminMembersRouteImport.update({
     id: '/members',
@@ -327,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
+  '/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
@@ -371,6 +379,7 @@ export interface FileRoutesByTo {
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
+  '/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
@@ -465,6 +474,7 @@ export interface FileRouteTypes {
     | '/admin/invites'
     | '/admin/members'
     | '/admin/online'
+    | '/admin/offer-page'
     | '/admin/support'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
@@ -509,6 +519,7 @@ export interface FileRouteTypes {
     | '/admin/invites'
     | '/admin/members'
     | '/admin/online'
+    | '/admin/offer-page'
     | '/admin/support'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
@@ -555,6 +566,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/invites'
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/online'
+    | '/_authenticated/admin/offer-page'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/whitelist'
     | '/api/public/beat-claim'
@@ -795,6 +807,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOnlineRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/offer-page': {
+      id: '/_authenticated/admin/offer-page'
+      path: '/offer-page'
+      fullPath: '/admin/offer-page'
+      preLoaderRoute: typeof AuthenticatedAdminOfferPageRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/members': {
       id: '/_authenticated/admin/members'
       path: '/members'
@@ -909,6 +928,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminInvitesRoute: typeof AuthenticatedAdminInvitesRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
+  AuthenticatedAdminOfferPageRoute: typeof AuthenticatedAdminOfferPageRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
   AuthenticatedAdminWhitelistRoute: typeof AuthenticatedAdminWhitelistRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -928,6 +948,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminInvitesRoute: AuthenticatedAdminInvitesRoute,
   AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
+  AuthenticatedAdminOfferPageRoute: AuthenticatedAdminOfferPageRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
   AuthenticatedAdminWhitelistRoute: AuthenticatedAdminWhitelistRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
