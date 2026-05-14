@@ -120,13 +120,14 @@ export const createPortalSession = createServerFn({ method: "POST" })
 // Guest checkout: no auth required. Email is collected up front so the
 // post-purchase webhook can issue a single-use claim invite.
 export const createGuestCheckoutSession = createServerFn({ method: "POST" })
-  .inputValidator((input: { priceId: string; email: string; returnUrl: string; environment: StripeEnv }) =>
+  .inputValidator((input: { priceId: string; email: string; returnUrl: string; environment: StripeEnv; claimToken?: string }) =>
     z
       .object({
         priceId: z.string().regex(/^[a-zA-Z0-9_-]+$/).max(64),
         email: z.string().email().max(254),
         returnUrl: z.string().url().max(2048),
         environment: z.enum(["sandbox", "live"]),
+        claimToken: z.string().regex(/^[a-z0-9-]{6,32}$/).optional(),
       })
       .parse(input),
   )
@@ -147,6 +148,8 @@ export const createGuestCheckoutSession = createServerFn({ method: "POST" })
         ? existing.data[0].id
         : (await stripe.customers.create({ email: data.email })).id;
 
+      const metadata = data.claimToken ? { beatClaimToken: data.claimToken } : {};
+
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],
         mode: isRecurring ? "subscription" : "payment",
@@ -154,6 +157,8 @@ export const createGuestCheckoutSession = createServerFn({ method: "POST" })
         return_url: data.returnUrl,
         customer: customerId,
         customer_update: { address: "auto" },
+        metadata,
+        ...(isRecurring && { subscription_data: { metadata } }),
       });
 
       return { clientSecret: session.client_secret ?? null, error: null };

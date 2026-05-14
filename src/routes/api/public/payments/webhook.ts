@@ -127,6 +127,16 @@ async function grantMonthlyCredits(
   });
 }
 
+async function markBeatClaimPurchased(token: string | undefined, checkoutSessionId: string) {
+  if (!token) return;
+  const admin = getAdmin();
+  await admin
+    .from("beat_claims" as any)
+    .update({ purchased_at: new Date().toISOString(), checkout_session_id: checkoutSessionId })
+    .eq("token", token)
+    .is("purchased_at", null);
+}
+
 export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
     handlers: {
@@ -157,6 +167,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           switch (event.type) {
             case "checkout.session.completed": {
               const session = event.data.object as Stripe.Checkout.Session;
+              await markBeatClaimPurchased(session.metadata?.beatClaimToken, session.id);
               if (session.mode === "subscription" && session.subscription) {
                 const subId = typeof session.subscription === "string"
                   ? session.subscription

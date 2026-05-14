@@ -15,6 +15,7 @@ import {
   UserCheck,
   GraduationCap,
   Link2,
+  Clock,
 } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
@@ -31,6 +32,7 @@ const NAV = [
   { to: "/admin/beats", label: "Beats", icon: Music },
   { to: "/admin/beat-requests", label: "Beat Requests", icon: Music },
   { to: "/admin/funnels", label: "Beat Funnels", icon: Megaphone },
+  { to: "/admin/beat-claims", label: "Beat Claims", icon: Clock },
   { to: "/admin/members", label: "Members", icon: Users },
   { to: "/admin/access", label: "Manual Access", icon: UserCheck },
   { to: "/admin/invites", label: "Invites", icon: Link2 },
