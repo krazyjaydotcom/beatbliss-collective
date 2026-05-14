@@ -139,7 +139,7 @@ declare
   new_token text;
   inserted public.beat_claims%rowtype;
 begin
-  if email_norm !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' then
+  if length(email_norm) < 6 or position('@' in email_norm) = 0 or position('.' in split_part(email_norm, '@', 2)) = 0 then
     raise exception 'Enter a valid email address.';
   end if;
 
