@@ -19,6 +19,8 @@ type ClaimRow = {
   created_at: string;
   purchased_at: string | null;
   checkout_session_id: string | null;
+  ip_address?: string | null;
+  device_fingerprint?: string | null;
   beats?: {
     title: string;
     genre: string | null;
@@ -34,7 +36,7 @@ function AdminBeatClaimsPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("beat_claims")
-        .select("id, email, token, source, expires_at, created_at, purchased_at, checkout_session_id, beats(title, genre, mood, bpm, cover_url)")
+        .select("id, email, token, source, expires_at, created_at, purchased_at, checkout_session_id, ip_address, device_fingerprint, beats(title, genre, mood, bpm, cover_url)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ClaimRow[];
@@ -64,7 +66,7 @@ function AdminBeatClaimsPage() {
         <Stat icon={TimerOff} label="Expired" value={expired} />
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-sm">
         {claimsQ.isLoading ? (
           <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading beat claims...
@@ -76,14 +78,14 @@ function AdminBeatClaimsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <thead className="border-b border-slate-200 bg-slate-100 text-left text-xs uppercase tracking-[0.2em] text-slate-600">
                 <tr>
                   <th className="px-4 py-3">Lead</th>
                   <th className="px-4 py-3">Beat</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Created</th>
                   <th className="px-4 py-3">Expires</th>
-                  <th className="px-4 py-3">Source</th>
+                  <th className="px-4 py-3">Source</th><th className="px-4 py-3">Guardrails</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
@@ -111,24 +113,28 @@ function ClaimRow({ claim }: { claim: ClaimRow }) {
   const meta = beat ? [beat.genre, beat.mood, beat.bpm ? String(beat.bpm) + " BPM" : null].filter(Boolean).join(" / ") : "";
 
   return (
-    <tr className="border-b border-border/70 align-top">
+    <tr className="border-b border-slate-200 align-top hover:bg-slate-50">
       <td className="px-4 py-4">
         <div className="font-medium">{claim.email}</div>
-        <div className="mt-1 max-w-[240px] truncate text-xs text-muted-foreground">{url}</div>
+        <div className="mt-1 max-w-[240px] truncate text-xs text-slate-600">{url}</div>
       </td>
       <td className="px-4 py-4">
         <div className="flex items-center gap-3">
           {beat?.cover_url ? <img src={beat.cover_url} alt={beat.title} className="h-10 w-10 rounded-md border border-border object-cover" /> : null}
           <div>
             <div className="font-medium">{beat?.title ?? "Beat removed"}</div>
-            {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
+            {meta ? <div className="text-xs text-slate-600">{meta}</div> : null}
           </div>
         </div>
       </td>
       <td className="px-4 py-4"><span className={"rounded-full border px-2 py-1 text-xs " + badgeClass}>{status}</span></td>
-      <td className="px-4 py-4 text-muted-foreground">{new Date(claim.created_at).toLocaleString()}</td>
-      <td className="px-4 py-4 text-muted-foreground">{new Date(claim.expires_at).toLocaleString()}</td>
-      <td className="px-4 py-4 text-muted-foreground">{claim.source ?? "-"}</td>
+      <td className="px-4 py-4 text-slate-600">{new Date(claim.created_at).toLocaleString()}</td>
+      <td className="px-4 py-4 text-slate-600">{new Date(claim.expires_at).toLocaleString()}</td>
+      <td className="px-4 py-4 text-slate-600">{claim.source ?? "-"}</td>
+      <td className="px-4 py-4 text-xs text-slate-600">
+        <div>{claim.ip_address ? "IP: " + claim.ip_address : "IP: -"}</div>
+        <div className="mt-1 max-w-[180px] truncate">{claim.device_fingerprint ? "Device: " + claim.device_fingerprint : "Device: -"}</div>
+      </td>
       <td className="px-4 py-4">
         <Button
           type="button"
@@ -153,7 +159,7 @@ function ClaimRow({ claim }: { claim: ClaimRow }) {
 
 function Stat({ icon: Icon, label, value }: { icon: typeof Clock; label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-950 shadow-sm">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{label}</p>
         <Icon className="h-4 w-4 text-primary" />

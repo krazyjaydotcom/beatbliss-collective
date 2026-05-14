@@ -1,7 +1,67 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
+
+type PlanTier = "artist" | "label" | "none";
+
+function tierForPlan(priceId: string): PlanTier {
+  if (priceId.startsWith("artist_")) return "artist";
+  if (priceId.startsWith("label_")) return "label";
+  return "none";
+}
+
+async function resolveCheckoutLineItem(stripe: ReturnType<typeof createStripeClient>, priceId: string) {
+  if (priceId === "artist_monthly" || priceId === "artist_monthly_v2") {
+    return {
+      lineItem: {
+        price_data: {
+          currency: "usd",
+          unit_amount: 4999,
+          recurring: { interval: "month" },
+          product_data: { name: "MYBEATCATALOG Catalog Membership" },
+        },
+        quantity: 1,
+      },
+      isRecurring: true,
+    };
+  }
+
+  const prices = await stripe.prices.list({ lookup_keys: [priceId] });
+  if (!prices.data.length) {
+    throw new Error(`Plan "${priceId}" is not configured in Stripe yet. Add a Price with this lookup_key in your Stripe dashboard.`);
+  }
+  const stripePrice = prices.data[0];
+  return {
+    lineItem: { price: stripePrice.id, quantity: 1 },
+    isRecurring: stripePrice.type === "recurring",
+  };
+}
+
+async function validateBeatClaimForCheckout(params: { token?: string; email: string }) {
+  if (!params.token) return null;
+
+  const { data, error } = await (supabaseAdmin as any)
+    .from("beat_claims")
+    .select("id, email, expires_at, purchased_at")
+    .eq("token", params.token)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("This private offer link is not valid.");
+  if (String(data.email).toLowerCase() !== params.email.trim().toLowerCase()) {
+    throw new Error("This private offer belongs to a different email address.");
+  }
+  if (data.purchased_at) {
+    throw new Error("This private offer has already been used.");
+  }
+  if (new Date(data.expires_at).getTime() <= Date.now()) {
+    throw new Error("This private offer has expired.");
+  }
+
+  return data;
+}
 
 async function resolveOrCreateCustomer(
   stripe: ReturnType<typeof createStripeClient>,
@@ -44,7 +104,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     environment: StripeEnv;
   }) => {
     if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
-    if (data.environment !== 'sandbox' && data.environment !== 'live') {
+    if (data.environment !== "sandbox" && data.environment !== "live") {
       throw new Error("Invalid environment");
     }
     return data;
@@ -55,13 +115,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       const email = (claims.email as string | undefined) ?? undefined;
 
       const stripe = createStripeClient(data.environment);
-
-      const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
-      if (!prices.data.length) {
-        return { clientSecret: null, error: `Plan "${data.priceId}" is not configured in Stripe yet. Add a Price with this lookup_key in your Stripe dashboard.` };
-      }
-      const stripePrice = prices.data[0];
-      const isRecurring = stripePrice.type === "recurring";
+      const { lineItem, isRecurring } = await resolveCheckoutLineItem(stripe, data.priceId);
+      const tier = tierForPlan(data.priceId);
 
       const customerId = await resolveOrCreateCustomer(stripe, { email, userId });
 
@@ -70,14 +125,15 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         .update({ stripe_customer_id: customerId })
         .eq("id", userId);
 
+      const metadata = { userId, planId: data.priceId, tier };
       const session = await stripe.checkout.sessions.create({
-        line_items: [{ price: stripePrice.id, quantity: 1 }],
+        line_items: [lineItem as any],
         mode: isRecurring ? "subscription" : "payment",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
         customer: customerId,
-        metadata: { userId },
-        ...(isRecurring && { subscription_data: { metadata: { userId } } }),
+        metadata,
+        ...(isRecurring && { subscription_data: { metadata } }),
       });
 
       return { clientSecret: session.client_secret ?? null, error: null };
@@ -91,7 +147,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 export const createPortalSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { returnUrl: string; environment: StripeEnv }) => {
-    if (data.environment !== 'sandbox' && data.environment !== 'live') {
+    if (data.environment !== "sandbox" && data.environment !== "live") {
       throw new Error("Invalid environment");
     }
     return data;
@@ -117,8 +173,6 @@ export const createPortalSession = createServerFn({ method: "POST" })
     return portal.url;
   });
 
-// Guest checkout: no auth required. Email is collected up front so the
-// post-purchase webhook can issue a single-use claim invite.
 export const createGuestCheckoutSession = createServerFn({ method: "POST" })
   .inputValidator((input: { priceId: string; email: string; returnUrl: string; environment: StripeEnv; claimToken?: string }) =>
     z
@@ -133,25 +187,26 @@ export const createGuestCheckoutSession = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<{ clientSecret: string | null; error: string | null }> => {
     try {
+      const email = data.email.trim().toLowerCase();
+      await validateBeatClaimForCheckout({ token: data.claimToken, email });
+
       const stripe = createStripeClient(data.environment);
+      const { lineItem, isRecurring } = await resolveCheckoutLineItem(stripe, data.priceId);
+      const tier = tierForPlan(data.priceId);
 
-      const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
-      if (!prices.data.length) {
-        return { clientSecret: null, error: `Plan "${data.priceId}" is not configured.` };
-      }
-      const stripePrice = prices.data[0];
-      const isRecurring = stripePrice.type === "recurring";
-
-      // Reuse customer with same email if present
-      const existing = await stripe.customers.list({ email: data.email, limit: 1 });
+      const existing = await stripe.customers.list({ email, limit: 1 });
       const customerId = existing.data.length
         ? existing.data[0].id
-        : (await stripe.customers.create({ email: data.email })).id;
+        : (await stripe.customers.create({ email })).id;
 
-      const metadata: Record<string, string> = data.claimToken ? { beatClaimToken: data.claimToken } : {};
+      const metadata: Record<string, string> = {
+        planId: data.priceId,
+        tier,
+        ...(data.claimToken ? { beatClaimToken: data.claimToken } : {}),
+      };
 
       const session = await stripe.checkout.sessions.create({
-        line_items: [{ price: stripePrice.id, quantity: 1 }],
+        line_items: [lineItem as any],
         mode: isRecurring ? "subscription" : "payment",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,

@@ -16,6 +16,11 @@ function getAdmin() {
   return createClient<Database>(url, key, { auth: { persistSession: false } });
 }
 
+function tierFromMetadataOrLookup(metadataTier: string | undefined, lookupKey: string | null | undefined) {
+  if (metadataTier === "artist" || metadataTier === "label" || metadataTier === "none") return metadataTier;
+  return tierFromLookupKey(lookupKey);
+}
+
 async function applySubscription(
   env: StripeEnv,
   sub: Stripe.Subscription,
@@ -46,7 +51,7 @@ async function applySubscription(
   }
   const tier = sub.status === "canceled" || sub.status === "incomplete_expired" || sub.status === "unpaid"
     ? "none"
-    : tierFromLookupKey(lookupKey);
+    : tierFromMetadataOrLookup(sub.metadata?.tier, lookupKey);
 
   // current_period_end lives on the subscription item in newer Stripe API versions
   const periodEndUnix =
@@ -96,7 +101,7 @@ async function grantMonthlyCredits(
     const price = await stripe.prices.retrieve(item.price.id);
     lookupKey = price.lookup_key ?? null;
   }
-  const tier = tierFromLookupKey(lookupKey);
+  const tier = tierFromMetadataOrLookup(sub.metadata?.tier, lookupKey);
   const credits = CREDITS_PER_TIER[tier];
   if (!credits) return;
 
@@ -134,6 +139,7 @@ async function markBeatClaimPurchased(token: string | undefined, checkoutSession
     .from("beat_claims" as any)
     .update({ purchased_at: new Date().toISOString(), checkout_session_id: checkoutSessionId })
     .eq("token", token)
+    .gt("expires_at", new Date().toISOString())
     .is("purchased_at", null);
 }
 
@@ -195,7 +201,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                     const price = await stripe.prices.retrieve(item.price.id);
                     lookupKey = price.lookup_key ?? null;
                   }
-                  const tier = tierFromLookupKey(lookupKey);
+                  const tier = tierFromMetadataOrLookup(sub.metadata?.tier, lookupKey);
                   if (email && (tier === "artist" || tier === "label")) {
                     const origin = url.origin;
                     await issueInviteAndEmail({

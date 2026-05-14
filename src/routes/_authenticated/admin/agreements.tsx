@@ -98,14 +98,14 @@ function AdminAgreementsPage() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search agreement ID, beat, user name or email…" className="pl-9" />
         </div>
 
-        <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white text-slate-950 overflow-hidden shadow-sm">
           {isLoading ? (
             <div className="p-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : filtered.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">No agreements found.</div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+              <thead className="bg-slate-100 text-xs uppercase tracking-wider text-slate-600">
                 <tr>
                   <th className="text-left px-5 py-3 font-medium">Agreement ID</th>
                   <th className="text-left px-5 py-3 font-medium hidden md:table-cell">User</th>
@@ -117,15 +117,15 @@ function AdminAgreementsPage() {
               </thead>
               <tbody>
                 {filtered.map((r: any) => (
-                  <tr key={r.id} className="border-t border-border hover:bg-muted/20">
+                  <tr key={r.id} className="border-t border-slate-200 hover:bg-slate-50">
                     <td className="px-5 py-4 font-mono text-xs">{r.agreement_id}</td>
                     <td className="px-5 py-4 hidden md:table-cell">
                       <div className="font-medium">{r.user_name}</div>
-                      <div className="text-xs text-muted-foreground">{r.user_email}</div>
+                      <div className="text-xs text-slate-600">{r.user_email}</div>
                     </td>
                     <td className="px-5 py-4 hidden sm:table-cell">{r.beat_title}</td>
                     <td className="px-5 py-4 hidden lg:table-cell"><Badge variant="secondary">{r.license_type}</Badge></td>
-                    <td className="px-5 py-4 text-muted-foreground hidden md:table-cell">{new Date(r.accepted_at).toLocaleDateString()}</td>
+                    <td className="px-5 py-4 text-slate-600 hidden md:table-cell">{new Date(r.accepted_at).toLocaleDateString()}</td>
                     <td className="px-5 py-4 text-right">
                       <Button size="sm" variant="ghost" onClick={() => download(r as AgreementData)}>
                         <FileText className="h-4 w-4 mr-1" /> PDF

@@ -68,6 +68,16 @@ function beatAudio(beat: ClaimableBeat | null) {
   return beat?.audio_url_tagged || beat?.audio_url || "";
 }
 
+function getDeviceFingerprint() {
+  if (typeof window === "undefined") return "";
+  const key = "mbc_beat_claim_device";
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const generated = window.crypto?.randomUUID?.() || Math.random().toString(36).slice(2) + Date.now().toString(36);
+  window.localStorage.setItem(key, generated);
+  return generated;
+}
+
 function BeatClaimPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
@@ -169,6 +179,7 @@ function BeatClaimPage() {
           beatId: selectedBeat.id,
           source: search.source ?? "beat-claim",
           origin: window.location.origin,
+          deviceFingerprint: getDeviceFingerprint(),
         }),
       });
       const result = (await response.json()) as ClaimBeatApiResponse;

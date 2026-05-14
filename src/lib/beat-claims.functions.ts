@@ -30,6 +30,7 @@ const inputSchema = z.object({
   beatId: z.string().uuid(),
   source: z.string().max(120).optional().nullable(),
   origin: z.string().url().max(2048).optional(),
+  deviceFingerprint: z.string().max(128).optional().nullable(),
 });
 
 function getPublicOrigin(inputOrigin?: string) {
@@ -60,7 +61,8 @@ async function sendToSendy(params: {
       boolean: "true",
       BeatTitle: params.beatTitle,
       OfferUrl: params.offerUrl,
-      Source: params.source || "beat-claim",    });
+      Source: params.source || "beat-claim",
+    });
 
     const res = await fetch(url, {
       method: "POST",
@@ -99,6 +101,9 @@ export const claimBeatAndSendFox = createServerFn({ method: "POST" })
         _email: email,
         _beat_id: data.beatId,
         _source: source,
+        _ip_address: null,
+        _user_agent: null,
+        _device_fingerprint: data.deviceFingerprint?.trim() || null,
       });
 
       if (claimError) throw claimError;

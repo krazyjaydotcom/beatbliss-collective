@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Check, Clock, Loader2, Music, PlayCircle } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
+import { Check, Clock, Loader2, Music, PlayCircle, ShieldCheck } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { createGuestCheckoutSession } from "@/lib/payments.functions";
+import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/offer/$token")({
   head: () => ({
@@ -98,14 +103,12 @@ function BeatOfferPage() {
 function OfferContent({ offer }: { offer: BeatOffer }) {
   const remaining = useCountdown(offer.expires_at);
   const expired = remaining.total <= 0;
-  const checkoutSearch = useMemo(
-    () => ({ plan: "artist_monthly_v2", email: offer.email, claim: offer.token }) as any,
-    [offer.email, offer.token],
-  );
+  const purchased = !!offer.purchased_at;
   const meta = [offer.genre, offer.mood, offer.bpm ? String(offer.bpm) + " BPM" : null].filter(Boolean).join(" / ");
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <PaymentTestModeBanner />
       <header className="border-b border-border/80 bg-background/90 backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-6 py-5">
           <Link to="/" aria-label="MYBEATCATALOG home"><KrazyLogo className="text-xl" /></Link>
@@ -113,7 +116,7 @@ function OfferContent({ offer }: { offer: BeatOffer }) {
         </div>
       </header>
 
-      <main className="container mx-auto grid gap-8 px-6 py-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-14">
+      <main className="container mx-auto grid gap-8 px-6 py-10 lg:grid-cols-[minmax(0,1fr)_460px] lg:py-14">
         <section className="space-y-6">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-primary">Your beat is reserved</p>
@@ -121,7 +124,7 @@ function OfferContent({ offer }: { offer: BeatOffer }) {
               {offer.title}
             </h1>
             <p className="mt-4 max-w-2xl text-muted-foreground md:text-lg">
-              This is the private page for the beat you selected. Join before the timer ends to unlock this beat plus MYBEATCATALOG membership access.
+              This private page is tied to your email and device. Join before the timer ends to unlock this beat plus MYBEATCATALOG membership access.
             </p>
           </div>
 
@@ -180,7 +183,7 @@ function OfferContent({ offer }: { offer: BeatOffer }) {
         </section>
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-3xl border border-primary/60 bg-card p-6 shadow-[var(--shadow-glow)]">
+          <div className="rounded-3xl border border-primary/60 bg-card p-5 shadow-[var(--shadow-glow)] md:p-6">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
                 <Clock className="h-5 w-5 text-primary" />
@@ -192,6 +195,11 @@ function OfferContent({ offer }: { offer: BeatOffer }) {
             </div>
 
             <Countdown remaining={remaining} />
+
+            <div className="mt-6 rounded-2xl border border-primary/40 bg-primary/10 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Membership price</p>
+              <p className="mt-1 text-3xl font-black">$49.99<span className="text-sm font-semibold text-muted-foreground">/mo</span></p>
+            </div>
 
             <div className="mt-6 space-y-3">
               {FEATURES.map((feature) => (
@@ -207,24 +215,70 @@ function OfferContent({ offer }: { offer: BeatOffer }) {
               <p className="mt-1 truncate font-medium">{offer.email}</p>
             </div>
 
-            <Button variant="hero" size="lg" className="mt-6 w-full" disabled={expired} asChild={!expired}>
-              {expired ? (
-                <span>Offer Expired</span>
-              ) : (
-                <Link to="/checkout" search={checkoutSearch}>
-                  Unlock This Beat
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              )}
-            </Button>
-            {expired ? (
-              <Button variant="outline" size="lg" className="mt-3 w-full" asChild>
-                <Link to="/beat-claim">Choose a New Beat</Link>
-              </Button>
-            ) : null}
+            {purchased ? (
+              <ClosedBox title="Offer already used" message="This private offer has already been used for a purchase." />
+            ) : expired ? (
+              <ClosedBox title="Offer expired" message="This private checkout window is closed. The same email, device, or IP cannot restart this offer automatically." />
+            ) : (
+              <OfferEmbeddedCheckout offer={offer} />
+            )}
           </div>
         </aside>
       </main>
+    </div>
+  );
+}
+
+function OfferEmbeddedCheckout({ offer }: { offer: BeatOffer }) {
+  const create = useServerFn(createGuestCheckoutSession);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchClientSecret = async (): Promise<string> => {
+    const returnUrl = `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`;
+    const result = await create({
+      data: {
+        priceId: "artist_monthly_v2",
+        email: offer.email,
+        returnUrl,
+        environment: getStripeEnvironment(),
+        claimToken: offer.token,
+      },
+    });
+    if (result.error || !result.clientSecret) {
+      const msg = result.error ?? "Failed to create checkout session";
+      setError(msg);
+      throw new Error(msg);
+    }
+    setError(null);
+    return result.clientSecret;
+  };
+
+  if (error) {
+    return (
+      <div className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
+        <p className="font-semibold text-destructive">Checkout unavailable</p>
+        <p className="mt-2 text-muted-foreground">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-background p-2">
+      <div className="mb-3 flex items-center gap-2 px-2 pt-2 text-xs text-muted-foreground">
+        <ShieldCheck className="h-4 w-4 text-primary" /> Secure embedded checkout
+      </div>
+      <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret }}>
+        <EmbeddedCheckout />
+      </EmbeddedCheckoutProvider>
+    </div>
+  );
+}
+
+function ClosedBox({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="mt-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+      <p className="font-semibold text-amber-300">{title}</p>
+      <p className="mt-2 text-muted-foreground">{message}</p>
     </div>
   );
 }

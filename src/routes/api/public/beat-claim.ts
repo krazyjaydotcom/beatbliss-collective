@@ -30,11 +30,23 @@ const inputSchema = z.object({
   beatId: z.string().uuid(),
   source: z.string().max(120).optional().nullable(),
   origin: z.string().url().max(2048).optional(),
+  deviceFingerprint: z.string().max(128).optional().nullable(),
 });
 
 function getPublicOrigin(inputOrigin?: string) {
   const origin = inputOrigin || process.env.PUBLIC_SITE_URL || process.env.SITE_URL || "https://mybeatcatalog.com";
   return origin.endsWith("/") ? origin.slice(0, -1) : origin;
+}
+
+function getClientIp(request: Request) {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return (
+    forwarded ||
+    request.headers.get("x-real-ip") ||
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-client-ip") ||
+    null
+  );
 }
 
 async function sendToSendy(params: {
@@ -60,7 +72,8 @@ async function sendToSendy(params: {
       boolean: "true",
       BeatTitle: params.beatTitle,
       OfferUrl: params.offerUrl,
-      Source: params.source || "beat-claim",    });
+      Source: params.source || "beat-claim",
+    });
 
     const res = await fetch(url, {
       method: "POST",
@@ -93,6 +106,9 @@ export const Route = createFileRoute("/api/public/beat-claim")({
             _email: email,
             _beat_id: input.beatId,
             _source: source,
+            _ip_address: getClientIp(request),
+            _user_agent: request.headers.get("user-agent"),
+            _device_fingerprint: input.deviceFingerprint?.trim() || null,
           });
 
           if (claimError) throw claimError;
