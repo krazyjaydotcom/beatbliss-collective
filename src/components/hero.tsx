@@ -3,7 +3,11 @@ import { ArrowRight, Crown, Lock, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-producer.jpg";
 
-export function Hero() {
+type HeroProps = {
+  onApplyForAccess?: () => void;
+};
+
+export function Hero({ onApplyForAccess }: HeroProps) {
   return (
     <section className="relative overflow-hidden pt-24 pb-12 lg:min-h-[calc(100vh-0px)] lg:flex lg:items-center">
       <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-radial-red)" }} />
@@ -22,19 +26,26 @@ export function Hero() {
             Private access to cinematic, inspirational beats built for artists with a message. Apply for access, unlock the catalog, and stay close to KrazyJay.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button size="xl" variant="hero" asChild>
-              <Link to="/checkout">
+            {onApplyForAccess ? (
+              <Button size="xl" variant="hero" type="button" onClick={onApplyForAccess}>
                 Apply For Access
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button size="xl" variant="hero" asChild>
+                <Link to="/checkout">
+                  Apply For Access
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            )}
             <Button size="xl" variant="heroOutline" asChild>
               <Link to="/login">Member Login</Link>
             </Button>
           </div>
           <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
             <Lock className="h-4 w-4 text-primary" />
-            <span>Private membership · Application required · Member-only access</span>
+            <span>Private membership - Application required - Member-only access</span>
           </div>
           <div className="mt-6 inline-flex items-center gap-2 text-sm text-muted-foreground">
             <MessageSquareText className="h-4 w-4 text-primary" />
