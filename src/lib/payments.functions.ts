@@ -148,7 +148,7 @@ export const createGuestCheckoutSession = createServerFn({ method: "POST" })
         ? existing.data[0].id
         : (await stripe.customers.create({ email: data.email })).id;
 
-      const metadata = data.claimToken ? { beatClaimToken: data.claimToken } : {};
+      const metadata: Record<string, string> = data.claimToken ? { beatClaimToken: data.claimToken } : {};
 
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],

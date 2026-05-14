@@ -13,9 +13,9 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as BeatClaimRouteImport } from './routes/beat-claim'
-import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
@@ -68,6 +68,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BeatClaimRoute = BeatClaimRouteImport.update({
+  id: '/beat-claim',
+  path: '/beat-claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -75,11 +80,6 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BeatClaimRoute = BeatClaimRouteImport.update({
-  id: '/beat-claim',
-  path: '/beat-claim',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfferTokenRoute = OfferTokenRouteImport.update({
@@ -287,6 +287,7 @@ const AuthenticatedAdminFunnelsIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/beat-claim': typeof BeatClaimRoute
   '/checkout': typeof CheckoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -303,12 +304,11 @@ export interface FileRoutesByFullPath {
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/artist/$username': typeof ArtistUsernameRoute
   '/b/$slug': typeof BSlugRouteWithChildren
-  '/beat-claim': typeof BeatClaimRoute
-  '/offer/$token': typeof OfferTokenRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
+  '/offer/$token': typeof OfferTokenRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
@@ -331,6 +331,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/beat-claim': typeof BeatClaimRoute
   '/checkout': typeof CheckoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -350,8 +351,10 @@ export interface FileRoutesByTo {
   '/claim/$token': typeof ClaimTokenRoute
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
+  '/offer/$token': typeof OfferTokenRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
+  '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
@@ -373,6 +376,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/beat-claim': typeof BeatClaimRoute
   '/checkout': typeof CheckoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
@@ -393,6 +397,7 @@ export interface FileRoutesById {
   '/claim/$token': typeof ClaimTokenRoute
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
+  '/offer/$token': typeof OfferTokenRoute
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
@@ -417,6 +422,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/beat-claim'
     | '/checkout'
     | '/login'
     | '/signup'
@@ -433,12 +439,11 @@ export interface FileRouteTypes {
     | '/whitelist'
     | '/artist/$username'
     | '/b/$slug'
-    | '/beat-claim'
-    | '/offer/$token'
     | '/checkout/return'
     | '/claim/$token'
     | '/invite/$token'
     | '/join/$token'
+    | '/offer/$token'
     | '/admin/access'
     | '/admin/agreements'
     | '/admin/beat-claims'
@@ -461,6 +466,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/beat-claim'
     | '/checkout'
     | '/login'
     | '/signup'
@@ -476,12 +482,11 @@ export interface FileRouteTypes {
     | '/whitelist'
     | '/artist/$username'
     | '/b/$slug'
-    | '/beat-claim'
-    | '/offer/$token'
     | '/checkout/return'
     | '/claim/$token'
     | '/invite/$token'
     | '/join/$token'
+    | '/offer/$token'
     | '/admin/access'
     | '/admin/agreements'
     | '/admin/beat-claims'
@@ -505,6 +510,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/beat-claim'
     | '/checkout'
     | '/login'
     | '/signup'
@@ -521,12 +527,11 @@ export interface FileRouteTypes {
     | '/_authenticated/whitelist'
     | '/artist/$username'
     | '/b/$slug'
-    | '/beat-claim'
-    | '/offer/$token'
     | '/checkout/return'
     | '/claim/$token'
     | '/invite/$token'
     | '/join/$token'
+    | '/offer/$token'
     | '/_authenticated/admin/access'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/beat-claims'
@@ -551,16 +556,16 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  BeatClaimRoute: typeof BeatClaimRoute
   CheckoutRoute: typeof CheckoutRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   ArtistUsernameRoute: typeof ArtistUsernameRoute
   BSlugRoute: typeof BSlugRouteWithChildren
-  BeatClaimRoute: typeof BeatClaimRoute
   ClaimTokenRoute: typeof ClaimTokenRoute
   InviteTokenRoute: typeof InviteTokenRoute
-  OfferTokenRoute: typeof OfferTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
+  OfferTokenRoute: typeof OfferTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
@@ -588,6 +593,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/beat-claim': {
+      id: '/beat-claim'
+      path: '/beat-claim'
+      fullPath: '/beat-claim'
+      preLoaderRoute: typeof BeatClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -600,6 +612,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offer/$token': {
+      id: '/offer/$token'
+      path: '/offer/$token'
+      fullPath: '/offer/$token'
+      preLoaderRoute: typeof OfferTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/join/$token': {
@@ -812,6 +831,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBeatRequestsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/beat-claims': {
+      id: '/_authenticated/admin/beat-claims'
+      path: '/beat-claims'
+      fullPath: '/admin/beat-claims'
+      preLoaderRoute: typeof AuthenticatedAdminBeatClaimsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/agreements': {
       id: '/_authenticated/admin/agreements'
       path: '/agreements'
@@ -948,16 +974,16 @@ const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  BeatClaimRoute: BeatClaimRoute,
   CheckoutRoute: CheckoutRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   ArtistUsernameRoute: ArtistUsernameRoute,
   BSlugRoute: BSlugRouteWithChildren,
-  BeatClaimRoute: BeatClaimRoute,
   ClaimTokenRoute: ClaimTokenRoute,
   InviteTokenRoute: InviteTokenRoute,
-  OfferTokenRoute: OfferTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
+  OfferTokenRoute: OfferTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
