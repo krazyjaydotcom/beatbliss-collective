@@ -19,7 +19,7 @@ type BeatOffer = {
   bpm: number | null;
 };
 
-type SendFoxResult = {
+type EmailProviderResult = {
   configured: boolean;
   ok: boolean;
   error?: string;
@@ -37,62 +37,48 @@ function getPublicOrigin(inputOrigin?: string) {
   return origin.endsWith("/") ? origin.slice(0, -1) : origin;
 }
 
-async function sendToSendFox(params: {
+async function sendToSendy(params: {
   email: string;
   beatTitle: string;
   offerUrl: string;
   source?: string | null;
-}): Promise<SendFoxResult> {
-  const apiToken = process.env.SENDFOX_API_TOKEN;
-  const listId = process.env.SENDFOX_LIST_ID;
+}): Promise<EmailProviderResult> {
+  const baseUrl = process.env.SENDY_BASE_URL;
+  const apiKey = process.env.SENDY_API_KEY;
+  const listId = process.env.SENDY_LIST_ID;
 
-  if (!apiToken || !listId) {
-    return { configured: false, ok: false, error: "SENDFOX_API_TOKEN or SENDFOX_LIST_ID is missing." };
+  if (!baseUrl || !apiKey || !listId) {
+    return { configured: false, ok: false, error: "SENDY_BASE_URL, SENDY_API_KEY, or SENDY_LIST_ID is missing." };
   }
 
-  const contactFields: Record<string, string> = {
-    beat_title: params.beatTitle,
-    offer_url: params.offerUrl,
-    source: params.source || "beat-claim",
-  };
-
-  const basePayload = {
-    email: params.email,
-    lists: [Number(listId)],
-  };
-
-  const send = async (payload: Record<string, unknown>) => {
-    return fetch("https://api.sendfox.com/contacts", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + apiToken,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-  };
-
   try {
-    let res = await send({ ...basePayload, contact_fields: contactFields });
+    const url = baseUrl.replace(/\/+$/, "") + "/subscribe";
+    const form = new URLSearchParams({
+      api_key: apiKey,
+      list: listId,
+      email: params.email,
+      boolean: "true",
+      Beat: params.beatTitle,
+      OfferURL: params.offerUrl,
+      Source: params.source || "beat-claim",
+      referrer: params.source || "beat-claim",
+    });
 
-    // Some SendFox accounts require custom fields to exist before they can be set.
-    // If that fails, still add the lead to the list so the funnel does not break.
-    if (!res.ok) {
-      res = await send(basePayload);
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+    });
+    const text = (await res.text()).trim();
+    if (res.ok && (text === "1" || text.toLowerCase() === "true" || /already subscribed/i.test(text))) {
+      return { configured: true, ok: true };
     }
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      return { configured: true, ok: false, error: text || "SendFox rejected the contact." };
-    }
-
-    return { configured: true, ok: true };
+    return { configured: true, ok: false, error: text || ("Sendy returned status " + res.status) };
   } catch (err) {
     return {
       configured: true,
       ok: false,
-      error: err instanceof Error ? err.message : "SendFox request failed.",
+      error: err instanceof Error ? err.message : "Sendy request failed.",
     };
   }
 }
@@ -104,7 +90,7 @@ export const claimBeatAndSendFox = createServerFn({ method: "POST" })
     token: string | null;
     offerUrl: string | null;
     expiresAt: string | null;
-    sendfox: SendFoxResult;
+    sendfox: EmailProviderResult;
     error: string | null;
   }> => {
     try {
@@ -126,7 +112,7 @@ export const claimBeatAndSendFox = createServerFn({ method: "POST" })
       const offer = (Array.isArray(offerRows) ? offerRows[0] : offerRows) as BeatOffer | undefined;
       const origin = getPublicOrigin(data.origin);
       const offerUrl = origin + "/offer/" + claim.token;
-      const sendfox = await sendToSendFox({
+      const sendy = await sendToSendy({
         email,
         beatTitle: offer?.title || "Selected Beat",
         offerUrl,
@@ -138,7 +124,7 @@ export const claimBeatAndSendFox = createServerFn({ method: "POST" })
         token: claim.token,
         offerUrl,
         expiresAt: claim.expires_at,
-        sendfox,
+        sendfox: sendy,
         error: null,
       };
     } catch (err) {
@@ -147,7 +133,10 @@ export const claimBeatAndSendFox = createServerFn({ method: "POST" })
         token: null,
         offerUrl: null,
         expiresAt: null,
-        sendfox: { configured: !!process.env.SENDFOX_API_TOKEN && !!process.env.SENDFOX_LIST_ID, ok: false },
+        sendfox: {
+          configured: !!process.env.SENDY_BASE_URL && !!process.env.SENDY_API_KEY && !!process.env.SENDY_LIST_ID,
+          ok: false,
+        },
         error: err instanceof Error ? err.message : "Unable to claim this beat.",
       };
     }
