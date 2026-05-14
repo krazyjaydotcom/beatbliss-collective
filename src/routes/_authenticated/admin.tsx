@@ -16,6 +16,7 @@ import {
   GraduationCap,
   Link2,
   Clock,
+  PanelsTopLeft,
 } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
@@ -33,6 +34,7 @@ const NAV = [
   { to: "/admin/beat-requests", label: "Beat Requests", icon: Music },
   { to: "/admin/funnels", label: "Beat Funnels", icon: Megaphone },
   { to: "/admin/beat-claims", label: "Beat Claims", icon: Clock },
+  { to: "/admin/offer-page", label: "Offer Page", icon: PanelsTopLeft },
   { to: "/admin/members", label: "Members", icon: Users },
   { to: "/admin/access", label: "Manual Access", icon: UserCheck },
   { to: "/admin/invites", label: "Invites", icon: Link2 },

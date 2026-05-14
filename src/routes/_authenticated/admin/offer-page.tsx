@@ -1,0 +1,217 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { GripVertical, Loader2, Save } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+
+export const Route = createFileRoute("/_authenticated/admin/offer-page")({
+  component: OfferPageEditor,
+});
+
+type OfferSettings = {
+  id: string;
+  video_url: string;
+  eyebrow: string;
+  headline_template: string;
+  intro_text: string;
+  video_title: string;
+  video_body: string;
+  beat_title: string;
+  benefits_title: string;
+  benefits: string[];
+  section_order: string[];
+};
+
+const DEFAULT_SETTINGS: OfferSettings = {
+  id: "main",
+  video_url: "",
+  eyebrow: "Your beat is reserved",
+  headline_template: "{beat} is Reserved For You",
+  intro_text: "This is a private offer. Watch the video below to see everything you get with your membership before the timer expires.",
+  video_title: "Watch the private offer video",
+  video_body: "A quick breakdown of how MYBEATCATALOG helps artists create, release, and stay consistent.",
+  beat_title: "Preview the beat",
+  benefits_title: "Membership includes",
+  benefits: ["Full Beat Catalog", "New Beats Weekly", "Direct Artist Access", "Cancel Anytime"],
+  section_order: ["video", "beat", "benefits"],
+};
+
+const SECTION_LABELS: Record<string, string> = {
+  video: "Private video",
+  beat: "Beat preview",
+  benefits: "Benefit blocks",
+};
+
+function normalize(row: Partial<OfferSettings> | null | undefined): OfferSettings {
+  if (!row) return DEFAULT_SETTINGS;
+  return {
+    ...DEFAULT_SETTINGS,
+    ...row,
+    video_url: row.video_url ?? "",
+    benefits: Array.isArray(row.benefits) ? row.benefits : DEFAULT_SETTINGS.benefits,
+    section_order: Array.isArray(row.section_order) && row.section_order.length ? row.section_order : DEFAULT_SETTINGS.section_order,
+  };
+}
+
+function OfferPageEditor() {
+  const queryClient = useQueryClient();
+  const [settings, setSettings] = useState<OfferSettings>(DEFAULT_SETTINGS);
+  const [saving, setSaving] = useState(false);
+  const [dragged, setDragged] = useState<string | null>(null);
+
+  const settingsQ = useQuery({
+    queryKey: ["admin-offer-page-settings"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("offer_page_settings")
+        .select("*")
+        .eq("id", "main")
+        .maybeSingle();
+      if (error) throw error;
+      return normalize(data as Partial<OfferSettings> | null);
+    },
+  });
+
+  useEffect(() => {
+    if (settingsQ.data) setSettings(settingsQ.data);
+  }, [settingsQ.data]);
+
+  function setField<K extends keyof OfferSettings>(key: K, value: OfferSettings[K]) {
+    setSettings((current) => ({ ...current, [key]: value }));
+  }
+
+  function moveSection(target: string) {
+    if (!dragged || dragged === target) return;
+    setSettings((current) => {
+      const without = current.section_order.filter((id) => id !== dragged);
+      const targetIndex = without.indexOf(target);
+      const next = [...without];
+      next.splice(targetIndex, 0, dragged);
+      return { ...current, section_order: next };
+    });
+    setDragged(null);
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      const payload = {
+        id: "main",
+        video_url: settings.video_url || null,
+        eyebrow: settings.eyebrow,
+        headline_template: settings.headline_template,
+        intro_text: settings.intro_text,
+        video_title: settings.video_title,
+        video_body: settings.video_body,
+        beat_title: settings.beat_title,
+        benefits_title: settings.benefits_title,
+        benefits: settings.benefits.filter(Boolean),
+        section_order: settings.section_order,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await (supabase as any).from("offer_page_settings").upsert(payload, { onConflict: "id" });
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["admin-offer-page-settings"] });
+      toast.success("Offer page saved.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unable to save offer page.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (settingsQ.isLoading) {
+    return <div className="flex items-center gap-2 text-slate-600"><Loader2 className="h-4 w-4 animate-spin" /> Loading offer editor...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight">Offer Page</h1>
+          <p className="mt-1 text-slate-600">Edit the private offer page copy, YouTube embed, and drag the sections into order.</p>
+        </div>
+        <Button type="button" variant="hero" onClick={save} disabled={saving}>
+          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          Save Offer Page
+        </Button>
+      </div>
+
+      {settingsQ.error ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          If this editor cannot save yet, run the new Supabase migration for offer_page_settings first.
+        </div>
+      ) : null}
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <Field label="YouTube or video URL">
+            <Input value={settings.video_url} onChange={(e) => setField("video_url", e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
+          </Field>
+          <Field label="Eyebrow">
+            <Input value={settings.eyebrow} onChange={(e) => setField("eyebrow", e.target.value)} />
+          </Field>
+          <Field label="Headline">
+            <Input value={settings.headline_template} onChange={(e) => setField("headline_template", e.target.value)} />
+            <p className="mt-1 text-xs text-slate-500">Use {"{beat}"} where the selected beat title should appear.</p>
+          </Field>
+          <Field label="Intro text">
+            <textarea className="min-h-24 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" value={settings.intro_text} onChange={(e) => setField("intro_text", e.target.value)} />
+          </Field>
+          <Field label="Video title">
+            <Input value={settings.video_title} onChange={(e) => setField("video_title", e.target.value)} />
+          </Field>
+          <Field label="Video supporting text">
+            <textarea className="min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" value={settings.video_body} onChange={(e) => setField("video_body", e.target.value)} />
+          </Field>
+          <Field label="Beat section title">
+            <Input value={settings.beat_title} onChange={(e) => setField("beat_title", e.target.value)} />
+          </Field>
+          <Field label="Benefit block subtitle">
+            <Input value={settings.benefits_title} onChange={(e) => setField("benefits_title", e.target.value)} />
+          </Field>
+          <Field label="Benefits">
+            <textarea
+              className="min-h-28 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950"
+              value={settings.benefits.join("\n")}
+              onChange={(e) => setField("benefits", e.target.value.split("\n").map((line) => line.trim()).filter(Boolean))}
+            />
+            <p className="mt-1 text-xs text-slate-500">One benefit per line.</p>
+          </Field>
+        </section>
+
+        <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-black">Section Order</h2>
+          <p className="mt-1 text-sm text-slate-600">Drag these into the order you want on the offer page.</p>
+          <div className="mt-4 space-y-2">
+            {settings.section_order.map((sectionId) => (
+              <div
+                key={sectionId}
+                draggable
+                onDragStart={() => setDragged(sectionId)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => moveSection(sectionId)}
+                className="flex cursor-grab items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold active:cursor-grabbing"
+              >
+                <GripVertical className="h-4 w-4 text-slate-400" />
+                {SECTION_LABELS[sectionId] ?? sectionId}
+              </div>
+            ))}
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-semibold text-slate-800">{label}</span>
+      {children}
+    </label>
+  );
+}

@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
-import { Check, Clock, Loader2, Music, PlayCircle, ShieldCheck } from "lucide-react";
+import { Check, Clock, Loader2, Lock, Music, Play, ShieldCheck, Waves } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,15 +38,41 @@ type BeatOffer = {
   audio_url_tagged: string | null;
 };
 
-const FEATURES = [
-  "Unlock this beat inside your private membership",
-  "Access the full catalog built for artists with a message",
-  "Use beats for your songs, releases, and content",
-  "Direct line to KrazyJay after joining",
-  "Cancel anytime",
-];
+type OfferSettings = {
+  id: string;
+  video_url: string | null;
+  eyebrow: string;
+  headline_template: string;
+  intro_text: string;
+  video_title: string;
+  video_body: string;
+  beat_title: string;
+  benefits_title: string;
+  benefits: string[];
+  section_order: string[];
+};
 
-const OFFER_VIDEO_URL = import.meta.env.VITE_OFFER_VIDEO_URL || "";
+const DEFAULT_SETTINGS: OfferSettings = {
+  id: "main",
+  video_url: import.meta.env.VITE_OFFER_VIDEO_URL || "",
+  eyebrow: "Your beat is reserved",
+  headline_template: "{beat} is Reserved For You",
+  intro_text: "This is a private offer. Watch the video below to see everything you get with your membership before the timer expires.",
+  video_title: "Watch the private offer video",
+  video_body: "A quick breakdown of how MYBEATCATALOG helps artists create, release, and stay consistent.",
+  beat_title: "Preview the beat",
+  benefits_title: "Membership includes",
+  benefits: ["Full Beat Catalog", "New Beats Weekly", "Direct Artist Access", "Cancel Anytime"],
+  section_order: ["video", "beat", "benefits"],
+};
+
+function formatDuration(seconds: number | null | undefined) {
+  const total = Math.max(0, Number(seconds ?? 0));
+  if (!total) return "--:--";
+  const min = Math.floor(total / 60);
+  const sec = Math.floor(total % 60);
+  return String(min).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+}
 
 function getEmbedUrl(url: string) {
   if (!url) return "";
@@ -69,6 +94,16 @@ function getEmbedUrl(url: string) {
   }
 }
 
+function mergeSettings(row: Partial<OfferSettings> | null | undefined): OfferSettings {
+  if (!row) return DEFAULT_SETTINGS;
+  return {
+    ...DEFAULT_SETTINGS,
+    ...row,
+    benefits: Array.isArray(row.benefits) ? row.benefits : DEFAULT_SETTINGS.benefits,
+    section_order: Array.isArray(row.section_order) && row.section_order.length ? row.section_order : DEFAULT_SETTINGS.section_order,
+  };
+}
+
 function BeatOfferPage() {
   const { token } = Route.useParams();
   const offerQuery = useQuery({
@@ -78,6 +113,18 @@ function BeatOfferPage() {
       if (error) throw error;
       const offer = Array.isArray(data) ? data[0] : data;
       return (offer ?? null) as BeatOffer | null;
+    },
+  });
+  const settingsQuery = useQuery({
+    queryKey: ["offer-page-settings"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("offer_page_settings")
+        .select("*")
+        .eq("id", "main")
+        .maybeSingle();
+      if (error) return DEFAULT_SETTINGS;
+      return mergeSettings(data as Partial<OfferSettings> | null);
     },
   });
 
@@ -91,128 +138,80 @@ function BeatOfferPage() {
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-black">This private link was not found.</h1>
           <p className="mt-2 text-muted-foreground">Choose a beat again to create a fresh private offer page.</p>
-          <Button className="mt-6" variant="hero" asChild><Link to="/beat-claim">Choose a Beat</Link></Button>
+          <Link to="/beat-claim" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Choose a Beat</Link>
         </div>
       </Centered>
     );
   }
 
-  return <OfferContent offer={offerQuery.data} />;
+  return <OfferContent offer={offerQuery.data} settings={settingsQuery.data ?? DEFAULT_SETTINGS} />;
 }
 
-function OfferContent({ offer }: { offer: BeatOffer }) {
+function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSettings }) {
   const remaining = useCountdown(offer.expires_at);
   const expired = remaining.total <= 0;
   const purchased = !!offer.purchased_at;
+  const headline = settings.headline_template.replace("{beat}", offer.title);
   const meta = [offer.genre, offer.mood, offer.bpm ? String(offer.bpm) + " BPM" : null].filter(Boolean).join(" / ");
+  const videoUrl = getEmbedUrl(settings.video_url || "");
+  const orderedSections = useMemo(() => {
+    const valid = settings.section_order.filter((id) => ["video", "beat", "benefits"].includes(id));
+    return valid.length ? valid : DEFAULT_SETTINGS.section_order;
+  }, [settings.section_order]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#02060b] text-white">
       <PaymentTestModeBanner />
-      <header className="border-b border-border/80 bg-background/90 backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between px-6 py-5">
+      <header className="border-b border-white/10 bg-black/70 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
           <Link to="/" aria-label="MYBEATCATALOG home"><KrazyLogo className="text-xl" /></Link>
-          <Badge variant="secondary" className="border border-primary/30 bg-primary/10 text-primary">PRIVATE OFFER</Badge>
+          <Badge variant="outline" className="border-primary/50 bg-primary/10 text-primary"><Lock className="mr-1.5 h-3.5 w-3.5" /> Private Offer</Badge>
         </div>
       </header>
 
-      <main className="container mx-auto grid gap-8 px-6 py-10 lg:grid-cols-[minmax(0,1fr)_460px] lg:py-14">
+      <TopTimer remaining={remaining} />
+
+      <main className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-10">
         <section className="space-y-6">
           <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-primary">Your beat is reserved</p>
-            <h1 className="mt-3 text-4xl font-black leading-tight tracking-tight md:text-6xl">
-              {offer.title}
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-primary">{settings.eyebrow}</p>
+            <h1 className="mt-3 max-w-2xl text-4xl font-black leading-[1.03] tracking-tight md:text-6xl">
+              {headline}
             </h1>
-            <p className="mt-4 max-w-2xl text-muted-foreground md:text-lg">
-              This private page is tied to your email and device. Join before the timer ends to unlock this beat plus MYBEATCATALOG membership access.
-            </p>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base">{settings.intro_text}</p>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-border bg-card">
-            <div className="grid gap-0 md:grid-cols-[320px_1fr]">
-              <div className="aspect-square bg-muted md:aspect-auto">
-                {offer.cover_url ? (
-                  <img src={offer.cover_url} alt={offer.title} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full min-h-[280px] items-center justify-center"><Music className="h-12 w-12 text-muted-foreground" /></div>
-                )}
-              </div>
-              <div className="p-6">
-                <div className="flex flex-wrap gap-2">
-                  {offer.genre ? <Badge variant="outline">{offer.genre}</Badge> : null}
-                  {offer.mood ? <Badge variant="outline">{offer.mood}</Badge> : null}
-                  {offer.bpm ? <Badge variant="outline">{offer.bpm} BPM</Badge> : null}
-                </div>
-                <h2 className="mt-5 text-2xl font-black">Preview the beat</h2>
-                <p className="mt-2 text-sm text-muted-foreground">{meta || "Listen again, then lock in your access below."}</p>
-                {offer.audio_url_tagged || offer.audio_url ? (
-                  <audio controls preload="metadata" src={offer.audio_url_tagged ?? offer.audio_url ?? undefined} className="mt-5 w-full" />
-                ) : (
-                  <p className="mt-5 text-sm text-muted-foreground">Audio preview is being prepared.</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-border bg-card p-6 md:p-8">
-            <div className="flex items-center gap-3">
-              <PlayCircle className="h-8 w-8 text-primary" />
-              <div>
-                <h2 className="text-2xl font-black">Watch the private offer video</h2>
-                <p className="text-sm text-muted-foreground">Add your sales video here when ready.</p>
-              </div>
-            </div>
-            {OFFER_VIDEO_URL ? (
-              <iframe
-                title="Private offer video"
-                src={getEmbedUrl(OFFER_VIDEO_URL)}
-                className="mt-6 aspect-video w-full rounded-2xl border border-border bg-black"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            ) : (
-              <div className="mt-6 flex aspect-video items-center justify-center rounded-2xl border border-dashed border-primary/40 bg-primary/10 text-center">
-                <div className="max-w-sm px-6">
-                  <PlayCircle className="mx-auto h-12 w-12 text-primary" />
-                  <p className="mt-3 text-sm font-semibold">Private offer video placeholder</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Set VITE_OFFER_VIDEO_URL to show your hosted YouTube, Vimeo, or Loom video here.</p>
-                </div>
-              </div>
-            )}
-          </div>
+          {orderedSections.map((section) => {
+            if (section === "video") return <VideoSection key={section} settings={settings} videoUrl={videoUrl} />;
+            if (section === "beat") return <BeatPreview key={section} offer={offer} meta={meta} />;
+            return <Benefits key={section} settings={settings} />;
+          })}
         </section>
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-3xl border border-primary/60 bg-card p-5 shadow-[var(--shadow-glow)] md:p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
-                <Clock className="h-5 w-5 text-primary" />
+          <div className="rounded-2xl border border-primary/40 bg-[#07111d] p-5 shadow-[0_0_60px_rgba(37,99,235,0.18)]">
+            <div className="flex items-center gap-3 border-b border-white/10 pb-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10">
+                <Lock className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Offer Window</p>
-                <h2 className="text-xl font-black">12-hour private access</h2>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/55">Special Offer</p>
+                <h2 className="text-2xl font-black">$49.99<span className="ml-1 text-sm font-semibold text-white/60">/mo</span></h2>
               </div>
             </div>
 
-            <Countdown remaining={remaining} />
-
-            <div className="mt-6 rounded-2xl border border-primary/40 bg-primary/10 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Membership price</p>
-              <p className="mt-1 text-3xl font-black">$49.99<span className="text-sm font-semibold text-muted-foreground">/mo</span></p>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              {FEATURES.map((feature) => (
-                <div key={feature} className="flex gap-3 text-sm">
+            <div className="mt-5 space-y-2">
+              {["Unlock full catalog access", "New beats added every week", "Use beats for songs, releases, and content", "Direct line to KrazyJay after joining", "Cancel anytime"].map((item) => (
+                <div key={item} className="flex gap-2 text-sm text-white/75">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>{feature}</span>
+                  <span>{item}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 rounded-2xl border border-border bg-background/50 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Reserved for</p>
-              <p className="mt-1 truncate font-medium">{offer.email}</p>
+            <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">Reserved for</p>
+              <p className="mt-1 truncate text-sm font-semibold">{offer.email}</p>
             </div>
 
             {purchased ? (
@@ -226,6 +225,118 @@ function OfferContent({ offer }: { offer: BeatOffer }) {
         </aside>
       </main>
     </div>
+  );
+}
+
+function TopTimer({ remaining }: { remaining: ReturnType<typeof useCountdown> }) {
+  const expired = remaining.total <= 0;
+  return (
+    <section className="border-b border-primary/30 bg-[#041121]">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <Clock className="h-5 w-5 text-primary" />
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-primary">12-hour private access</p>
+            <p className="text-sm text-white/60">{expired ? "This private offer window has expired." : "Offer expires in"}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <TimerCell value={remaining.hours} label="hrs" />
+          <TimerCell value={remaining.minutes} label="min" />
+          <TimerCell value={remaining.seconds} label="sec" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TimerCell({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="min-w-[78px] rounded-lg border border-white/10 bg-black/35 px-4 py-2 text-center">
+      <div className="text-2xl font-black tabular-nums">{String(value).padStart(2, "0")}</div>
+      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">{label}</div>
+    </div>
+  );
+}
+
+function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUrl: string }) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-[#07111d] p-5">
+      <div className="mb-4 flex items-center gap-3">
+        <Lock className="h-5 w-5 text-primary" />
+        <div>
+          <h2 className="text-sm font-black uppercase tracking-[0.12em]">{settings.video_title}</h2>
+          <p className="mt-1 text-xs text-white/55">{settings.video_body}</p>
+        </div>
+      </div>
+      {videoUrl ? (
+        <iframe
+          title="Private offer video"
+          src={videoUrl}
+          className="aspect-video w-full rounded-xl border border-white/10 bg-black"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      ) : (
+        <div className="flex aspect-video items-center justify-center rounded-xl border border-white/10 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.35),transparent_38%),#03070d]">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-primary text-primary shadow-[0_0_45px_rgba(37,99,235,0.55)]">
+            <Play className="ml-1 h-11 w-11 fill-current" />
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function BeatPreview({ offer, meta }: { offer: BeatOffer; meta: string }) {
+  return (
+    <section>
+      <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
+        <Music className="h-4 w-4" /> Preview the beat
+      </div>
+      <div className="rounded-2xl border border-white/10 bg-[#07111d] p-4">
+        <div className="grid gap-4 md:grid-cols-[130px_1fr] md:items-center">
+          <div className="aspect-square overflow-hidden rounded-xl border border-white/10 bg-black/40">
+            {offer.cover_url ? (
+              <img src={offer.cover_url} alt={offer.title} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.45),transparent_58%)] text-center text-xl font-black">
+                {offer.title}
+              </div>
+            )}
+          </div>
+          <div>
+            <div className="flex flex-wrap gap-2">
+              {offer.genre ? <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary">{offer.genre}</Badge> : null}
+              {offer.bpm ? <Badge variant="outline" className="border-white/20 text-white/70">{offer.bpm} BPM</Badge> : null}
+            </div>
+            <h2 className="mt-3 text-2xl font-black">{offer.title}</h2>
+            <p className="mt-1 text-sm text-white/55">{meta || "Listen again, then lock in your access."}</p>
+            {offer.audio_url_tagged || offer.audio_url ? (
+              <audio controls preload="metadata" src={offer.audio_url_tagged ?? offer.audio_url ?? undefined} className="mt-4 w-full" />
+            ) : (
+              <p className="mt-4 text-sm text-white/50">Audio preview is being prepared.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Benefits({ settings }: { settings: OfferSettings }) {
+  return (
+    <section>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {settings.benefits.map((benefit) => (
+          <div key={benefit} className="rounded-xl border border-white/10 bg-[#07111d] p-4">
+            <Waves className="h-5 w-5 text-primary" />
+            <h3 className="mt-3 text-sm font-black">{benefit}</h3>
+            <p className="mt-2 text-xs leading-5 text-white/55">{settings.benefits_title}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -255,16 +366,16 @@ function OfferEmbeddedCheckout({ offer }: { offer: BeatOffer }) {
 
   if (error) {
     return (
-      <div className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
-        <p className="font-semibold text-destructive">Checkout unavailable</p>
-        <p className="mt-2 text-muted-foreground">{error}</p>
+      <div className="mt-5 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm">
+        <p className="font-semibold text-red-200">Checkout unavailable</p>
+        <p className="mt-2 text-white/60">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-background p-2">
-      <div className="mb-3 flex items-center gap-2 px-2 pt-2 text-xs text-muted-foreground">
+    <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black/40 p-2">
+      <div className="mb-3 flex items-center gap-2 px-2 pt-2 text-xs text-white/55">
         <ShieldCheck className="h-4 w-4 text-primary" /> Secure embedded checkout
       </div>
       <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret }}>
@@ -276,9 +387,9 @@ function OfferEmbeddedCheckout({ offer }: { offer: BeatOffer }) {
 
 function ClosedBox({ title, message }: { title: string; message: string }) {
   return (
-    <div className="mt-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-      <p className="font-semibold text-amber-300">{title}</p>
-      <p className="mt-2 text-muted-foreground">{message}</p>
+    <div className="mt-5 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+      <p className="font-semibold text-amber-200">{title}</p>
+      <p className="mt-2 text-white/60">{message}</p>
     </div>
   );
 }
@@ -296,31 +407,6 @@ function useCountdown(expiresAt: string) {
     minutes: Math.floor((total % 3600000) / 60000),
     seconds: Math.floor((total % 60000) / 1000),
   };
-}
-
-function Countdown({ remaining }: { remaining: ReturnType<typeof useCountdown> }) {
-  if (remaining.total <= 0) {
-    return <p className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-center text-sm text-destructive">This private offer window has expired.</p>;
-  }
-  return (
-    <div className="mt-6">
-      <p className="text-center text-xs uppercase tracking-[0.25em] text-muted-foreground">Ends in</p>
-      <div className="mt-3 grid grid-cols-3 gap-3">
-        <Cell value={remaining.hours} label="hrs" />
-        <Cell value={remaining.minutes} label="min" />
-        <Cell value={remaining.seconds} label="sec" />
-      </div>
-    </div>
-  );
-}
-
-function Cell({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="rounded-2xl border border-primary/40 bg-primary/10 p-3 text-center">
-      <div className="text-3xl font-black tabular-nums">{String(value).padStart(2, "0")}</div>
-      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</div>
-    </div>
-  );
 }
 
 function Centered({ children }: { children: ReactNode }) {
