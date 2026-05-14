@@ -42,6 +42,28 @@ const FEATURES = [
   "Cancel anytime",
 ];
 
+const OFFER_VIDEO_URL = import.meta.env.VITE_OFFER_VIDEO_URL || "";
+
+function getEmbedUrl(url: string) {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("youtube.com")) {
+      const id = parsed.searchParams.get("v");
+      return id ? "https://www.youtube.com/embed/" + id : url;
+    }
+    if (parsed.hostname === "youtu.be") {
+      return "https://www.youtube.com/embed/" + parsed.pathname.replace("/", "");
+    }
+    if (parsed.hostname.includes("vimeo.com") && /^\/\d+/.test(parsed.pathname)) {
+      return "https://player.vimeo.com/video" + parsed.pathname;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
+
 function BeatOfferPage() {
   const { token } = Route.useParams();
   const offerQuery = useQuery({
@@ -137,13 +159,23 @@ function OfferContent({ offer }: { offer: BeatOffer }) {
                 <p className="text-sm text-muted-foreground">Add your sales video here when ready.</p>
               </div>
             </div>
-            <div className="mt-6 flex aspect-video items-center justify-center rounded-2xl border border-dashed border-primary/40 bg-primary/10 text-center">
-              <div className="max-w-sm px-6">
-                <PlayCircle className="mx-auto h-12 w-12 text-primary" />
-                <p className="mt-3 text-sm font-semibold">Private offer video placeholder</p>
-                <p className="mt-1 text-xs text-muted-foreground">This page is ready for a hosted YouTube, Vimeo, or Loom embed.</p>
+            {OFFER_VIDEO_URL ? (
+              <iframe
+                title="Private offer video"
+                src={getEmbedUrl(OFFER_VIDEO_URL)}
+                className="mt-6 aspect-video w-full rounded-2xl border border-border bg-black"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : (
+              <div className="mt-6 flex aspect-video items-center justify-center rounded-2xl border border-dashed border-primary/40 bg-primary/10 text-center">
+                <div className="max-w-sm px-6">
+                  <PlayCircle className="mx-auto h-12 w-12 text-primary" />
+                  <p className="mt-3 text-sm font-semibold">Private offer video placeholder</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Set VITE_OFFER_VIDEO_URL to show your hosted YouTube, Vimeo, or Loom video here.</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </section>
 
