@@ -180,7 +180,7 @@ function BeatClaimPage() {
       });
       if (!result.ok || !result.token) throw new Error(result.error ?? "Unable to reserve this beat.");
       if (result.sendfox.configured && !result.sendfox.ok) {
-        toast.message("Beat reserved. SendFox needs attention, but your lead was saved.");
+        toast.message("Beat reserved. Email provider needs attention, but your lead was saved.");
       }
       navigate({ to: "/offer/$token", params: { token: result.token } });
     } catch (err) {
