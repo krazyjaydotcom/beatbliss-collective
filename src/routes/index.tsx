@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Hero } from "@/components/hero";
-import { Pricing } from "@/components/pricing";
 import { PublicSupportButton } from "@/components/public-support-button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
@@ -15,7 +14,6 @@ function IndexPage() {
       <SiteNav />
       <main>
         <Hero />
-        <Pricing />
       </main>
       <SiteFooter />
       <PublicSupportButton />

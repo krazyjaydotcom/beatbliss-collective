@@ -13,10 +13,6 @@ export function SiteNav() {
         <Link to="/" className="text-2xl font-black tracking-tight">
           <span className="text-foreground">MY</span><span className="text-primary">BEAT</span><span className="text-foreground">CATALOG</span><sup className="ml-0.5 align-super text-[0.45em] font-bold text-foreground">™</sup>
         </Link>
-        <div className="hidden items-center gap-8 text-sm font-medium md:flex">
-          <a href="/#pricing" className="transition-colors hover:text-primary">Pricing</a>
-          <a href="/#contact" className="transition-colors hover:text-primary">Contact</a>
-        </div>
         <div className="flex items-center gap-3">
           {loading ? null : user ? (
             <>
@@ -41,7 +37,7 @@ export function SiteNav() {
                 <Link to="/login">Log In</Link>
               </Button>
               <Button variant="hero" size="sm" asChild>
-                <Link to="/" hash="pricing">Apply For Access</Link>
+                <Link to="/checkout">Apply For Access</Link>
               </Button>
             </>
           )}

@@ -19,11 +19,11 @@ export function Hero() {
             <span className="text-primary">HIGH QUALITY BEATS.</span>
           </h1>
           <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-            Private access to cinematic, inspirational beats built for artists with a message. Join the membership, unlock the catalog, and stay close to KrazyJay.
+            Private access to cinematic, inspirational beats built for artists with a message. Apply for access, unlock the catalog, and stay close to KrazyJay.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button size="xl" variant="hero" asChild>
-              <Link to="/" hash="pricing">
+              <Link to="/checkout">
                 Apply For Access
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -34,7 +34,7 @@ export function Hero() {
           </div>
           <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
             <Lock className="h-4 w-4 text-primary" />
-            <span>Private membership · $49.99/mo · Apply for access below</span>
+            <span>Private membership · Application required · Member-only access</span>
           </div>
           <div className="mt-6 inline-flex items-center gap-2 text-sm text-muted-foreground">
             <MessageSquareText className="h-4 w-4 text-primary" />
