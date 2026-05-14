@@ -60,9 +60,7 @@ async function sendToSendy(params: {
       boolean: "true",
       BeatTitle: params.beatTitle,
       OfferUrl: params.offerUrl,
-      Source: params.source || "beat-claim",
-      referrer: params.source || "beat-claim",
-    });
+      Source: params.source || "beat-claim",    });
 
     const res = await fetch(url, {
       method: "POST",
