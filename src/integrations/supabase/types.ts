@@ -86,6 +86,50 @@ export type Database = {
           },
         ]
       }
+      beat_claims: {
+        Row: {
+          beat_id: string
+          checkout_session_id: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          purchased_at: string | null
+          source: string | null
+          token: string
+        }
+        Insert: {
+          beat_id: string
+          checkout_session_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          purchased_at?: string | null
+          source?: string | null
+          token: string
+        }
+        Update: {
+          beat_id?: string
+          checkout_session_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          purchased_at?: string | null
+          source?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_claims_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beat_funnel_leads: {
         Row: {
           captured_at: string
@@ -201,6 +245,7 @@ export type Database = {
           mood: string
           music_key: string
           producer_name: string
+          release_at: string | null
           title: string
         }
         Insert: {
@@ -217,6 +262,7 @@ export type Database = {
           mood: string
           music_key: string
           producer_name?: string
+          release_at?: string | null
           title: string
         }
         Update: {
@@ -233,6 +279,7 @@ export type Database = {
           mood?: string
           music_key?: string
           producer_name?: string
+          release_at?: string | null
           title?: string
         }
         Relationships: []
@@ -805,6 +852,15 @@ export type Database = {
         Args: { _email: string; _ip?: string; _slug: string; _ua?: string }
         Returns: Json
       }
+      claim_beat: {
+        Args: { _beat_id: string; _email: string; _source?: string }
+        Returns: {
+          beat_id: string
+          expires_at: string
+          reused: boolean
+          token: string
+        }[]
+      }
       claim_invite: {
         Args: { _token: string; _user_id: string }
         Returns: Json
@@ -818,6 +874,28 @@ export type Database = {
         Returns: number
       }
       ensure_chat_thread: { Args: never; Returns: string }
+      get_beat_offer: {
+        Args: { _token: string }
+        Returns: {
+          audio_url: string
+          audio_url_tagged: string
+          beat_id: string
+          bpm: number
+          claim_id: string
+          cover_url: string
+          created_at: string
+          duration_seconds: number
+          email: string
+          expires_at: string
+          genre: string
+          mood: string
+          music_key: string
+          producer_name: string
+          purchased_at: string
+          title: string
+          token: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -825,6 +903,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_claimable_beats: {
+        Args: never
+        Returns: {
+          audio_url: string
+          audio_url_tagged: string
+          bpm: number
+          cover_url: string
+          created_at: string
+          duration_seconds: number
+          genre: string
+          id: string
+          mood: string
+          music_key: string
+          producer_name: string
+          title: string
+        }[]
+      }
+      make_beat_claim_token: { Args: never; Returns: string }
       mark_funnel_lead_forwarded: {
         Args: { _error?: string; _lead_id: string }
         Returns: undefined
