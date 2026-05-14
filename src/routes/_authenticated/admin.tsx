@@ -11,6 +11,7 @@ import {
   Download,
   Eye,
   ShieldCheck,
+  Megaphone,
   UserCheck,
   GraduationCap,
   Link2,
