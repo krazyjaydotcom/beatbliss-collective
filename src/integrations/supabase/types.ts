@@ -555,6 +555,124 @@ export type Database = {
         }
         Relationships: []
       }
+      exclusive_bids: {
+        Row: {
+          amount: number
+          beat_id: string
+          created_at: string
+          id: string
+          note: string | null
+          request_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          beat_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          request_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          beat_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          request_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exclusive_bids_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exclusive_bids_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "exclusive_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exclusive_bids_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exclusive_requests: {
+        Row: {
+          beat_id: string
+          bid_deadline: string | null
+          closed_at: string | null
+          created_at: string
+          id: string
+          intended_use: string | null
+          minimum_bid: number | null
+          notes: string | null
+          opened_at: string | null
+          requested_amount: number | null
+          requested_by: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          beat_id: string
+          bid_deadline?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          intended_use?: string | null
+          minimum_bid?: number | null
+          notes?: string | null
+          opened_at?: string | null
+          requested_amount?: number | null
+          requested_by: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          beat_id?: string
+          bid_deadline?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          intended_use?: string | null
+          minimum_bid?: number | null
+          notes?: string | null
+          opened_at?: string | null
+          requested_amount?: number | null
+          requested_by?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exclusive_requests_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exclusive_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invites: {
         Row: {
           claimed_by_user_id: string | null
@@ -1057,6 +1175,23 @@ export type Database = {
           title: string
         }[]
       }
+      list_my_exclusive_opportunities: {
+        Args: never
+        Returns: {
+          beat_id: string
+          beat_title: string
+          bid_deadline: string
+          bidder_count: number
+          bpm: number
+          cover_url: string
+          current_high_bid: number
+          genre: string
+          minimum_bid: number
+          my_bid: number
+          request_id: string
+          requested_amount: number
+        }[]
+      }
       make_beat_claim_token: { Args: never; Returns: string }
       mark_funnel_lead_forwarded: {
         Args: { _error?: string; _lead_id: string }
@@ -1074,6 +1209,10 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      place_exclusive_bid: {
+        Args: { _amount: number; _note?: string; _request_id: string }
+        Returns: Json
       }
       process_beat_download: {
         Args: { _beat_id: string; _file_type?: string }
