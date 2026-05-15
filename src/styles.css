@@ -154,57 +154,68 @@
     color: var(--color-foreground);
   }
 }
-
 @layer components {
   .admin-console {
-    background: #f8fafc;
-    color: #0f172a;
+    background:
+      radial-gradient(circle at 80% 0%, rgba(37, 99, 235, 0.16), transparent 34%),
+      radial-gradient(circle at 8% 10%, rgba(37, 99, 235, 0.08), transparent 26%),
+      #030915;
+    color: #f8fafc;
   }
 
   .admin-console header,
   .admin-console main,
   .admin-console section,
-  .admin-console article {
-    color: #0f172a;
+  .admin-console article,
+  .admin-console label {
+    color: #f8fafc;
   }
 
   .admin-console .bg-background,
   .admin-console [class*="bg-background"] {
-    background-color: #f8fafc !important;
+    background-color: #030915 !important;
   }
 
   .admin-console .bg-card,
   .admin-console [class*="bg-card"] {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.94)) !important;
+    color: #f8fafc !important;
   }
 
   .admin-console .bg-muted,
   .admin-console [class*="bg-muted"] {
-    background-color: #f1f5f9 !important;
+    background-color: #0f172a !important;
   }
 
   .admin-console .border-border,
   .admin-console [class*="border-border"] {
-    border-color: #e2e8f0 !important;
+    border-color: #1e293b !important;
   }
 
   .admin-console .text-foreground,
   .admin-console [class*="text-foreground"] {
-    color: #0f172a !important;
+    color: #f8fafc !important;
   }
 
   .admin-console .text-muted-foreground,
   .admin-console [class*="text-muted-foreground"] {
-    color: #475569 !important;
+    color: #94a3b8 !important;
+  }
+
+  .admin-console .text-slate-950,
+  .admin-console .text-slate-900,
+  .admin-console .text-slate-800,
+  .admin-console .text-slate-700,
+  .admin-console .text-slate-600 {
+    color: #e2e8f0 !important;
   }
 
   .admin-console input,
   .admin-console textarea,
   .admin-console select {
-    background-color: #ffffff !important;
-    border-color: #cbd5e1 !important;
-    color: #0f172a !important;
+    background-color: #0b1220 !important;
+    border-color: #263449 !important;
+    color: #f8fafc !important;
   }
 
   .admin-console input::placeholder,
@@ -213,29 +224,29 @@
   }
 
   .admin-console table {
-    background-color: #ffffff;
-    color: #0f172a;
+    background-color: #07111d;
+    color: #f8fafc;
   }
 
   .admin-console thead,
   .admin-console thead tr,
   .admin-console thead th {
-    background-color: #f1f5f9 !important;
-    color: #334155 !important;
+    background-color: #0f172a !important;
+    color: #cbd5e1 !important;
   }
 
   .admin-console tbody tr {
-    background-color: #ffffff;
-    border-color: #e2e8f0 !important;
+    background-color: #07111d !important;
+    border-color: #1e293b !important;
   }
 
   .admin-console tbody tr:hover {
-    background-color: #f8fafc !important;
+    background-color: #0b1a2d !important;
   }
 
   .admin-console td,
   .admin-console th {
-    border-color: #e2e8f0 !important;
+    border-color: #1e293b !important;
   }
 
   .admin-console .shadow-\[var\(--shadow-glow\)\],
@@ -243,22 +254,33 @@
   .admin-console .shadow-xl,
   .admin-console .shadow-lg,
   .admin-console .shadow {
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06) !important;
-  }
-
-  .admin-console .rounded-2xl,
-  .admin-console .rounded-3xl {
-    border-color: #e2e8f0;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28) !important;
   }
 
   .admin-console .bg-secondary,
   .admin-console [class*="bg-secondary"] {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
   }
 
   .admin-console .bg-primary,
   .admin-console [class*="bg-primary/10"] {
-    background-color: #eff6ff !important;
+    background-color: rgba(37, 99, 235, 0.15) !important;
+  }
+
+  .admin-console .bg-white,
+  .admin-console [class*="bg-white"] {
+    background-color: #07111d !important;
+    color: #f8fafc !important;
+  }
+
+  .admin-console .border-slate-200,
+  .admin-console [class*="border-slate-200"] {
+    border-color: #1e293b !important;
+  }
+
+  .admin-console .bg-slate-50,
+  .admin-console [class*="bg-slate-50"] {
+    background-color: #0b1220 !important;
   }
 }
