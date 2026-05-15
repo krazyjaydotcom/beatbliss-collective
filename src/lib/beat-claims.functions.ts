@@ -31,7 +31,6 @@ const inputSchema = z.object({
   source: z.string().max(120).optional().nullable(),
   deviceFingerprint: z.string().max(160).optional().nullable(),
   origin: z.string().url().max(2048).optional(),
-  deviceFingerprint: z.string().max(128).optional().nullable(),
 });
 
 function getPublicOrigin(inputOrigin?: string) {
