@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-r
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";`nimport { KrazyLogo } from "@/components/krazy-logo";
+import { Button } from "@/components/ui/button";
+import { KrazyLogo } from "@/components/krazy-logo";
 import { supabase } from "@/integrations/supabase/client";
 import { validateJoinToken, claimJoinInvite } from "@/lib/join.functions";
 
@@ -166,7 +167,9 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <Link to="/" className="block text-center text-2xl font-black tracking-tight mb-8">`n          <KrazyLogo className="text-2xl" />`n        </Link>
+        <Link to="/" className="block text-center text-2xl font-black tracking-tight mb-8">
+          <KrazyLogo className="text-2xl" />
+        </Link>
         <div className="rounded-2xl border border-border bg-card p-8">{children}</div>
       </div>
     </div>

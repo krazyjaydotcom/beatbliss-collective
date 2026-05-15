@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";`nimport { KrazyLogo } from "@/components/krazy-logo";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { KrazyLogo } from "@/components/krazy-logo";
 
 export const Route = createFileRoute("/signup")({
   component: SignupClosed,
@@ -8,7 +9,9 @@ function SignupClosed() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 block text-center text-2xl font-black tracking-tight">`n          <KrazyLogo className="text-2xl" />`n        </Link>
+        <Link to="/" className="mb-8 block text-center text-2xl font-black tracking-tight">
+          <KrazyLogo className="text-2xl" />
+        </Link>
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
           <p className="text-xs font-bold tracking-wider text-primary">INVITE-ONLY</p>
           <h1 className="mt-2 text-2xl font-bold">Private membership access</h1>

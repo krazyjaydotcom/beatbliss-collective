@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";`nimport { KrazyLogo } from "@/components/krazy-logo";
+import { Button } from "@/components/ui/button";
+import { KrazyLogo } from "@/components/krazy-logo";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>): { redirect?: string; plan?: string } => ({
@@ -39,7 +40,9 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <Link to="/" className="block text-center text-2xl font-black tracking-tight mb-8">`n          <KrazyLogo className="text-2xl" />`n        </Link>
+        <Link to="/" className="block text-center text-2xl font-black tracking-tight mb-8">
+          <KrazyLogo className="text-2xl" />
+        </Link>
         <div className="rounded-2xl border border-border bg-card p-8">
           <h1 className="text-2xl font-bold">Log in</h1>
           <p className="mt-1 text-sm text-muted-foreground">Welcome back. Let's get to work.</p>
