@@ -156,10 +156,7 @@
 }
 @layer components {
   .admin-console {
-    background:
-      radial-gradient(circle at 80% 0%, rgba(37, 99, 235, 0.16), transparent 34%),
-      radial-gradient(circle at 8% 10%, rgba(37, 99, 235, 0.08), transparent 26%),
-      #030915;
+    background: radial-gradient(circle at 80% 0%, rgba(37, 99, 235, 0.16), transparent 34%), radial-gradient(circle at 8% 10%, rgba(37, 99, 235, 0.08), transparent 26%), #030915;
     color: #f8fafc;
   }
 
@@ -188,7 +185,9 @@
   }
 
   .admin-console .border-border,
-  .admin-console [class*="border-border"] {
+  .admin-console [class*="border-border"],
+  .admin-console .border-slate-200,
+  .admin-console [class*="border-slate-200"] {
     border-color: #1e293b !important;
   }
 
@@ -269,18 +268,10 @@
   }
 
   .admin-console .bg-white,
-  .admin-console [class*="bg-white"] {
-    background-color: #07111d !important;
-    color: #f8fafc !important;
-  }
-
-  .admin-console .border-slate-200,
-  .admin-console [class*="border-slate-200"] {
-    border-color: #1e293b !important;
-  }
-
+  .admin-console [class*="bg-white"],
   .admin-console .bg-slate-50,
   .admin-console [class*="bg-slate-50"] {
-    background-color: #0b1220 !important;
+    background-color: #07111d !important;
+    color: #f8fafc !important;
   }
 }

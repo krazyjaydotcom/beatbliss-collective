@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — MYBEATCATALOG" }] }),
+  head: () => ({ meta: [{ title: "Admin - MYBEATCATALOG" }] }),
   component: AdminLayout,
 });
 
@@ -31,18 +31,19 @@ const NAV = [
   { to: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
   { to: "/admin/beats", label: "Beats", icon: Music },
   { to: "/admin/beat-requests", label: "Beat Requests", icon: Music },
-  { to: "/admin/funnels", label: "Offer Page", icon: PanelsTopLeft },`n  { to: "/admin/beat-claims", label: "Beat Claims", icon: Clock },
+  { to: "/admin/funnels", label: "Offer Page", icon: PanelsTopLeft },
+  { to: "/admin/beat-claims", label: "Beat Claims", icon: Clock },
   { to: "/admin/members", label: "Members", icon: Users },
   { to: "/admin/access", label: "Manual Access", icon: UserCheck },
   { to: "/admin/invites", label: "Invites", icon: Link2 },
   { to: "/admin/classroom", label: "Classroom", icon: GraduationCap },
-  { to: "/admin/import", label: "Import beats", icon: Download },
+  { to: "/admin/import", label: "Import Beats", icon: Download },
   { to: "/admin/whitelist", label: "Whitelist", icon: ShieldCheck },
-  { to: "/admin/gift", label: "Gift credits", icon: Gift },
+  { to: "/admin/gift", label: "Gift Credits", icon: Gift },
   { to: "/admin/support", label: "Support", icon: MessageSquare },
   { to: "/admin/online", label: "Online Users", icon: Users },
   { to: "/admin/agreements", label: "Agreements", icon: BarChart3 },
-  { to: "/beats", label: "View as user", icon: Eye },
+  { to: "/beats", label: "View as User", icon: Eye },
 ];
 
 function AdminLayout() {
@@ -56,8 +57,8 @@ function AdminLayout() {
 
   if (isAdmin !== true) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="flex min-h-screen items-center justify-center bg-[#030915]">
+        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
       </div>
     );
   }
@@ -77,26 +78,48 @@ function AdminLayout() {
           </div>
         </div>
       </header>
+
       <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-8 px-6 py-7 md:grid-cols-[250px_1fr]">
-        <aside className="rounded-2xl border border-slate-800/90 bg-slate-950/55 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.28)]"><nav className="space-y-1">
-          {NAV.map((item) => {
-            const active = item.exact ? path === item.to : path.startsWith(item.to);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
-                  active`n                    ? "bg-primary text-white shadow-[0_10px_30px_rgba(37,99,235,0.28)]"`n                    : "text-slate-300 hover:bg-slate-800/80 hover:text-white",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav><div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/50 p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Music className="h-5 w-5" /></div><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Catalog Storage</p><p className="mt-1 text-sm text-slate-200">Admin workspace</p></div></div><div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full w-2/5 rounded-full bg-primary" /></div></div></aside><main className="min-w-0 rounded-2xl border border-slate-800/90 bg-slate-950/45 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.24)] md:p-6">
+        <aside className="rounded-2xl border border-slate-800/90 bg-slate-950/55 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.28)]">
+          <nav className="space-y-1">
+            {NAV.map((item) => {
+              const active = item.exact ? path === item.to : path.startsWith(item.to);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-primary text-white shadow-[0_10px_30px_rgba(37,99,235,0.28)]"
+                      : "text-slate-300 hover:bg-slate-800/80 hover:text-white",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Music className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Catalog Storage</p>
+                <p className="mt-1 text-sm text-slate-200">Admin workspace</p>
+              </div>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+              <div className="h-full w-2/5 rounded-full bg-primary" />
+            </div>
+          </div>
+        </aside>
+
+        <main className="min-w-0 rounded-2xl border border-slate-800/90 bg-slate-950/45 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.24)] md:p-6">
           <Outlet />
         </main>
       </div>
