@@ -29,6 +29,7 @@ const inputSchema = z.object({
   email: z.string().email().max(254),
   beatId: z.string().uuid(),
   source: z.string().max(120).optional().nullable(),
+  deviceFingerprint: z.string().max(160).optional().nullable(),
   origin: z.string().url().max(2048).optional(),
   deviceFingerprint: z.string().max(128).optional().nullable(),
 });
