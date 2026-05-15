@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Image, Loader2, Music, Save, Trash2, FolderUp, FileAudio, FileMusic, Pencil, X } from "lucide-react";
+import { Image, Loader2, Music, Save, Trash2, FolderUp, FileAudio, FileMusic, Pencil, X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +83,8 @@ function AdminBeatsPage() {
 
       <DropUploader onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
 
+      <ExclusiveRightsAdminPanel />
+
       {selected.size > 0 && (
         <BulkEditBar
           ids={Array.from(selected)}
@@ -150,6 +152,174 @@ function AdminBeatsPage() {
           qc.invalidateQueries({ queryKey: ["admin-beats"] });
         }}
       />
+    </div>
+  );
+}
+
+function ExclusiveRightsAdminPanel() {
+  const qc = useQueryClient();
+  const { data: requests = [], isLoading } = useQuery({
+    queryKey: ["admin-exclusive-requests"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("exclusive_requests")
+        .select("*, beats(title, cover_url, genre, bpm), profiles!exclusive_requests_requested_by_fkey(email, display_name, full_name)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: bids = [] } = useQuery({
+    queryKey: ["admin-exclusive-bids"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("exclusive_bids")
+        .select("*, profiles!exclusive_bids_user_id_fkey(email, display_name, full_name)")
+        .order("amount", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  async function updateRequest(id: string, patch: Record<string, unknown>) {
+    const { error } = await (supabase as any).from("exclusive_requests").update(patch).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Exclusive request updated");
+    qc.invalidateQueries({ queryKey: ["admin-exclusive-requests"] });
+    qc.invalidateQueries({ queryKey: ["admin-exclusive-bids"] });
+  }
+
+  return (
+    <div className="rounded-2xl border border-primary/25 bg-primary/5 p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="flex items-center gap-2 text-xl font-black">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Exclusive Rights Requests
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Review member requests, open bidding windows, and track bids from members who downloaded each beat.
+          </p>
+        </div>
+        <Badge variant="outline">{requests.length} total</Badge>
+      </div>
+
+      {isLoading ? (
+        <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading exclusive requests...
+        </div>
+      ) : requests.length ? (
+        <div className="mt-5 space-y-4">
+          {requests.map((request: any) => (
+            <ExclusiveRequestAdminRow
+              key={request.id}
+              request={request}
+              bids={bids.filter((bid: any) => bid.request_id === request.id)}
+              onUpdate={(patch) => updateRequest(request.id, patch)}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="mt-5 rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          No exclusive rights requests yet.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ExclusiveRequestAdminRow({
+  request,
+  bids,
+  onUpdate,
+}: {
+  request: any;
+  bids: any[];
+  onUpdate: (patch: Record<string, unknown>) => void;
+}) {
+  const [minimumBid, setMinimumBid] = useState(String(request.minimum_bid ?? request.requested_amount ?? 500));
+  const [deadline, setDeadline] = useState(
+    request.bid_deadline
+      ? new Date(request.bid_deadline).toISOString().slice(0, 16)
+      : new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16),
+  );
+  const highBid = bids.reduce((max, bid) => Math.max(max, Number(bid.amount ?? 0)), 0);
+  const requester = request.profiles?.display_name || request.profiles?.full_name || request.profiles?.email || "Member";
+
+  const openWindow = () => {
+    const parsed = Number(minimumBid);
+    if (!Number.isFinite(parsed) || parsed <= 0) return toast.error("Enter a valid minimum bid.");
+    if (!deadline) return toast.error("Choose a bidding deadline.");
+    onUpdate({
+      status: "open",
+      minimum_bid: parsed,
+      bid_deadline: new Date(deadline).toISOString(),
+      opened_at: new Date().toISOString(),
+    });
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        {request.beats?.cover_url ? (
+          <img src={request.beats.cover_url} alt={request.beats.title} className="h-16 w-16 rounded-lg object-cover" />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
+            <Music className="h-5 w-5 text-muted-foreground" />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-bold">{request.beats?.title ?? "Unknown beat"}</p>
+            <Badge variant="secondary">{request.status}</Badge>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Requested by {requester} - Offer {request.requested_amount ? `$${request.requested_amount}` : "not specified"}
+          </p>
+          {request.intended_use ? <p className="mt-2 text-sm">{request.intended_use}</p> : null}
+          {request.notes ? <p className="mt-1 text-xs text-muted-foreground">{request.notes}</p> : null}
+          <div className="mt-3 grid gap-3 md:grid-cols-[150px_220px_1fr]">
+            <div>
+              <Label>Minimum bid</Label>
+              <Input value={minimumBid} onChange={(e) => setMinimumBid(e.target.value)} type="number" min="1" />
+            </div>
+            <div>
+              <Label>Bid deadline</Label>
+              <Input value={deadline} onChange={(e) => setDeadline(e.target.value)} type="datetime-local" />
+            </div>
+            <div className="flex items-end gap-2">
+              <Button size="sm" variant="hero" onClick={openWindow}>
+                {request.status === "open" ? "Update window" : "Open bidding"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "closed", closed_at: new Date().toISOString() })}>
+                Close
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "rejected", closed_at: new Date().toISOString() })}>
+                Reject
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "sold", closed_at: new Date().toISOString() })}>
+                Sold
+              </Button>
+            </div>
+          </div>
+        </div>
+        <div className="min-w-[190px] rounded-lg border border-border bg-background/60 p-3 text-sm">
+          <p className="text-xs font-bold uppercase text-muted-foreground">Bidding</p>
+          <p className="mt-1 text-lg font-black">${highBid.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">{bids.length} bid{bids.length === 1 ? "" : "s"}</p>
+          <div className="mt-3 space-y-2">
+            {bids.slice(0, 3).map((bid) => (
+              <div key={bid.id} className="rounded-md bg-muted/40 p-2 text-xs">
+                <p className="font-semibold">${Number(bid.amount).toLocaleString()}</p>
+                <p className="text-muted-foreground">
+                  {bid.profiles?.display_name || bid.profiles?.full_name || bid.profiles?.email || bid.user_id}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -563,3 +733,4 @@ function BulkEditBar({ ids, onDone, onClear }: { ids: string[]; onDone: () => vo
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1.5"><Label className="text-xs">{label}</Label>{children}</div>;
 }
+
