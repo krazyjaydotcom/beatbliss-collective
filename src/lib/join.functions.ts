@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";`r`nimport { createStripeClient, type StripeEnv } from "@/lib/stripe.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createStripeClient, type StripeEnv } from "@/lib/stripe.server";
 
 export const validateJoinToken = createServerFn({ method: "POST" })
   .inputValidator((input: { token: string }) =>
