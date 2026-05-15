@@ -37,6 +37,14 @@ function getPublicOrigin(inputOrigin?: string) {
   const origin = inputOrigin || process.env.PUBLIC_SITE_URL || process.env.SITE_URL || "https://mybeatcatalog.com";
   return origin.endsWith("/") ? origin.slice(0, -1) : origin;
 }
+function getErrorMessage(err: unknown) {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object" && "message" in err) {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return "Unable to claim this beat.";
+}
 
 async function sendToSendy(params: {
   email: string;
@@ -146,7 +154,7 @@ export const claimBeatAndSendFox = createServerFn({ method: "POST" })
           configured: !!process.env.SENDY_BASE_URL && !!process.env.SENDY_API_KEY && !!process.env.SENDY_LIST_ID,
           ok: false,
         },
-        error: err instanceof Error ? err.message : "Unable to claim this beat.",
+        error: getErrorMessage(err),
       };
     }
   });
