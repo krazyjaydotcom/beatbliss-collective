@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";`r`nimport { createStripeClient, type StripeEnv } from "@/lib/stripe.server";
 
 export const validateJoinToken = createServerFn({ method: "POST" })
   .inputValidator((input: { token: string }) =>
@@ -9,7 +9,7 @@ export const validateJoinToken = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: invite } = await supabaseAdmin
       .from("invites")
-      .select("id, expires_at, used_at, revoked_at")
+      .select("id, expires_at, used_at, revoked_at, tier, environment, stripe_customer_id, stripe_subscription_id")
       .eq("token", data.token)
       .maybeSingle();
 
@@ -44,7 +44,7 @@ export const claimJoinInvite = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: boolean; email?: string; error?: string }> => {
     const { data: invite } = await supabaseAdmin
       .from("invites")
-      .select("id, expires_at, used_at, revoked_at")
+      .select("id, expires_at, used_at, revoked_at, tier, environment, stripe_customer_id, stripe_subscription_id")
       .eq("token", data.token)
       .maybeSingle();
 
@@ -85,8 +85,9 @@ export const claimJoinInvite = createServerFn({ method: "POST" })
         full_name: fullName,
         display_name: fullName,
         email,
-        subscription_tier: "artist",
+        subscription_tier: invite.tier ?? "artist",
         subscription_status: "active",
+        stripe_customer_id: invite.stripe_customer_id || null,
       })
       .eq("id", userId);
 
@@ -95,6 +96,20 @@ export const claimJoinInvite = createServerFn({ method: "POST" })
       return { ok: false, error: profileErr.message };
     }
 
+    if (invite.stripe_customer_id) {
+      try {
+        const env = (invite.environment === "live" ? "live" : "sandbox") as StripeEnv;
+        const stripe = createStripeClient(env);
+        await stripe.customers.update(invite.stripe_customer_id, { metadata: { userId } });
+        if (invite.stripe_subscription_id) {
+          await stripe.subscriptions.update(invite.stripe_subscription_id, {
+            metadata: { userId, tier: invite.tier ?? "artist" },
+          });
+        }
+      } catch (err) {
+        console.error("[join] failed to attach Stripe metadata", err);
+      }
+    }
     const { error: inviteErr } = await supabaseAdmin
       .from("invites")
       .update({ used_at: new Date().toISOString(), used_by: userId, claimed_by_user_id: userId })

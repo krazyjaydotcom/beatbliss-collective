@@ -18,13 +18,18 @@ function CheckoutReturn() {
         {session_id ? (
           <>
             <CheckCircle2 className="mx-auto h-16 w-16 text-primary" />
-            <h1 className="mt-6 text-3xl font-bold">You're in!</h1>
+            <h1 className="mt-6 text-3xl font-bold">Payment received</h1>
             <p className="mt-2 text-muted-foreground">
-              Your subscription is active. Head to your account to start downloading beats.
+              Check your email for your one-time MYBEATCATALOG claim link. That link lets you create your login and unlock the catalog.
             </p>
-            <Button variant="hero" size="lg" className="mt-8" asChild>
-              <Link to="/account">Go to my account</Link>
-            </Button>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Button variant="hero" size="lg" asChild>
+                <Link to="/login">Log in</Link>
+              </Button>
+              <Button variant="heroOutline" size="lg" asChild>
+                <Link to="/account">Already claimed? Go to account</Link>
+              </Button>
+            </div>
           </>
         ) : (
           <>
