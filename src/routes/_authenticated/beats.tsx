@@ -168,6 +168,7 @@ function BeatsDashboard() {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [confirmBeat, setConfirmBeat] = useState<Beat | null>(null);
+  const [exclusiveBeat, setExclusiveBeat] = useState<Beat | null>(null);
   const [notepadOpen, setNotepadOpen] = useState(false);
 
   const { data: beats = [] } = useQuery({
@@ -204,6 +205,26 @@ function BeatsDashboard() {
       const raw = localStorage.getItem(`favs:${user!.id}`);
       return raw ? (JSON.parse(raw) as string[]) : [];
     },
+  });
+
+  const exclusiveRequestM = useMutation({
+    mutationFn: async (payload: { beat: Beat; amount: number | null; intendedUse: string; notes: string }) => {
+      if (!user) throw new Error("You must be logged in to request exclusive rights.");
+      const { error } = await (supabase as any).from("exclusive_requests").insert({
+        beat_id: payload.beat.id,
+        requested_by: user.id,
+        requested_amount: payload.amount,
+        intended_use: payload.intendedUse.trim() || null,
+        notes: payload.notes.trim() || null,
+        status: "pending",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Exclusive request sent. KrazyJay will review it.");
+      setExclusiveBeat(null);
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Could not send exclusive request."),
   });
 
   const sidebarItems = useMemo(() => {
@@ -521,13 +542,14 @@ function BeatsDashboard() {
 
                 {view === "list" ? (
                   <div className="rounded-xl border border-border overflow-hidden">
-                    <div className="hidden md:grid grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px] gap-4 px-4 py-3 text-xs font-semibold uppercase text-muted-foreground border-b border-border bg-secondary/40">
+                    <div className="hidden md:grid grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px_50px] gap-4 px-4 py-3 text-xs font-semibold uppercase text-muted-foreground border-b border-border bg-secondary/40">
                       <div>Beat</div>
                       <div>Genre</div>
                       <div>Mood</div>
                       <div>Key</div>
                       <div>BPM</div>
                       <div>Duration</div>
+                      <div></div>
                       <div></div>
                       <div></div>
                     </div>
@@ -544,6 +566,7 @@ function BeatsDashboard() {
                         }}
                         onFav={() => toggleFav(b.id)}
                         onDownload={() => setConfirmBeat(b)}
+                        onRequestExclusive={() => setExclusiveBeat(b)}
                       />
                     ))}
                     {filtered.length === 0 && (
@@ -563,6 +586,7 @@ function BeatsDashboard() {
                         }}
                         onFav={() => toggleFav(b.id)}
                         onDownload={() => setConfirmBeat(b)}
+                        onRequestExclusive={() => setExclusiveBeat(b)}
                       />
                     ))}
                   </div>
@@ -620,6 +644,12 @@ function BeatsDashboard() {
         profile={profile ?? null}
         onClose={() => setConfirmBeat(null)}
         onSuccess={() => qc.invalidateQueries({ queryKey: ["profile"] })}
+      />
+      <ExclusiveRequestDialog
+        beat={exclusiveBeat}
+        onClose={() => setExclusiveBeat(null)}
+        onSubmit={(payload) => exclusiveRequestM.mutate(payload)}
+        isPending={exclusiveRequestM.isPending}
       />
     </div>
   );
@@ -689,6 +719,7 @@ function BeatRow({
   onPlay,
   onFav,
   onDownload,
+  onRequestExclusive,
 }: {
   beat: Beat;
   isPlaying: boolean;
@@ -697,10 +728,11 @@ function BeatRow({
   onPlay: () => void;
   onFav: () => void;
   onDownload: () => void;
+  onRequestExclusive: () => void;
 }) {
   return (
     <div
-      className={`grid grid-cols-[1fr_50px_50px] md:grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px] gap-4 px-4 py-4 md:py-3 items-center border-b border-border last:border-0 hover:bg-secondary/40 transition-colors ${
+      className={`grid grid-cols-[1fr_50px_50px_50px] md:grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px_50px] gap-4 px-4 py-4 md:py-3 items-center border-b border-border last:border-0 hover:bg-secondary/40 transition-colors ${
         isCurrent ? "bg-electric/5 ring-1 ring-electric/40" : ""
       }`}
     >
@@ -744,6 +776,13 @@ function BeatRow({
       <button onClick={onDownload} className="p-2 rounded hover:bg-secondary text-muted-foreground hover:text-electric">
         <Download className="h-4 w-4" />
       </button>
+      <button
+        onClick={onRequestExclusive}
+        className="p-2 rounded hover:bg-secondary text-muted-foreground hover:text-primary"
+        title="Request exclusive rights"
+      >
+        <Sparkles className="h-4 w-4" />
+      </button>
     </div>
   );
 }
@@ -754,12 +793,14 @@ function BeatCard({
   onPlay,
   onFav,
   onDownload,
+  onRequestExclusive,
 }: {
   beat: Beat;
   isFav: boolean;
   onPlay: () => void;
   onFav: () => void;
   onDownload: () => void;
+  onRequestExclusive: () => void;
 }) {
   const hash = beat.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const hue1 = hash % 360;
@@ -799,8 +840,99 @@ function BeatCard({
             </button>
           </div>
         </div>
+        <Button variant="outline" size="sm" className="mt-3 w-full" onClick={onRequestExclusive}>
+          Request Exclusive
+        </Button>
       </div>
     </div>
+  );
+}
+
+function ExclusiveRequestDialog({
+  beat,
+  onClose,
+  onSubmit,
+  isPending,
+}: {
+  beat: Beat | null;
+  onClose: () => void;
+  onSubmit: (payload: { beat: Beat; amount: number | null; intendedUse: string; notes: string }) => void;
+  isPending: boolean;
+}) {
+  const [amount, setAmount] = useState("");
+  const [intendedUse, setIntendedUse] = useState("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (!beat) return;
+    setAmount("");
+    setIntendedUse("");
+    setNotes("");
+  }, [beat?.id]);
+
+  return (
+    <Dialog open={!!beat} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Request exclusive rights</DialogTitle>
+          <DialogDescription>
+            Tell KrazyJay how you want to use {beat?.title ?? "this beat"} and what you would like to offer.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!beat) return;
+            const parsed = amount.trim() ? Number(amount) : null;
+            if (parsed !== null && (!Number.isFinite(parsed) || parsed <= 0)) {
+              toast.error("Enter a valid offer amount.");
+              return;
+            }
+            onSubmit({ beat, amount: parsed, intendedUse, notes });
+          }}
+        >
+          <div>
+            <label className="text-sm font-medium">Offer amount</label>
+            <Input
+              type="number"
+              min="1"
+              step="1"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="500"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">How do you plan to use it?</label>
+            <Textarea
+              value={intendedUse}
+              onChange={(e) => setIntendedUse(e.target.value)}
+              placeholder="Single, video, album cut, campaign, etc."
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Additional notes</label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Timeline, release plans, budget notes..."
+              className="mt-1"
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="hero" disabled={isPending}>
+              {isPending ? "Sending..." : "Send request"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1579,3 +1711,4 @@ function NotificationsBell({ userId }: { userId?: string }) {
     </Popover>
   );
 }
+
