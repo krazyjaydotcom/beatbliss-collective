@@ -91,34 +91,43 @@ export type Database = {
           beat_id: string
           checkout_session_id: string | null
           created_at: string
+          device_fingerprint: string | null
           email: string
           expires_at: string
           id: string
+          ip_address: string | null
           purchased_at: string | null
           source: string | null
           token: string
+          user_agent: string | null
         }
         Insert: {
           beat_id: string
           checkout_session_id?: string | null
           created_at?: string
+          device_fingerprint?: string | null
           email: string
           expires_at?: string
           id?: string
+          ip_address?: string | null
           purchased_at?: string | null
           source?: string | null
           token: string
+          user_agent?: string | null
         }
         Update: {
           beat_id?: string
           checkout_session_id?: string | null
           created_at?: string
+          device_fingerprint?: string | null
           email?: string
           expires_at?: string
           id?: string
+          ip_address?: string | null
           purchased_at?: string | null
           source?: string | null
           token?: string
+          user_agent?: string | null
         }
         Relationships: [
           {
@@ -229,6 +238,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      beat_requests: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          reference_artists: string | null
+          status: string
+          style: string | null
+          tempo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reference_artists?: string | null
+          status?: string
+          style?: string | null
+          tempo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reference_artists?: string | null
+          status?: string
+          style?: string | null
+          tempo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       beats: {
         Row: {
@@ -632,6 +677,60 @@ export type Database = {
         }
         Relationships: []
       }
+      offer_page_settings: {
+        Row: {
+          beat_title: string | null
+          benefits: Json
+          benefits_title: string | null
+          checkout_copy: string | null
+          eyebrow: string | null
+          headline_template: string | null
+          id: string
+          intro_text: string | null
+          price_display: string | null
+          section_order: Json
+          subheadline: string | null
+          updated_at: string
+          video_body: string | null
+          video_title: string | null
+          video_url: string | null
+        }
+        Insert: {
+          beat_title?: string | null
+          benefits?: Json
+          benefits_title?: string | null
+          checkout_copy?: string | null
+          eyebrow?: string | null
+          headline_template?: string | null
+          id?: string
+          intro_text?: string | null
+          price_display?: string | null
+          section_order?: Json
+          subheadline?: string | null
+          updated_at?: string
+          video_body?: string | null
+          video_title?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          beat_title?: string | null
+          benefits?: Json
+          benefits_title?: string | null
+          checkout_copy?: string | null
+          eyebrow?: string | null
+          headline_template?: string | null
+          id?: string
+          intro_text?: string | null
+          price_display?: string | null
+          section_order?: Json
+          subheadline?: string | null
+          updated_at?: string
+          video_body?: string | null
+          video_title?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -645,6 +744,13 @@ export type Database = {
           full_name: string | null
           id: string
           music_link: string | null
+          store_artwork_url: string | null
+          store_bio: string | null
+          store_buy_url: string | null
+          store_donate_url: string | null
+          store_name: string | null
+          store_tracks: Json
+          store_username: string | null
           stripe_customer_id: string | null
           subscription_status: string | null
           subscription_tier: string
@@ -662,6 +768,13 @@ export type Database = {
           full_name?: string | null
           id: string
           music_link?: string | null
+          store_artwork_url?: string | null
+          store_bio?: string | null
+          store_buy_url?: string | null
+          store_donate_url?: string | null
+          store_name?: string | null
+          store_tracks?: Json
+          store_username?: string | null
           stripe_customer_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string
@@ -679,6 +792,13 @@ export type Database = {
           full_name?: string | null
           id?: string
           music_link?: string | null
+          store_artwork_url?: string | null
+          store_bio?: string | null
+          store_buy_url?: string | null
+          store_donate_url?: string | null
+          store_name?: string | null
+          store_tracks?: Json
+          store_username?: string | null
           stripe_customer_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string
@@ -852,15 +972,32 @@ export type Database = {
         Args: { _email: string; _ip?: string; _slug: string; _ua?: string }
         Returns: Json
       }
-      claim_beat: {
-        Args: { _beat_id: string; _email: string; _source?: string }
-        Returns: {
-          beat_id: string
-          expires_at: string
-          reused: boolean
-          token: string
-        }[]
-      }
+      claim_beat:
+        | {
+            Args: { _beat_id: string; _email: string; _source?: string }
+            Returns: {
+              beat_id: string
+              expires_at: string
+              reused: boolean
+              token: string
+            }[]
+          }
+        | {
+            Args: {
+              _beat_id: string
+              _device_fingerprint?: string
+              _email: string
+              _ip_address?: string
+              _source?: string
+              _user_agent?: string
+            }
+            Returns: {
+              beat_id: string
+              expires_at: string
+              reused: boolean
+              token: string
+            }[]
+          }
       claim_invite: {
         Args: { _token: string; _user_id: string }
         Returns: Json
