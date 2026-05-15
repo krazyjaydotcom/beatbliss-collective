@@ -151,6 +151,11 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
   const remaining = useCountdown(offer.expires_at);
   const expired = remaining.total <= 0;
   const purchased = !!offer.purchased_at;
+
+  useEffect(() => {
+    if (!expired || purchased) return;
+    window.location.replace("https://mybeatcatalog.com");
+  }, [expired, purchased]);
   const headline = settings.headline_template.replace("{beat}", offer.title);
   const meta = [offer.genre, offer.mood, offer.bpm ? String(offer.bpm) + " BPM" : null].filter(Boolean).join(" / ");
   const videoUrl = getEmbedUrl(settings.video_url || "");
