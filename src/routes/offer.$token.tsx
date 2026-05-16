@@ -96,12 +96,14 @@ function getEmbedUrl(url: string) {
 
 function mergeSettings(row: Partial<OfferSettings> | null | undefined): OfferSettings {
   if (!row) return DEFAULT_SETTINGS;
-  return {
-    ...DEFAULT_SETTINGS,
-    ...row,
-    benefits: Array.isArray(row.benefits) ? row.benefits : DEFAULT_SETTINGS.benefits,
-    section_order: Array.isArray(row.section_order) && row.section_order.length ? row.section_order : DEFAULT_SETTINGS.section_order,
-  };
+  const merged: OfferSettings = { ...DEFAULT_SETTINGS };
+  for (const [key, value] of Object.entries(row)) {
+    if (value === null || value === undefined) continue;
+    (merged as any)[key] = value;
+  }
+  merged.benefits = Array.isArray(row.benefits) && row.benefits.length ? row.benefits : DEFAULT_SETTINGS.benefits;
+  merged.section_order = Array.isArray(row.section_order) && row.section_order.length ? row.section_order : DEFAULT_SETTINGS.section_order;
+  return merged;
 }
 
 function BeatOfferPage() {
