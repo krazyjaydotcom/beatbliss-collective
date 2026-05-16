@@ -38,7 +38,7 @@ export function ChatWidget() {
       if (cancelled || !data) return;
       const tid = data as unknown as string;
       setThreadId(tid);
-      const { data: msgs } = await supabase
+      const { data: msgs } = await (supabase as any)
         .from("chat_messages")
         .select("id, body, sender_role, created_at, audio_url, audio_mime, audio_duration_seconds")
         .eq("thread_id", tid)

@@ -73,7 +73,7 @@ function SupportInbox() {
     if (!activeId) return;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("chat_messages")
         .select("id, body, sender_role, created_at, audio_url, audio_mime, audio_duration_seconds")
         .eq("thread_id", activeId)
