@@ -329,8 +329,38 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_options: {
+        Row: {
+          created_at: string
+          id: string
+          sort_order: number
+          type: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sort_order?: number
+          type: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sort_order?: number
+          type?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
+          audio_duration_seconds: number | null
+          audio_mime: string | null
+          audio_url: string | null
           body: string
           created_at: string
           id: string
@@ -340,6 +370,9 @@ export type Database = {
           thread_id: string
         }
         Insert: {
+          audio_duration_seconds?: number | null
+          audio_mime?: string | null
+          audio_url?: string | null
           body: string
           created_at?: string
           id?: string
@@ -349,6 +382,9 @@ export type Database = {
           thread_id: string
         }
         Update: {
+          audio_duration_seconds?: number | null
+          audio_mime?: string | null
+          audio_url?: string | null
           body?: string
           created_at?: string
           id?: string
