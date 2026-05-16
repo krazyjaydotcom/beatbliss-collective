@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Clock, Copy, Loader2, Music, TimerOff } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Clock, Copy, Loader2, Music, TimerOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ type ClaimRow = {
 };
 
 function AdminBeatClaimsPage() {
+  const qc = useQueryClient();
   const claimsQ = useQuery({
     queryKey: ["admin-beat-claims"],
     queryFn: async () => {
@@ -47,6 +48,17 @@ function AdminBeatClaimsPage() {
   const active = claims.filter((claim) => !claim.purchased_at && new Date(claim.expires_at).getTime() > Date.now()).length;
   const purchased = claims.filter((claim) => claim.purchased_at).length;
   const expired = claims.filter((claim) => !claim.purchased_at && new Date(claim.expires_at).getTime() <= Date.now()).length;
+
+  async function deleteClaim(id: string, email: string) {
+    if (!confirm(`Delete this beat claim for ${email}? This removes the offer link from admin.`)) return;
+    const { error } = await (supabase as any).rpc("admin_delete_beat_claim", { _id: id });
+    if (error) {
+      toast.error(error.message || "Unable to delete claim.");
+      return;
+    }
+    toast.success("Beat claim deleted.");
+    qc.invalidateQueries({ queryKey: ["admin-beat-claims"] });
+  }
 
   return (
     <div className="space-y-6">
@@ -90,7 +102,7 @@ function AdminBeatClaimsPage() {
                 </tr>
               </thead>
               <tbody>
-                {claims.map((claim) => <ClaimRow key={claim.id} claim={claim} />)}
+                {claims.map((claim) => <ClaimRow key={claim.id} claim={claim} onDelete={() => deleteClaim(claim.id, claim.email)} />)}
               </tbody>
             </table>
           </div>
@@ -100,7 +112,7 @@ function AdminBeatClaimsPage() {
   );
 }
 
-function ClaimRow({ claim }: { claim: ClaimRow }) {
+function ClaimRow({ claim, onDelete }: { claim: ClaimRow; onDelete: () => void }) {
   const expired = !claim.purchased_at && new Date(claim.expires_at).getTime() <= Date.now();
   const status = claim.purchased_at ? "purchased" : expired ? "expired" : "active";
   const badgeClass = status === "purchased"
@@ -151,6 +163,16 @@ function ClaimRow({ claim }: { claim: ClaimRow }) {
         >
           <Copy className="mr-2 h-4 w-4" />
           Copy
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onDelete}
+          className="ml-2 border-red-200 text-red-700 hover:bg-red-50"
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
         </Button>
       </td>
     </tr>

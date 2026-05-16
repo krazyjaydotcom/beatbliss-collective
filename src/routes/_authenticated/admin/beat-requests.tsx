@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Music2 } from "lucide-react";
+import { Loader2, Music2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin/beat-requests")({
   component: AdminBeatRequestsPage,
@@ -54,6 +55,17 @@ function AdminBeatRequestsPage() {
     qc.invalidateQueries({ queryKey: ["admin-beat-requests"] });
   }
 
+  async function deleteRequest(id: string, memberName: string) {
+    if (!confirm(`Delete this beat request from ${memberName}?`)) return;
+    const { error } = await (supabase as any).rpc("admin_delete_beat_request", { _id: id });
+    if (error) {
+      toast.error(error.message || "Unable to delete request.");
+      return;
+    }
+    toast.success("Beat request deleted.");
+    qc.invalidateQueries({ queryKey: ["admin-beat-requests"] });
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -85,6 +97,7 @@ function AdminBeatRequestsPage() {
                   <th className="px-4 py-3">Notes</th>
                   <th className="px-4 py-3">Date submitted</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -107,6 +120,18 @@ function AdminBeatRequestsPage() {
                         <option value="in progress">in progress</option>
                         <option value="completed">completed</option>
                       </select>
+                    </td>
+                    <td className="px-4 py-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteRequest(request.id, request.member_name)}
+                        className="border-red-500/30 text-red-300 hover:bg-red-500/10 hover:text-red-100"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </Button>
                     </td>
                   </tr>
                 ))}

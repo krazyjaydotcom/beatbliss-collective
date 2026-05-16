@@ -75,7 +75,7 @@ function useCatalogOptions(type: CatalogOptionType) {
         return fallbackOptions(type);
       }
 
-      return ((data ?? []) as CatalogOption[]).length ? ((data ?? []) as CatalogOption[]) : fallbackOptions(type);
+      return (data ?? []) as CatalogOption[];
     },
   });
 }

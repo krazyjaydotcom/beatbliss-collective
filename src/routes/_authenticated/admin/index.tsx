@@ -76,9 +76,13 @@ function AdminDashboard() {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} allowDecimals={false} />
-            <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+            <XAxis dataKey="date" stroke="#94a3b8" tick={{ fill: "#cbd5e1" }} fontSize={11} />
+            <YAxis stroke="#94a3b8" tick={{ fill: "#cbd5e1" }} fontSize={11} allowDecimals={false} />
+            <Tooltip
+              contentStyle={{ background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#f8fafc" }}
+              labelStyle={{ color: "#f8fafc" }}
+              itemStyle={{ color: "#f8fafc" }}
+            />
             <Area type="monotone" dataKey="count" stroke="hsl(var(--accent))" fill="url(#fillBlue)" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
@@ -93,7 +97,7 @@ function AdminDashboard() {
 
 function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
+    <div className="rounded-2xl border border-border bg-card p-5 text-slate-100">
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
         <Icon className="h-4 w-4 text-muted-foreground" />
@@ -105,7 +109,7 @@ function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: n
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
+    <div className="rounded-2xl border border-border bg-card p-5 text-slate-100">
       <h3 className="font-semibold mb-4">{title}</h3>
       {children}
     </div>
@@ -131,9 +135,13 @@ function TopBeats({ topBeatIds }: { topBeatIds: [string, number][] }) {
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={11} allowDecimals={false} />
-        <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={11} width={120} />
-        <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+        <XAxis type="number" stroke="#94a3b8" tick={{ fill: "#cbd5e1" }} fontSize={11} allowDecimals={false} />
+        <YAxis dataKey="name" type="category" stroke="#94a3b8" tick={{ fill: "#cbd5e1" }} fontSize={11} width={120} />
+        <Tooltip
+          contentStyle={{ background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#f8fafc" }}
+          labelStyle={{ color: "#f8fafc" }}
+          itemStyle={{ color: "#f8fafc" }}
+        />
         <Bar dataKey="count" fill="hsl(var(--accent))" radius={[0, 6, 6, 0]} />
       </BarChart>
     </ResponsiveContainer>

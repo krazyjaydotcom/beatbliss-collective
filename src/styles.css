@@ -277,6 +277,13 @@
 }
 
 @media (max-width: 640px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   input,
   select,
   textarea {
