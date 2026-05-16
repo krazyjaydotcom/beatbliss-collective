@@ -201,11 +201,11 @@ function CatalogOptionsManager() {
       <div>
         <h2 className="font-semibold flex items-center gap-2"><Music className="h-4 w-4 text-primary" /> Beat option lists</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage the Signature Sound and Mood choices used when uploading or editing beats.
+          Manage the Vibe and Mood choices used when uploading or editing beats.
         </p>
       </div>
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <CatalogOptionColumn type="signature_sound" title="Signature Sounds" placeholder="Add a signature sound" />
+        <CatalogOptionColumn type="signature_sound" title="Vibes" placeholder="Add a vibe" />
         <CatalogOptionColumn type="mood" title="Moods" placeholder="Add a mood" />
       </div>
     </div>
@@ -659,7 +659,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
-        <Field label="Default signature sound">
+        <Field label="Default vibe">
           <OptionInput value={genre} onChange={setGenre} options={signatureSounds.map((option) => option.value)} placeholder="Trap, R&B, Cinematic..." />
         </Field>
         <Field label="Default mood">
@@ -811,7 +811,7 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Title"><Input value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
             <Field label="Producer"><Input value={producer} onChange={(e) => setProducer(e.target.value)} /></Field>
-            <Field label="Signature Sound">
+            <Field label="Vibe">
               <OptionInput value={genre} onChange={setGenre} options={signatureSounds.map((option) => option.value)} />
             </Field>
             <Field label="Mood">
@@ -921,7 +921,7 @@ function BulkEditBar({ ids, onDone, onClear }: { ids: string[]; onDone: () => vo
       </div>
       <p className="text-xs text-muted-foreground">Leave a field blank to keep existing values.</p>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Field label="Signature Sound">
+        <Field label="Vibe">
           <OptionInput value={genre} onChange={setGenre} options={signatureSounds.map((option) => option.value)} />
         </Field>
         <Field label="Mood">

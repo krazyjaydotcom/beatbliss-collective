@@ -18,17 +18,14 @@ import {
   LifeBuoy,
   LogOut,
   Search,
-  ShoppingCart,
   Bell,
   SlidersHorizontal,
+  MessageCircle,
   Play,
   Pause,
   SkipBack,
   SkipForward,
-  Shuffle,
-  Repeat,
   Volume2,
-  MoreHorizontal,
   Plus,
   Pin,
   Trash2,
@@ -170,6 +167,7 @@ function BeatsDashboard() {
   const [confirmBeat, setConfirmBeat] = useState<Beat | null>(null);
   const [exclusiveBeat, setExclusiveBeat] = useState<Beat | null>(null);
   const [notepadOpen, setNotepadOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { data: beats = [] } = useQuery({
     queryKey: ["beats"],
@@ -320,7 +318,7 @@ function BeatsDashboard() {
         window.scrollTo({ top: 0, behavior: "smooth" });
         break;
       case "filterBpm":
-        toast.info("Use the filter dropdowns above to narrow results.");
+        setFiltersOpen((value) => !value);
         break;
       case "classroom":
         navigate({ to: "/classroom" });
@@ -353,7 +351,7 @@ function BeatsDashboard() {
         navigate({ to: "/whitelist" });
         break;
       case "support":
-        toast.info("Use the chat bubble at the bottom right to reach support.");
+        window.dispatchEvent(new CustomEvent("mbc:open-chat"));
         break;
     }
   }
@@ -448,18 +446,14 @@ function BeatsDashboard() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search beats by mood, signature sound, key, artist..."
-                  className="pl-10 pr-10 bg-secondary border-border"
+                  placeholder="Search beats by mood, vibe, key, artist..."
+                  className="pl-10 bg-secondary border-border"
                 />
-                <SlidersHorizontal className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
               <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-full border border-border bg-secondary">
                 <Sparkles className="h-4 w-4 text-electric" />
                 <span className="text-sm font-medium">{profile?.credits_balance ?? 0} Credits</span>
               </div>
-              <Button variant="ghost" size="icon">
-                <ShoppingCart className="h-5 w-5" />
-              </Button>
               <NotificationsBell userId={user?.id} />
               <div className="flex items-center gap-2">
                 <Avatar className="h-9 w-9">
@@ -491,9 +485,9 @@ function BeatsDashboard() {
                   </div>
                 </div>
 
-                <div className="sticky top-[65px] z-10 bg-background/90 backdrop-blur border-b border-border px-4 lg:px-8 py-3 -mx-4 lg:-mx-8 mb-4">
+                <div className={`${filtersOpen ? "block" : "hidden"} lg:block sticky top-[65px] z-10 bg-background/90 backdrop-blur border-b border-border px-4 lg:px-8 py-3 -mx-4 lg:-mx-8 mb-4`}>
                   <div className="flex flex-wrap gap-2 items-center">
-                    <FilterSelect value={genre} onChange={setGenre} placeholder="All Signature Sounds" options={uniq("genre")} />
+                    <FilterSelect value={genre} onChange={setGenre} placeholder="All Vibes" options={uniq("genre")} />
                     <FilterSelect value={mood} onChange={setMood} placeholder="All Moods" options={uniq("mood")} />
                     <FilterSelect
                       value={musicKey}
@@ -542,14 +536,13 @@ function BeatsDashboard() {
 
                 {view === "list" ? (
                   <div className="rounded-xl border border-border overflow-hidden">
-                    <div className="hidden md:grid grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px_50px] gap-4 px-4 py-3 text-xs font-semibold uppercase text-muted-foreground border-b border-border bg-secondary/40">
+                    <div className="hidden md:grid grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px] gap-4 px-4 py-3 text-xs font-semibold uppercase text-muted-foreground border-b border-border bg-secondary/40">
                       <div>Beat</div>
-                      <div>Signature Sound</div>
+                      <div>Vibe</div>
                       <div>Mood</div>
                       <div>Key</div>
                       <div>BPM</div>
                       <div>Duration</div>
-                      <div></div>
                       <div></div>
                       <div></div>
                     </div>
@@ -566,7 +559,6 @@ function BeatsDashboard() {
                         }}
                         onFav={() => toggleFav(b.id)}
                         onDownload={() => setConfirmBeat(b)}
-                        onRequestExclusive={() => setExclusiveBeat(b)}
                       />
                     ))}
                     {filtered.length === 0 && (
@@ -586,7 +578,6 @@ function BeatsDashboard() {
                         }}
                         onFav={() => toggleFav(b.id)}
                         onDownload={() => setConfirmBeat(b)}
-                        onRequestExclusive={() => setExclusiveBeat(b)}
                       />
                     ))}
                   </div>
@@ -612,14 +603,15 @@ function BeatsDashboard() {
         onFav={() => now && toggleFav(now.id)}
         isFav={now ? favorites.includes(now.id) : false}
         onDownload={() => now && setConfirmBeat(now)}
+        onRequestExclusive={() => now && setExclusiveBeat(now)}
       />
 
       {/* MOBILE BOTTOM NAV */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur border-t border-border flex items-center justify-around px-2 py-2">
         {[
           { icon: Music, label: "Beats", action: "beats" as const },
-          { icon: Sparkles, label: "New", action: "new" as const },
-          { icon: Heart, label: "Favorites", action: "favorites" as const },
+          { icon: MessageCircle, label: "Chat", action: "support" as const },
+          { icon: SlidersHorizontal, label: "Filter", action: "filterBpm" as const },
           { icon: Download, label: "Downloads", action: "downloads" as const },
           { icon: User, label: "Account", action: "settings" as const },
         ].map(({ icon: Icon, label, action }) => {
@@ -719,7 +711,6 @@ function BeatRow({
   onPlay,
   onFav,
   onDownload,
-  onRequestExclusive,
 }: {
   beat: Beat;
   isPlaying: boolean;
@@ -728,11 +719,10 @@ function BeatRow({
   onPlay: () => void;
   onFav: () => void;
   onDownload: () => void;
-  onRequestExclusive: () => void;
 }) {
   return (
     <div
-      className={`grid grid-cols-[1fr_50px_50px_50px] md:grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px_50px] gap-4 px-4 py-4 md:py-3 items-center border-b border-border last:border-0 hover:bg-secondary/40 transition-colors ${
+      className={`grid grid-cols-[1fr_44px_44px] md:grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px] gap-3 md:gap-4 px-4 py-4 md:py-3 items-center border-b border-border last:border-0 hover:bg-secondary/40 transition-colors ${
         isCurrent ? "bg-electric/5 ring-1 ring-electric/40" : ""
       }`}
     >
@@ -776,13 +766,6 @@ function BeatRow({
       <button onClick={onDownload} className="p-2 rounded hover:bg-secondary text-muted-foreground hover:text-electric">
         <Download className="h-4 w-4" />
       </button>
-      <button
-        onClick={onRequestExclusive}
-        className="p-2 rounded hover:bg-secondary text-muted-foreground hover:text-primary"
-        title="Request exclusive rights"
-      >
-        <Sparkles className="h-4 w-4" />
-      </button>
     </div>
   );
 }
@@ -793,14 +776,12 @@ function BeatCard({
   onPlay,
   onFav,
   onDownload,
-  onRequestExclusive,
 }: {
   beat: Beat;
   isFav: boolean;
   onPlay: () => void;
   onFav: () => void;
   onDownload: () => void;
-  onRequestExclusive: () => void;
 }) {
   const hash = beat.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const hue1 = hash % 360;
@@ -840,9 +821,6 @@ function BeatCard({
             </button>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="mt-3 w-full" onClick={onRequestExclusive}>
-          Request Exclusive
-        </Button>
       </div>
     </div>
   );
@@ -1163,6 +1141,7 @@ function AudioPlayer({
   onFav,
   isFav,
   onDownload,
+  onRequestExclusive,
 }: {
   beat: Beat | null;
   playing: boolean;
@@ -1174,6 +1153,7 @@ function AudioPlayer({
   onFav: () => void;
   isFav: boolean;
   onDownload: () => void;
+  onRequestExclusive: () => void;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [volume, setVolume] = useState(0.8);
@@ -1220,7 +1200,7 @@ function AudioPlayer({
 
       {/* MOBILE FULL-SCREEN PLAYER */}
       {expanded && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-background flex flex-col select-none">
+        <div className="lg:hidden fixed inset-0 z-50 bg-background flex flex-col select-none animate-in fade-in duration-700">
           <div className="flex items-center justify-between px-6 pt-14 pb-2">
             <button onClick={() => setExpanded(false)} className="flex items-center gap-1.5 text-muted-foreground">
               <svg
@@ -1277,6 +1257,16 @@ function AudioPlayer({
                 <Download className="h-5 w-5" />
               </button>
             </div>
+            <Button
+              type="button"
+              variant="heroOutline"
+              size="sm"
+              className="mt-4 w-full"
+              onClick={onRequestExclusive}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Request Exclusive Rights
+            </Button>
           </div>
 
           <div className="px-8 mt-7">
@@ -1297,10 +1287,7 @@ function AudioPlayer({
           </div>
 
           <div className="px-8 mt-6">
-            <div className="flex items-center justify-between">
-              <button className="p-3 text-muted-foreground/60">
-                <Shuffle className="h-5 w-5" />
-              </button>
+            <div className="flex items-center justify-center gap-8">
               <button className="p-3 text-foreground/80">
                 <SkipBack className="h-7 w-7" />
               </button>
@@ -1312,9 +1299,6 @@ function AudioPlayer({
               </button>
               <button className="p-3 text-foreground/80">
                 <SkipForward className="h-7 w-7" />
-              </button>
-              <button className="p-3 text-muted-foreground/60">
-                <Repeat className="h-5 w-5" />
               </button>
             </div>
           </div>
@@ -1367,9 +1351,6 @@ function AudioPlayer({
               <p className="text-xs text-muted-foreground truncate mt-0.5">{beat.producer_name}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-              <button onClick={onFav} className={`p-2 ${isFav ? "text-primary" : "text-muted-foreground"}`}>
-                <Heart className={`h-4 w-4 ${isFav ? "fill-primary" : ""}`} />
-              </button>
               <button
                 onClick={onToggle}
                 className="h-11 w-11 rounded-full bg-electric shadow-lg shadow-electric/30 flex items-center justify-center active:scale-95 transition-transform"
@@ -1450,8 +1431,8 @@ function AudioPlayer({
             >
               <Download className="h-4 w-4" />
             </button>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={onRequestExclusive} title="Request exclusive rights">
+              <Sparkles className="h-4 w-4" />
             </Button>
           </div>
         </div>

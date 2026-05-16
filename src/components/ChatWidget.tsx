@@ -32,6 +32,13 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (!enabled) return;
+    const openChat = () => setOpen(true);
+    window.addEventListener("mbc:open-chat", openChat);
+    return () => window.removeEventListener("mbc:open-chat", openChat);
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     (async () => {
       const { data } = await supabase.rpc("ensure_chat_thread");
@@ -118,7 +125,7 @@ export function ChatWidget() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-accent text-accent-foreground shadow-2xl hover:scale-105 transition flex items-center justify-center"
+          className="fixed bottom-6 right-6 z-50 hidden h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-2xl transition hover:scale-105 lg:flex"
           aria-label="Open support chat"
         >
           <MessageCircle className="h-6 w-6" />
