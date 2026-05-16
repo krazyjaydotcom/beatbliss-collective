@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { VoiceMemoButton } from "@/components/voice-memo-button";
+import { playSentDing, uploadVoiceMemo } from "@/lib/chat-audio";
 
 export const Route = createFileRoute("/_authenticated/admin/support")({
   component: SupportInbox,
@@ -25,6 +27,9 @@ interface Message {
   body: string;
   sender_role: "user" | "admin";
   created_at: string;
+  audio_url?: string | null;
+  audio_mime?: string | null;
+  audio_duration_seconds?: number | null;
 }
 
 function SupportInbox() {
@@ -70,7 +75,7 @@ function SupportInbox() {
     (async () => {
       const { data } = await supabase
         .from("chat_messages")
-        .select("id, body, sender_role, created_at")
+        .select("id, body, sender_role, created_at, audio_url, audio_mime, audio_duration_seconds")
         .eq("thread_id", activeId)
         .order("created_at", { ascending: true });
       if (cancelled) return;
@@ -99,12 +104,28 @@ function SupportInbox() {
     if (!text.trim() || !activeId || !user) return;
     const body = text.trim();
     setText("");
-    await supabase.from("chat_messages").insert({
+    const { error } = await supabase.from("chat_messages").insert({
       thread_id: activeId,
       sender_id: user.id,
       sender_role: "admin",
       body,
     });
+    if (!error) playSentDing();
+  };
+
+  const sendVoiceMemo = async (blob: Blob, durationSeconds: number) => {
+    if (!activeId || !user) return;
+    const uploaded = await uploadVoiceMemo(blob, user.id);
+    const { error } = await (supabase as any).from("chat_messages").insert({
+      thread_id: activeId,
+      sender_id: user.id,
+      sender_role: "admin",
+      body: "Voice memo",
+      audio_url: uploaded.audioUrl,
+      audio_mime: uploaded.mimeType,
+      audio_duration_seconds: durationSeconds,
+    });
+    if (!error) playSentDing();
   };
 
   return (
@@ -156,19 +177,36 @@ function SupportInbox() {
                     <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
                       m.sender_role === "admin" ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
                     }`}>
-                      {m.body}
+                      <MessageBubbleContent message={m} />
                     </div>
                   </div>
                 ))}
               </div>
               <form onSubmit={(e) => { e.preventDefault(); send(); }} className="p-3 border-t border-border flex gap-2">
                 <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Reply…" />
+                <VoiceMemoButton disabled={!activeId || !user} onRecorded={sendVoiceMemo} />
                 <Button type="submit" size="icon" variant="hero"><Send className="h-4 w-4" /></Button>
               </form>
             </>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MessageBubbleContent({ message }: { message: Message }) {
+  return (
+    <div className="space-y-2">
+      {message.body ? <div>{message.body}</div> : null}
+      {message.audio_url ? (
+        <audio controls src={message.audio_url} className="h-9 w-full max-w-[260px]">
+          Your browser does not support audio playback.
+        </audio>
+      ) : null}
+      {message.audio_duration_seconds ? (
+        <div className="text-[10px] opacity-70">{message.audio_duration_seconds}s voice memo</div>
+      ) : null}
     </div>
   );
 }

@@ -846,6 +846,8 @@ function BulkEditBar({ ids, onDone, onClear }: { ids: string[]; onDone: () => vo
   const [mood, setMood] = useState("");
   const [bpm, setBpm] = useState("");
   const [musicKey, setMusicKey] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [memberOnly, setMemberOnly] = useState<"unchanged" | "yes" | "no">("unchanged");
   const [saving, setSaving] = useState(false);
   const { data: signatureSounds = fallbackOptions("signature_sound") } = useCatalogOptions("signature_sound");
@@ -853,18 +855,54 @@ function BulkEditBar({ ids, onDone, onClear }: { ids: string[]; onDone: () => vo
 
   async function save() {
     setSaving(true);
-    const { data, error } = await supabase.rpc("admin_bulk_update_beats", {
-      _ids: ids,
-      _genre: genre || undefined,
-      _mood: mood || undefined,
-      _bpm: bpm ? parseInt(bpm) : undefined,
-      _music_key: musicKey || undefined,
-      _is_member_only: memberOnly === "unchanged" ? undefined : memberOnly === "yes",
-    });
-    setSaving(false);
-    if (error) return toast.error(error.message);
-    toast.success(`Updated ${data} beat${data === 1 ? "" : "s"}`);
-    onDone();
+    try {
+      const hasMetadataChanges = !!genre || !!mood || !!bpm || !!musicKey || memberOnly !== "unchanged";
+      let updatedCount = 0;
+
+      if (hasMetadataChanges) {
+        const { data, error } = await supabase.rpc("admin_bulk_update_beats", {
+          _ids: ids,
+          _genre: genre || undefined,
+          _mood: mood || undefined,
+          _bpm: bpm ? parseInt(bpm) : undefined,
+          _music_key: musicKey || undefined,
+          _is_member_only: memberOnly === "unchanged" ? undefined : memberOnly === "yes",
+        });
+        if (error) throw error;
+        updatedCount = Number(data ?? ids.length);
+      }
+
+      let nextCoverUrl = thumbnailUrl.trim();
+      if (thumbnailFile) {
+        const ext = thumbnailFile.name.split(".").pop() || "jpg";
+        const safeName = thumbnailFile.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "") || "thumbnail";
+        const coverPath = `bulk_${Date.now()}_${safeName}.${ext}`;
+        const upload = await supabase.storage.from("beat-covers").upload(coverPath, thumbnailFile, {
+          upsert: false,
+          contentType: thumbnailFile.type || "image/jpeg",
+        });
+        if (upload.error) throw upload.error;
+        nextCoverUrl = supabase.storage.from("beat-covers").getPublicUrl(coverPath).data.publicUrl;
+      }
+
+      if (nextCoverUrl) {
+        const { error } = await (supabase as any).from("beats").update({ cover_url: nextCoverUrl }).in("id", ids);
+        if (error) throw error;
+        updatedCount = ids.length;
+      }
+
+      if (!hasMetadataChanges && !nextCoverUrl) {
+        toast.error("Choose at least one field to update.");
+        return;
+      }
+
+      toast.success(`Updated ${updatedCount || ids.length} beat${(updatedCount || ids.length) === 1 ? "" : "s"}`);
+      onDone();
+    } catch (error: any) {
+      toast.error(error.message ?? "Could not update selected beats");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function bulkDelete() {
@@ -901,6 +939,14 @@ function BulkEditBar({ ids, onDone, onClear }: { ids: string[]; onDone: () => vo
             <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
+        </Field>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <Field label="Bulk thumbnail URL">
+          <Input value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} placeholder="https://..." />
+        </Field>
+        <Field label="Bulk upload thumbnail">
+          <Input type="file" accept="image/*" onChange={(e) => setThumbnailFile(e.target.files?.[0] ?? null)} />
         </Field>
       </div>
       <div className="flex gap-2">
