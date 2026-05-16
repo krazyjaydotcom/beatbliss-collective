@@ -448,7 +448,7 @@ function BeatsDashboard() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search beats by mood, genre, key, artist…"
+                  placeholder="Search beats by mood, signature sound, key, artist..."
                   className="pl-10 pr-10 bg-secondary border-border"
                 />
                 <SlidersHorizontal className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -493,7 +493,7 @@ function BeatsDashboard() {
 
                 <div className="sticky top-[65px] z-10 bg-background/90 backdrop-blur border-b border-border px-4 lg:px-8 py-3 -mx-4 lg:-mx-8 mb-4">
                   <div className="flex flex-wrap gap-2 items-center">
-                    <FilterSelect value={genre} onChange={setGenre} placeholder="All Genres" options={uniq("genre")} />
+                    <FilterSelect value={genre} onChange={setGenre} placeholder="All Signature Sounds" options={uniq("genre")} />
                     <FilterSelect value={mood} onChange={setMood} placeholder="All Moods" options={uniq("mood")} />
                     <FilterSelect
                       value={musicKey}
@@ -544,7 +544,7 @@ function BeatsDashboard() {
                   <div className="rounded-xl border border-border overflow-hidden">
                     <div className="hidden md:grid grid-cols-[1fr_100px_120px_100px_80px_90px_50px_50px_50px] gap-4 px-4 py-3 text-xs font-semibold uppercase text-muted-foreground border-b border-border bg-secondary/40">
                       <div>Beat</div>
-                      <div>Genre</div>
+                      <div>Signature Sound</div>
                       <div>Mood</div>
                       <div>Key</div>
                       <div>BPM</div>

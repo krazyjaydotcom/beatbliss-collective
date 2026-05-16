@@ -275,3 +275,23 @@
     color: #f8fafc !important;
   }
 }
+
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  [role="dialog"] input,
+  [role="dialog"] select,
+  [role="dialog"] textarea {
+    scroll-margin-bottom: 45vh;
+  }
+
+  .mobile-keyboard-safe {
+    max-height: calc(100dvh - 1rem);
+    overflow-y: auto;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}

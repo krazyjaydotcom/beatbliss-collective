@@ -120,6 +120,7 @@ function AccountPage() {
         </div>
 
         {isSubscribed && <ExclusiveOpportunities />}
+        {isSubscribed && <ExclusiveRequestStatusList />}
 
         <div className="mt-6 rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -204,6 +205,102 @@ function AccountPage() {
       </main>
     </div>
   );
+}
+
+type ExclusiveRequestStatus = {
+  id: string;
+  status: string;
+  requested_amount: number | null;
+  minimum_bid: number | null;
+  bid_deadline: string | null;
+  created_at: string;
+  closed_at: string | null;
+  beats: {
+    title: string | null;
+    cover_url: string | null;
+    genre: string | null;
+    bpm: number | null;
+  } | null;
+};
+
+function ExclusiveRequestStatusList() {
+  const [items, setItems] = useState<ExclusiveRequestStatus[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      setLoading(true);
+      const { data, error } = await (supabase as any)
+        .from("exclusive_requests")
+        .select("id,status,requested_amount,minimum_bid,bid_deadline,created_at,closed_at,beats(title,cover_url,genre,bpm)")
+        .order("created_at", { ascending: false });
+      if (alive && !error) setItems((data ?? []) as ExclusiveRequestStatus[]);
+      if (alive) setLoading(false);
+    }
+    void load();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (loading || !items.length) return null;
+
+  return (
+    <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-primary">Exclusive requests</p>
+          <h2 className="mt-1 text-2xl font-black">Your exclusive offer status</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Once a decision is made, the status will update here in your account.
+          </p>
+        </div>
+        <Badge variant="outline">{items.length} request{items.length === 1 ? "" : "s"}</Badge>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        {items.map((item) => (
+          <div key={item.id} className="flex items-center gap-4 rounded-xl border border-border bg-background/50 p-4">
+            {item.beats?.cover_url ? (
+              <img src={item.beats.cover_url} alt={item.beats.title ?? "Beat"} className="h-14 w-14 rounded-lg object-cover" />
+            ) : (
+              <div className="h-14 w-14 rounded-lg bg-muted" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="font-bold truncate">{item.beats?.title ?? "Selected beat"}</p>
+              <p className="text-xs text-muted-foreground">
+                Submitted {new Date(item.created_at).toLocaleDateString()}
+                {item.requested_amount ? ` - Offer: ${currency(item.requested_amount)}` : ""}
+              </p>
+              {item.bid_deadline && item.status === "open" ? (
+                <p className="mt-1 text-xs text-primary">Bidding closes {new Date(item.bid_deadline).toLocaleString()}</p>
+              ) : null}
+            </div>
+            <Badge className={exclusiveStatusClass(item.status)}>{exclusiveStatusLabel(item.status)}</Badge>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function exclusiveStatusLabel(status: string) {
+  const map: Record<string, string> = {
+    pending: "Under review",
+    open: "Bidding open",
+    closed: "Closed",
+    sold: "Sold",
+    rejected: "Declined",
+  };
+  return map[status] ?? status;
+}
+
+function exclusiveStatusClass(status: string) {
+  if (status === "open") return "bg-primary text-primary-foreground";
+  if (status === "sold") return "bg-emerald-500 text-white";
+  if (status === "rejected") return "bg-destructive text-destructive-foreground";
+  return "bg-secondary text-secondary-foreground";
 }
 
 interface ExclusiveOpportunity {

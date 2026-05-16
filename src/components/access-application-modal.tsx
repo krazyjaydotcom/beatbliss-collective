@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { Loader2, X } from "lucide-react";
-
-const GROWFORM_SRC = "https://embed.growform.co/client/6a062b94122a3aa549fe3414";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Loader2, Mail, Music2, Phone, UserRound, X } from "lucide-react";
+import { submitAccessApplication } from "@/lib/access-application.functions";
 
 type AccessApplicationModalProps = {
   open: boolean;
@@ -9,8 +9,13 @@ type AccessApplicationModalProps = {
 };
 
 export function AccessApplicationModal({ open, onOpenChange }: AccessApplicationModalProps) {
-  const formHostRef = useRef<HTMLDivElement>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const submitApplication = useServerFn(submitAccessApplication);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [music, setMusic] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -29,59 +34,38 @@ export function AccessApplicationModal({ open, onOpenChange }: AccessApplication
     };
   }, [onOpenChange, open]);
 
-  useEffect(() => {
-    if (!open || !formHostRef.current) return;
-
-    const host = formHostRef.current;
-    setScriptLoaded(false);
-    host.innerHTML = "";
-
-    const script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src = GROWFORM_SRC;
-    script.async = true;
-    script.onload = () => setScriptLoaded(true);
-    script.onerror = () => setScriptLoaded(true);
-    host.appendChild(script);
-
-    return () => {
-      host.innerHTML = "";
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !formHostRef.current) return;
-
-    const host = formHostRef.current;
-    const fitEmbedToHost = () => {
-      host.style.width = "100%";
-      host.style.maxWidth = "100%";
-      host.style.overflowX = "hidden";
-
-      host.querySelectorAll<HTMLElement>("iframe, div, form, section, main").forEach((element) => {
-        element.style.maxWidth = "100%";
-        element.style.boxSizing = "border-box";
+  async function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setMessage(null);
+    setSubmitting(true);
+    try {
+      const result = await submitApplication({
+        data: {
+          name,
+          email,
+          phone,
+          music: music.trim() || null,
+          source: "front-page-apply",
+        },
       });
-
-      host.querySelectorAll<HTMLIFrameElement>("iframe").forEach((iframe) => {
-        iframe.style.display = "block";
-        iframe.style.width = "100%";
-        iframe.style.maxWidth = "100%";
-        iframe.style.minWidth = "0";
-        iframe.style.border = "0";
+      if (!result.ok) {
+        setMessage({ type: "error", text: result.error || "We could not submit your application. Please try again." });
+        return;
+      }
+      setMessage({ type: "success", text: "Application received. Check your email and phone for the next step." });
+      setName("");
+      setEmail("");
+      setPhone("");
+      setMusic("");
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "We could not submit your application. Please try again.",
       });
-    };
-
-    fitEmbedToHost();
-    const resizeObserver = new ResizeObserver(fitEmbedToHost);
-    resizeObserver.observe(host);
-    const interval = window.setInterval(fitEmbedToHost, 300);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.clearInterval(interval);
-    };
-  }, [open, scriptLoaded]);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   if (!open) return null;
 
@@ -92,53 +76,8 @@ export function AccessApplicationModal({ open, onOpenChange }: AccessApplication
       aria-modal="true"
       aria-label="Apply for access form"
     >
-      <style>{`
-        .growform-modal-shell,
-        .growform-modal-shell * {
-          box-sizing: border-box;
-        }
-
-        .growform-host {
-          width: 100% !important;
-          max-width: 100% !important;
-          min-width: 0 !important;
-          overflow-x: hidden !important;
-        }
-
-        .growform-host > *,
-        .growform-host iframe,
-        .growform-host form,
-        .growform-host div,
-        .growform-host section,
-        .growform-host main {
-          max-width: 100% !important;
-          box-sizing: border-box !important;
-        }
-
-        .growform-host iframe {
-          display: block !important;
-          width: 100% !important;
-          min-width: 0 !important;
-          border: 0 !important;
-        }
-
-        .growform-host input,
-        .growform-host select,
-        .growform-host textarea,
-        .growform-host button {
-          max-width: 100% !important;
-        }
-
-        @media (max-width: 640px) {
-          .growform-host input,
-          .growform-host select,
-          .growform-host textarea {
-            font-size: 16px !important;
-          }
-        }
-      `}</style>
       <button className="absolute inset-0 cursor-default" type="button" aria-label="Close application form" onClick={() => onOpenChange(false)} />
-      <div className="growform-modal-shell relative my-auto max-h-[calc(100svh-1rem)] w-full max-w-[min(100%,48rem)] overflow-hidden rounded-xl border border-primary/40 bg-[#05070c] shadow-[0_0_90px_rgba(37,99,235,0.25)] animate-in fade-in zoom-in-95 duration-200 sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl">
+      <div className="mobile-keyboard-safe relative my-auto max-h-[calc(100svh-1rem)] w-full max-w-[min(100%,34rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-primary/40 bg-[#05070c] shadow-[0_0_90px_rgba(37,99,235,0.25)] animate-in fade-in zoom-in-95 duration-200 sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl">
         <button
           type="button"
           onClick={() => onOpenChange(false)}
@@ -151,17 +90,85 @@ export function AccessApplicationModal({ open, onOpenChange }: AccessApplication
         <div className="border-b border-white/10 px-4 py-4 pr-14 sm:px-6 sm:py-5 sm:pr-16">
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary sm:text-xs sm:tracking-[0.25em]">Private Access</p>
           <h2 className="mt-2 text-xl font-black leading-tight text-white sm:text-2xl md:text-3xl">Apply For MYBEATCATALOG Access</h2>
+          <p className="mt-2 text-sm leading-relaxed text-white/60">
+            Tell me where you are musically. If it fits, I will send the next step.
+          </p>
         </div>
 
-        <div className="relative max-h-[calc(100svh-6.5rem)] overflow-y-auto overflow-x-hidden px-2 py-3 sm:max-h-[calc(100dvh-9rem)] sm:px-5 sm:py-4 md:px-6">
-          {!scriptLoaded ? (
-            <div className="flex min-h-[280px] items-center justify-center gap-3 text-sm text-white/60 sm:min-h-[320px]">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" /> Loading application...
-            </div>
+        <form onSubmit={onSubmit} className="space-y-4 px-4 py-5 sm:px-6">
+          <Field icon={<UserRound className="h-4 w-4" />} label="Artist / label name">
+            <input
+              required
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className="w-full bg-transparent px-3 py-3 text-base text-white outline-none placeholder:text-white/30"
+              placeholder="Your artist or label name"
+            />
+          </Field>
+          <Field icon={<Mail className="h-4 w-4" />} label="Email address">
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="w-full bg-transparent px-3 py-3 text-base text-white outline-none placeholder:text-white/30"
+              placeholder="you@example.com"
+            />
+          </Field>
+          <Field icon={<Phone className="h-4 w-4" />} label="Phone number">
+            <input
+              required
+              type="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              className="w-full bg-transparent px-3 py-3 text-base text-white outline-none placeholder:text-white/30"
+              placeholder="Best number to reach you"
+            />
+          </Field>
+          <Field icon={<Music2 className="h-4 w-4" />} label="Link to music">
+            <input
+              value={music}
+              onChange={(event) => setMusic(event.target.value)}
+              className="w-full bg-transparent px-3 py-3 text-base text-white outline-none placeholder:text-white/30"
+              placeholder="Spotify, YouTube, SoundCloud, etc. (optional)"
+            />
+          </Field>
+
+          {message ? (
+            <p className={`rounded-lg border px-3 py-2 text-sm ${
+              message.type === "success"
+                ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+                : "border-red-400/30 bg-red-400/10 text-red-100"
+            }`}>
+              {message.text}
+            </p>
           ) : null}
-          <div ref={formHostRef} className="growform-host min-h-[280px] sm:min-h-[320px]" />
-        </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex w-full items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_35px_rgba(37,99,235,0.35)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : "Send Application"}
+          </button>
+
+          <p className="text-center text-xs text-white/45">Your information is private. No spam.</p>
+        </form>
       </div>
     </div>
+  );
+}
+
+function Field({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white/55">
+        <span className="text-primary">{icon}</span>
+        {label}
+      </span>
+      <span className="block rounded-lg border border-white/12 bg-white/[0.04] transition focus-within:border-primary/70 focus-within:bg-white/[0.07]">
+        {children}
+      </span>
+    </label>
   );
 }

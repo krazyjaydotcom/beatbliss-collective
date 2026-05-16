@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image, Loader2, Music, Save, Trash2, FolderUp, FileAudio, FileMusic, Pencil, X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +43,43 @@ function isTaggedName(name: string): boolean {
   return /(?:^|[\s_-])(tag|tagged)(?:[\s_-]|\.)/i.test(name);
 }
 
+type CatalogOptionType = "signature_sound" | "mood";
+type CatalogOption = {
+  id: string;
+  type: CatalogOptionType;
+  value: string;
+  sort_order: number | null;
+};
+
+const FALLBACK_SIGNATURE_SOUNDS = ["Trap", "R&B", "Melodic", "Drill", "Gospel", "Cinematic", "Emotional", "Motivational"];
+const FALLBACK_MOODS = ["Unknown", "Hard", "Chill", "Dark", "Pain", "Uplifting", "Inspirational", "Motivational"];
+
+function fallbackOptions(type: CatalogOptionType): CatalogOption[] {
+  const values = type === "signature_sound" ? FALLBACK_SIGNATURE_SOUNDS : FALLBACK_MOODS;
+  return values.map((value, index) => ({ id: `fallback-${type}-${value}`, type, value, sort_order: index * 10 }));
+}
+
+function useCatalogOptions(type: CatalogOptionType) {
+  return useQuery({
+    queryKey: ["catalog-options", type],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("catalog_options")
+        .select("id,type,value,sort_order")
+        .eq("type", type)
+        .order("sort_order", { ascending: true })
+        .order("value", { ascending: true });
+
+      if (error) {
+        console.warn("Catalog options unavailable", error.message);
+        return fallbackOptions(type);
+      }
+
+      return ((data ?? []) as CatalogOption[]).length ? ((data ?? []) as CatalogOption[]) : fallbackOptions(type);
+    },
+  });
+}
+
 function AdminBeatsPage() {
   const qc = useQueryClient();
   const { data: beats = [], isLoading } = useQuery({
@@ -82,6 +119,8 @@ function AdminBeatsPage() {
       </div>
 
       <DropUploader onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
+
+      <CatalogOptionsManager />
 
       <ExclusiveRightsAdminPanel />
 
@@ -152,6 +191,124 @@ function AdminBeatsPage() {
           qc.invalidateQueries({ queryKey: ["admin-beats"] });
         }}
       />
+    </div>
+  );
+}
+
+function CatalogOptionsManager() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6">
+      <div>
+        <h2 className="font-semibold flex items-center gap-2"><Music className="h-4 w-4 text-primary" /> Beat option lists</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Manage the Signature Sound and Mood choices used when uploading or editing beats.
+        </p>
+      </div>
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <CatalogOptionColumn type="signature_sound" title="Signature Sounds" placeholder="Add a signature sound" />
+        <CatalogOptionColumn type="mood" title="Moods" placeholder="Add a mood" />
+      </div>
+    </div>
+  );
+}
+
+function CatalogOptionColumn({ type, title, placeholder }: { type: CatalogOptionType; title: string; placeholder: string }) {
+  const qc = useQueryClient();
+  const { data: options = [] } = useCatalogOptions(type);
+  const [newValue, setNewValue] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function refresh() {
+    await qc.invalidateQueries({ queryKey: ["catalog-options", type] });
+  }
+
+  async function addOption() {
+    const value = newValue.trim();
+    if (!value) return;
+    setBusyId("new");
+    const nextSort = Math.max(0, ...options.map((option) => option.sort_order ?? 0)) + 10;
+    const { error } = await (supabase as any).from("catalog_options").insert({ type, value, sort_order: nextSort });
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    setNewValue("");
+    await refresh();
+  }
+
+  async function saveOption(option: CatalogOption) {
+    const value = editingValue.trim();
+    if (!value || option.id.startsWith("fallback-")) return;
+    setBusyId(option.id);
+    const { error } = await (supabase as any).from("catalog_options").update({ value }).eq("id", option.id);
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    setEditingId(null);
+    setEditingValue("");
+    await refresh();
+  }
+
+  async function deleteOption(option: CatalogOption) {
+    if (option.id.startsWith("fallback-")) {
+      toast.error("Run the catalog options migration before editing default options.");
+      return;
+    }
+    if (!confirm(`Delete "${option.value}"? Existing beats will keep their current value.`)) return;
+    setBusyId(option.id);
+    const { error } = await (supabase as any).from("catalog_options").delete().eq("id", option.id);
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    await refresh();
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-background/50 p-4">
+      <h3 className="font-semibold">{title}</h3>
+      <div className="mt-3 flex gap-2">
+        <Input value={newValue} onChange={(event) => setNewValue(event.target.value)} placeholder={placeholder} />
+        <Button type="button" onClick={addOption} disabled={busyId === "new"}>
+          {busyId === "new" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+        </Button>
+      </div>
+      <div className="mt-4 space-y-2">
+        {options.map((option) => {
+          const editing = editingId === option.id;
+          return (
+            <div key={option.id} className="flex items-center gap-2 rounded-lg border border-border bg-card p-2">
+              {editing ? (
+                <Input className="h-9" value={editingValue} onChange={(event) => setEditingValue(event.target.value)} autoFocus />
+              ) : (
+                <span className="flex-1 truncate text-sm font-medium">{option.value}</span>
+              )}
+              {editing ? (
+                <>
+                  <Button type="button" size="sm" onClick={() => saveOption(option)} disabled={busyId === option.id}>
+                    {busyId === option.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancel</Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingId(option.id);
+                      setEditingValue(option.value);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => deleteOption(option)} disabled={busyId === option.id}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -330,11 +487,22 @@ function DropUploader({ onDone }: { onDone: () => void }) {
   const [dragOver, setDragOver] = useState(false);
   const [items, setItems] = useState<Pending[]>([]);
   const [genre, setGenre] = useState("Trap");
+  const [mood, setMood] = useState("Unknown");
   const [bpm, setBpm] = useState("140");
   const [memberOnly, setMemberOnly] = useState(false);
   const [releaseAt, setReleaseAt] = useState("");
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { data: signatureSounds = fallbackOptions("signature_sound") } = useCatalogOptions("signature_sound");
+  const { data: moods = fallbackOptions("mood") } = useCatalogOptions("mood");
+
+  useEffect(() => {
+    if (signatureSounds.length && !genre) setGenre(signatureSounds[0].value);
+  }, [genre, signatureSounds]);
+
+  useEffect(() => {
+    if (moods.length && !mood) setMood(moods[0].value);
+  }, [mood, moods]);
 
   function basename(name: string) { return name.replace(/\.[^.]+$/, ""); }
 
@@ -431,7 +599,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       const duration_seconds = Math.round(buf.duration);
 
       const { error: insErr } = await (supabase as any).from("beats").insert({
-        title: p.title, genre, mood: "Unknown", bpm: parseInt(bpm) || 0,
+        title: p.title, genre, mood, bpm: parseInt(bpm) || 0,
         music_key: "C", producer_name: "KRAZYJAY",
         duration_seconds, audio_url, audio_url_wav, audio_url_tagged, cover_url,
         is_member_only: memberOnly,
@@ -490,8 +658,13 @@ function DropUploader({ onDone }: { onDone: () => void }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <Field label="Default genre"><Input value={genre} onChange={(e) => setGenre(e.target.value)} /></Field>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+        <Field label="Default signature sound">
+          <OptionInput value={genre} onChange={setGenre} options={signatureSounds.map((option) => option.value)} placeholder="Trap, R&B, Cinematic..." />
+        </Field>
+        <Field label="Default mood">
+          <OptionInput value={mood} onChange={setMood} options={moods.map((option) => option.value)} placeholder="Hard, Chill, Uplifting..." />
+        </Field>
         <Field label="Default BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
         <Field label="Release Date">
           <Input type="datetime-local" value={releaseAt} onChange={(e) => setReleaseAt(e.target.value)} />
@@ -558,6 +731,8 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
   const [memberOnly, setMemberOnly] = useState(false);
   const [releaseAt, setReleaseAt] = useState("");
   const [saving, setSaving] = useState(false);
+  const { data: signatureSounds = fallbackOptions("signature_sound") } = useCatalogOptions("signature_sound");
+  const { data: moods = fallbackOptions("mood") } = useCatalogOptions("mood");
 
   useEffect(() => {
     if (!beat) return;
@@ -636,8 +811,12 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Title"><Input value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
             <Field label="Producer"><Input value={producer} onChange={(e) => setProducer(e.target.value)} /></Field>
-            <Field label="Genre"><Input value={genre} onChange={(e) => setGenre(e.target.value)} /></Field>
-            <Field label="Mood"><Input value={mood} onChange={(e) => setMood(e.target.value)} /></Field>
+            <Field label="Signature Sound">
+              <OptionInput value={genre} onChange={setGenre} options={signatureSounds.map((option) => option.value)} />
+            </Field>
+            <Field label="Mood">
+              <OptionInput value={mood} onChange={setMood} options={moods.map((option) => option.value)} />
+            </Field>
             <Field label="BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
             <Field label="Key"><Input value={musicKey} onChange={(e) => setMusicKey(e.target.value)} /></Field>
             <Field label="Duration seconds"><Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} /></Field>
@@ -669,6 +848,8 @@ function BulkEditBar({ ids, onDone, onClear }: { ids: string[]; onDone: () => vo
   const [musicKey, setMusicKey] = useState("");
   const [memberOnly, setMemberOnly] = useState<"unchanged" | "yes" | "no">("unchanged");
   const [saving, setSaving] = useState(false);
+  const { data: signatureSounds = fallbackOptions("signature_sound") } = useCatalogOptions("signature_sound");
+  const { data: moods = fallbackOptions("mood") } = useCatalogOptions("mood");
 
   async function save() {
     setSaving(true);
@@ -702,8 +883,12 @@ function BulkEditBar({ ids, onDone, onClear }: { ids: string[]; onDone: () => vo
       </div>
       <p className="text-xs text-muted-foreground">Leave a field blank to keep existing values.</p>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Field label="Genre"><Input value={genre} onChange={(e) => setGenre(e.target.value)} /></Field>
-        <Field label="Mood"><Input value={mood} onChange={(e) => setMood(e.target.value)} /></Field>
+        <Field label="Signature Sound">
+          <OptionInput value={genre} onChange={setGenre} options={signatureSounds.map((option) => option.value)} />
+        </Field>
+        <Field label="Mood">
+          <OptionInput value={mood} onChange={setMood} options={moods.map((option) => option.value)} />
+        </Field>
         <Field label="BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
         <Field label="Key"><Input value={musicKey} onChange={(e) => setMusicKey(e.target.value)} /></Field>
         <Field label="Members only">
@@ -732,5 +917,29 @@ function BulkEditBar({ ids, onDone, onClear }: { ids: string[]; onDone: () => vo
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1.5"><Label className="text-xs">{label}</Label>{children}</div>;
+}
+
+function OptionInput({
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder?: string;
+}) {
+  const id = useId();
+  return (
+    <>
+      <Input value={value} onChange={(event) => onChange(event.target.value)} list={id} placeholder={placeholder} />
+      <datalist id={id}>
+        {options.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+    </>
+  );
 }
 
