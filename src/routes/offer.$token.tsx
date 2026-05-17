@@ -189,15 +189,15 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
 
       <ElfsightCountdown />
 
-      <main className="mx-auto grid max-w-7xl gap-7 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-6">
-        <section className="space-y-5">
+      <main className="mx-auto grid max-w-7xl gap-5 px-5 py-3 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-4">
+        <section className="space-y-4">
           <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-2xl lg:text-left">
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-primary">{settings.eyebrow}</p>
-            <h1 className="mt-3 text-4xl font-black leading-[1.03] tracking-tight md:text-6xl">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">{settings.eyebrow}</p>
+            <h1 className="mt-1 text-2xl font-black leading-[1.05] tracking-tight md:text-4xl">
               {headline}
             </h1>
             {settings.show_intro_text && settings.intro_text ? (
-              <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base lg:mx-0">{settings.intro_text}</p>
+              <p className="mx-auto mt-2 max-w-2xl text-xs leading-5 text-white/70 md:text-sm lg:mx-0">{settings.intro_text}</p>
             ) : null}
           </div>
 
