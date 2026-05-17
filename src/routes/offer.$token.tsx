@@ -278,7 +278,7 @@ function OfferCountdown({ remaining }: { remaining: ReturnType<typeof useCountdo
         <span className="h-px flex-1 bg-white/20" />
       </div>
       <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70">
-        This page may not stay available once the timer expires. Lock in your private access before this page resets.
+        Once this timer hits zero, this private offer disappears for good.
       </p>
     </section>
   );
