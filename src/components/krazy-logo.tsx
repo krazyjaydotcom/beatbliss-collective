@@ -4,7 +4,7 @@ export function KrazyLogo({ className = "" }: { className?: string }) {
       <span className="text-foreground">MY</span>
       <span className="text-[#e50914]">BEAT</span>
       <span className="text-foreground">CATALOG</span>
-      <sup className="ml-0.5 align-super text-[0.45em] font-bold text-foreground">™</sup>
+      <sup className="ml-0.5 align-super text-[0.28em] font-bold leading-none text-foreground">TM</sup>
     </span>
   );
 }
