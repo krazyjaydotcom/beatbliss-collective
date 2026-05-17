@@ -273,16 +273,10 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
   }
 
   return (
-    <section className="space-y-4 border-t border-white/10 pt-6">
-      <div className="mb-4 flex items-center gap-3">
-        <Lock className="h-5 w-5 text-primary" />
-        <div>
-          <h2 className="text-sm font-black uppercase tracking-[0.12em]">{settings.video_title}</h2>
-          {settings.show_video_body && settings.video_body ? (
-            <p className="mt-1 text-xs text-white/55">{settings.video_body}</p>
-          ) : null}
-        </div>
-      </div>
+    <section className="space-y-3">
+      {settings.show_video_body && settings.video_body ? (
+        <p className="text-xs text-white/55">{settings.video_body}</p>
+      ) : null}
       {videoUrl ? (
         <iframe
           title="Private offer video"
