@@ -293,7 +293,7 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
         </div>
       )}
       {settings.show_video_cta && settings.video_cta_text ? (
-        <div className="mt-5 flex justify-center">
+        <div className="mt-3 flex justify-center">
           <button
             type="button"
             onClick={scrollToOffer}
