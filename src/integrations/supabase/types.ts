@@ -843,9 +843,13 @@ export type Database = {
           intro_text: string | null
           price_display: string | null
           section_order: Json
+          show_intro_text: boolean
+          show_video_body: boolean
+          show_video_cta: boolean
           subheadline: string | null
           updated_at: string
           video_body: string | null
+          video_cta_text: string
           video_title: string | null
           video_url: string | null
         }
@@ -860,9 +864,13 @@ export type Database = {
           intro_text?: string | null
           price_display?: string | null
           section_order?: Json
+          show_intro_text?: boolean
+          show_video_body?: boolean
+          show_video_cta?: boolean
           subheadline?: string | null
           updated_at?: string
           video_body?: string | null
+          video_cta_text?: string
           video_title?: string | null
           video_url?: string | null
         }
@@ -877,9 +885,13 @@ export type Database = {
           intro_text?: string | null
           price_display?: string | null
           section_order?: Json
+          show_intro_text?: boolean
+          show_video_body?: boolean
+          show_video_cta?: boolean
           subheadline?: string | null
           updated_at?: string
           video_body?: string | null
+          video_cta_text?: string
           video_title?: string | null
           video_url?: string | null
         }
