@@ -709,6 +709,27 @@ export type Database = {
           },
         ]
       }
+      homepage_settings: {
+        Row: {
+          hero_media_type: string
+          hero_media_url: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          hero_media_type?: string
+          hero_media_url?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          hero_media_type?: string
+          hero_media_url?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invites: {
         Row: {
           claimed_by_user_id: string | null
