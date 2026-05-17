@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Lock, Play, Pause } from "lucide-react";
+import { Play, Pause } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
 
 export type SectionKey = "hero" | "video" | "download" | "email";
@@ -50,10 +50,10 @@ export const DEFAULT_CONTENT: Required<FunnelContent> = {
   email_heading_size: 22,
   body_size: 14,
   section_order: ["hero", "video", "email"],
-  padding_header: 12,
-  padding_hero: 12,
+  padding_header: 8,
+  padding_hero: 8,
   padding_video_top: 0,
-  padding_email_top: 16,
+  padding_email_top: 10,
 };
 
 export interface FunnelViewProps {
@@ -97,7 +97,6 @@ function toEmbedUrl(url: string | null): string | null {
 
 export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedded }: FunnelViewProps) {
   const c = { ...DEFAULT_CONTENT, ...content };
-  // Ensure section_order always contains all sections
   const order: SectionKey[] = (() => {
     const all: SectionKey[] = ["hero", "video", "download", "email"];
     const provided = (c.section_order || []).filter((k) => all.includes(k));
@@ -108,6 +107,8 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const embed = toEmbedUrl(funnel.video_url);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,6 +124,21 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
     }
   };
 
+  function toggleAudio() {
+    if (!funnel.audio_url) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio(funnel.audio_url);
+      audioRef.current.addEventListener("ended", () => setAudioPlaying(false));
+    }
+    if (audioPlaying) {
+      audioRef.current.pause();
+      setAudioPlaying(false);
+    } else {
+      audioRef.current.play().catch(() => setAudioPlaying(false));
+      setAudioPlaying(true);
+    }
+  }
+
   const heroBlock = (
     <div key="hero" className="text-center px-4" style={{ paddingTop: c.padding_hero, paddingBottom: c.padding_hero }}>
       <p
@@ -137,6 +153,7 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
   const videoBlock = (
     <div key="video" className="w-full" style={{ paddingTop: c.padding_video_top }}>
       {embed ? (
+        // YouTube/Vimeo embed — full width, no play overlay needed
         <div className="overflow-hidden bg-black aspect-video">
           <iframe
             src={embed}
@@ -147,12 +164,36 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
           />
         </div>
       ) : funnel.cover_url ? (
-        <div className="overflow-hidden bg-black aspect-video flex items-center justify-center">
-          <img src={funnel.cover_url} alt={funnel.title} className="w-full h-full object-cover opacity-80" />
+        // Cover image with play button overlay
+        <div className="relative overflow-hidden bg-black aspect-video cursor-pointer group" onClick={toggleAudio}>
+          <img
+            src={funnel.cover_url}
+            alt={funnel.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors duration-300" />
+          {/* Play / pause button */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              className={`h-20 w-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 ${
+                audioPlaying ? "bg-primary scale-95" : "bg-white/90 group-hover:scale-110 group-hover:bg-white"
+              }`}
+            >
+              {audioPlaying ? <Pause className="h-8 w-8 text-white" /> : <Play className="h-8 w-8 text-black ml-1" />}
+            </div>
+          </div>
+          {/* Beat title at bottom if audio available */}
+          {funnel.audio_url && (
+            <div className="absolute bottom-0 inset-x-0 px-4 py-3 bg-gradient-to-t from-black/70 to-transparent">
+              <p className="text-white text-sm font-semibold truncate">{funnel.beat_title || funnel.title}</p>
+              <p className="text-white/60 text-xs">Tap to {audioPlaying ? "pause" : "play"} preview</p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="border border-dashed border-border bg-card aspect-video flex items-center justify-center text-sm text-muted-foreground">
-          Add a video URL to display a player here
+          Add a video URL or cover image to display here
         </div>
       )}
     </div>
@@ -164,7 +205,7 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
     <form
       key="email"
       onSubmit={handleSubmit}
-      className="px-4 pb-6 max-w-2xl mx-auto w-full"
+      className="px-4 pb-4 max-w-2xl mx-auto w-full"
       style={{ paddingTop: c.padding_email_top }}
     >
       <p className="text-center text-sm font-medium text-foreground mb-3">{c.email_subheading}</p>
@@ -191,10 +232,7 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
         </Button>
       </div>
       {error && <p className="mt-2 text-sm text-destructive text-center">{error}</p>}
-      <p className="mt-2 inline-flex items-center justify-center gap-1.5 w-full text-xs text-muted-foreground">
-        <Lock className="h-3 w-3" />
-        {c.privacy_text}
-      </p>
+      <p className="mt-2 text-center w-full text-xs text-muted-foreground">{c.privacy_text}</p>
     </form>
   );
 
@@ -212,11 +250,11 @@ export function FunnelView({ funnel, content, onEmailSubmit, previewMode, embedd
           className="container mx-auto px-6 flex justify-center"
           style={{ paddingTop: c.padding_header, paddingBottom: c.padding_header }}
         >
-          <KrazyLogo className="text-lg" />
+          <KrazyLogo className="text-base" />
         </div>
       </header>
 
-      <main className="w-full max-w-3xl mx-auto pb-16">{order.map((key) => blocks[key])}</main>
+      <main className="w-full max-w-3xl mx-auto pb-8">{order.map((key) => blocks[key])}</main>
 
       {c.show_sticky_player && funnel.audio_url && (
         <StickyAudio
