@@ -301,4 +301,18 @@
     overflow-y: auto;
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+
+  .stripe-checkout-shell,
+  .stripe-checkout-shell > *,
+  .stripe-checkout-shell iframe {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .stripe-checkout-shell iframe {
+    display: block !important;
+    border: 0 !important;
+  }
 }

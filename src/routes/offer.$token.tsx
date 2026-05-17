@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
-import { Check, Clock, Loader2, Lock, Music, Play, ShieldCheck, Waves } from "lucide-react";
+import { Check, Clock, Loader2, Lock, Music, Play, Waves } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
@@ -205,7 +205,7 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
         </section>
 
         <aside id="special-offer" className="scroll-mt-6 lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-2xl border border-primary/40 bg-[#07111d] p-5 shadow-[0_0_60px_rgba(37,99,235,0.18)]">
+          <div className="rounded-2xl border border-primary/40 bg-[#07111d] p-3 shadow-[0_0_60px_rgba(37,99,235,0.18)] sm:p-5">
             <div className="flex items-center gap-3 border-b border-white/10 pb-5">
               <div className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10">
                 <Lock className="h-5 w-5 text-primary" />
@@ -407,10 +407,7 @@ function OfferEmbeddedCheckout({ offer }: { offer: BeatOffer }) {
   }
 
   return (
-    <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black/40 p-2">
-      <div className="mb-3 flex items-center gap-2 px-2 pt-2 text-xs text-white/55">
-        <ShieldCheck className="h-4 w-4 text-primary" /> Secure embedded checkout
-      </div>
+    <div className="stripe-checkout-shell mt-4 min-w-0 overflow-visible rounded-xl bg-transparent sm:mt-5 sm:overflow-hidden sm:border sm:border-white/10 sm:bg-black/40 sm:p-2">
       <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret }}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>
