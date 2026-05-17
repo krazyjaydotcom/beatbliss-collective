@@ -46,6 +46,10 @@ type OfferSettings = {
   intro_text: string;
   video_title: string;
   video_body: string;
+  show_intro_text: boolean;
+  show_video_body: boolean;
+  show_video_cta: boolean;
+  video_cta_text: string;
   beat_title: string;
   benefits_title: string;
   benefits: string[];
@@ -60,6 +64,10 @@ const DEFAULT_SETTINGS: OfferSettings = {
   intro_text: "This is a private offer. Watch the video below to see everything you get with your membership before the timer expires.",
   video_title: "Watch the private offer video",
   video_body: "A quick breakdown of how MYBEATCATALOG helps artists create, release, and stay consistent.",
+  show_intro_text: true,
+  show_video_body: true,
+  show_video_cta: true,
+  video_cta_text: "See Special Offer",
   beat_title: "Preview the beat",
   benefits_title: "Membership includes",
   benefits: ["Full Beat Catalog", "New Beats Weekly", "Direct Artist Access", "Cancel Anytime"],
@@ -170,9 +178,8 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
     <div className="min-h-screen bg-[#02060b] text-white">
       <PaymentTestModeBanner />
       <header className="border-b border-white/10 bg-black/70 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
+        <div className="mx-auto flex max-w-7xl items-center px-5 py-5">
           <Link to="/" aria-label="MYBEATCATALOG home"><KrazyLogo className="text-xl" /></Link>
-          <Badge variant="outline" className="border-primary/50 bg-primary/10 text-primary"><Lock className="mr-1.5 h-3.5 w-3.5" /> Private Offer</Badge>
         </div>
       </header>
 
@@ -185,7 +192,9 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
             <h1 className="mt-3 max-w-2xl text-4xl font-black leading-[1.03] tracking-tight md:text-6xl">
               {headline}
             </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base">{settings.intro_text}</p>
+            {settings.show_intro_text && settings.intro_text ? (
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base">{settings.intro_text}</p>
+            ) : null}
           </div>
 
           {orderedSections.map((section) => {
@@ -195,7 +204,7 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
           })}
         </section>
 
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside id="special-offer" className="scroll-mt-6 lg:sticky lg:top-6 lg:self-start">
           <div className="rounded-2xl border border-primary/40 bg-[#07111d] p-5 shadow-[0_0_60px_rgba(37,99,235,0.18)]">
             <div className="flex items-center gap-3 border-b border-white/10 pb-5">
               <div className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10">
@@ -238,16 +247,16 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
 function TopTimer({ remaining }: { remaining: ReturnType<typeof useCountdown> }) {
   const expired = remaining.total <= 0;
   return (
-    <section className="border-b border-primary/30 bg-[#041121]">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3">
-          <Clock className="h-5 w-5 text-primary" />
+    <section className="border-b border-primary/30 bg-[#041121]/95">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <Clock className="h-4 w-4 shrink-0 text-primary" />
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-primary">12-hour private access</p>
-            <p className="text-sm text-white/60">{expired ? "This private offer window has expired." : "Offer expires in"}</p>
+            <p className="truncate text-[10px] font-black uppercase tracking-[0.24em] text-primary">12-hour private access</p>
+            <p className="hidden text-xs text-white/55 sm:block">{expired ? "This private offer window has expired." : "Offer expires in"}</p>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="flex shrink-0 items-center gap-4 sm:gap-8">
           <TimerCell value={remaining.hours} label="hrs" />
           <TimerCell value={remaining.minutes} label="min" />
           <TimerCell value={remaining.seconds} label="sec" />
@@ -259,21 +268,27 @@ function TopTimer({ remaining }: { remaining: ReturnType<typeof useCountdown> })
 
 function TimerCell({ value, label }: { value: number; label: string }) {
   return (
-    <div className="min-w-[78px] rounded-lg border border-white/10 bg-black/35 px-4 py-2 text-center">
-      <div className="text-2xl font-black tabular-nums">{String(value).padStart(2, "0")}</div>
-      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">{label}</div>
+    <div className="min-w-[42px] text-center">
+      <div className="text-lg font-black leading-none tabular-nums sm:text-xl">{String(value).padStart(2, "0")}</div>
+      <div className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.18em] text-white/45">{label}</div>
     </div>
   );
 }
 
 function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUrl: string }) {
+  function scrollToOffer() {
+    document.getElementById("special-offer")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <section className="rounded-2xl border border-white/10 bg-[#07111d] p-5">
       <div className="mb-4 flex items-center gap-3">
         <Lock className="h-5 w-5 text-primary" />
         <div>
           <h2 className="text-sm font-black uppercase tracking-[0.12em]">{settings.video_title}</h2>
-          <p className="mt-1 text-xs text-white/55">{settings.video_body}</p>
+          {settings.show_video_body && settings.video_body ? (
+            <p className="mt-1 text-xs text-white/55">{settings.video_body}</p>
+          ) : null}
         </div>
       </div>
       {videoUrl ? (
@@ -291,6 +306,17 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
           </div>
         </div>
       )}
+      {settings.show_video_cta && settings.video_cta_text ? (
+        <div className="mt-5 flex justify-center">
+          <button
+            type="button"
+            onClick={scrollToOffer}
+            className="rounded-lg bg-primary px-7 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_35px_rgba(37,99,235,0.32)] transition hover:bg-primary/90"
+          >
+            {settings.video_cta_text}
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -19,6 +19,10 @@ type OfferSettings = {
   intro_text: string;
   video_title: string;
   video_body: string;
+  show_intro_text: boolean;
+  show_video_body: boolean;
+  show_video_cta: boolean;
+  video_cta_text: string;
   beat_title: string;
   benefits_title: string;
   benefits: string[];
@@ -33,6 +37,10 @@ const DEFAULT_SETTINGS: OfferSettings = {
   intro_text: "This is a private offer. Watch the video below to see everything you get with your membership before the timer expires.",
   video_title: "Watch the private offer video",
   video_body: "A quick breakdown of how MYBEATCATALOG helps artists create, release, and stay consistent.",
+  show_intro_text: true,
+  show_video_body: true,
+  show_video_cta: true,
+  video_cta_text: "See Special Offer",
   beat_title: "Preview the beat",
   benefits_title: "Membership includes",
   benefits: ["Full Beat Catalog", "New Beats Weekly", "Direct Artist Access", "Cancel Anytime"],
@@ -106,6 +114,10 @@ export function OfferPageEditor() {
         intro_text: settings.intro_text,
         video_title: settings.video_title,
         video_body: settings.video_body,
+        show_intro_text: settings.show_intro_text,
+        show_video_body: settings.show_video_body,
+        show_video_cta: settings.show_video_cta,
+        video_cta_text: settings.video_cta_text,
         beat_title: settings.beat_title,
         benefits_title: settings.benefits_title,
         benefits: settings.benefits.filter(Boolean),
@@ -158,14 +170,33 @@ export function OfferPageEditor() {
             <Input value={settings.headline_template} onChange={(e) => setField("headline_template", e.target.value)} />
             <p className="mt-1 text-xs text-slate-500">Use {"{beat}"} where the selected beat title should appear.</p>
           </Field>
+          <ToggleField
+            label="Show intro text"
+            checked={settings.show_intro_text}
+            onChange={(checked) => setField("show_intro_text", checked)}
+          />
           <Field label="Intro text">
             <textarea className="min-h-24 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" value={settings.intro_text} onChange={(e) => setField("intro_text", e.target.value)} />
           </Field>
           <Field label="Video title">
             <Input value={settings.video_title} onChange={(e) => setField("video_title", e.target.value)} />
           </Field>
+          <ToggleField
+            label="Show video supporting text"
+            checked={settings.show_video_body}
+            onChange={(checked) => setField("show_video_body", checked)}
+          />
           <Field label="Video supporting text">
             <textarea className="min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950" value={settings.video_body} onChange={(e) => setField("video_body", e.target.value)} />
+          </Field>
+          <ToggleField
+            label="Show button below video"
+            checked={settings.show_video_cta}
+            onChange={(checked) => setField("show_video_cta", checked)}
+          />
+          <Field label="Video button text">
+            <Input value={settings.video_cta_text} onChange={(e) => setField("video_cta_text", e.target.value)} />
+            <p className="mt-1 text-xs text-slate-500">This button scrolls visitors to the special offer checkout section.</p>
           </Field>
           <Field label="Beat section title">
             <Input value={settings.beat_title} onChange={(e) => setField("beat_title", e.target.value)} />
@@ -212,6 +243,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <label className="block">
       <span className="mb-2 block text-sm font-semibold text-slate-800">{label}</span>
       {children}
+    </label>
+  );
+}
+
+function ToggleField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <span className="text-sm font-semibold text-slate-800">{label}</span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-5 w-5 accent-primary"
+      />
     </label>
   );
 }
