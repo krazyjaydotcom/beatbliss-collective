@@ -189,15 +189,15 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
 
       <ElfsightCountdown />
 
-      <main className="mx-auto grid max-w-7xl gap-7 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-6">
-        <section className="space-y-5">
+      <main className="mx-auto grid max-w-7xl gap-5 px-5 py-3 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-4">
+        <section className="space-y-4">
           <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-2xl lg:text-left">
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-primary">{settings.eyebrow}</p>
-            <h1 className="mt-3 text-4xl font-black leading-[1.03] tracking-tight md:text-6xl">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">{settings.eyebrow}</p>
+            <h1 className="mt-1 text-2xl font-black leading-[1.05] tracking-tight md:text-4xl">
               {headline}
             </h1>
             {settings.show_intro_text && settings.intro_text ? (
-              <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base lg:mx-0">{settings.intro_text}</p>
+              <p className="mx-auto mt-2 max-w-2xl text-xs leading-5 text-white/70 md:text-sm lg:mx-0">{settings.intro_text}</p>
             ) : null}
           </div>
 
@@ -273,16 +273,10 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
   }
 
   return (
-    <section className="space-y-4 border-t border-white/10 pt-6">
-      <div className="mb-4 flex items-center gap-3">
-        <Lock className="h-5 w-5 text-primary" />
-        <div>
-          <h2 className="text-sm font-black uppercase tracking-[0.12em]">{settings.video_title}</h2>
-          {settings.show_video_body && settings.video_body ? (
-            <p className="mt-1 text-xs text-white/55">{settings.video_body}</p>
-          ) : null}
-        </div>
-      </div>
+    <section className="space-y-3">
+      {settings.show_video_body && settings.video_body ? (
+        <p className="text-xs text-white/55">{settings.video_body}</p>
+      ) : null}
       {videoUrl ? (
         <iframe
           title="Private offer video"
@@ -299,7 +293,7 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
         </div>
       )}
       {settings.show_video_cta && settings.video_cta_text ? (
-        <div className="mt-5 flex justify-center">
+        <div className="mt-3 flex justify-center">
           <button
             type="button"
             onClick={scrollToOffer}
