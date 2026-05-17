@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
-import { Check, Download, Loader2, Lock, Music, Pause, Play, Waves } from "lucide-react";
+import { Check, Clock, Download, Loader2, Lock, Music, Pause, Play, Waves } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
@@ -204,7 +204,7 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
               return (
                 <div key={section} className="space-y-5">
                   <VideoSection settings={settings} videoUrl={videoUrl} />
-                  <ElfsightCountdown />
+                  <OfferCountdown remaining={remaining} />
                 </div>
               );
             }
@@ -253,22 +253,45 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
   );
 }
 
-function ElfsightCountdown() {
-  useEffect(() => {
-    const existing = document.querySelector<HTMLScriptElement>('script[src="https://elfsightcdn.com/platform.js"]');
-    if (existing) return;
-    const script = document.createElement("script");
-    script.src = "https://elfsightcdn.com/platform.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-
+function OfferCountdown({ remaining }: { remaining: ReturnType<typeof useCountdown> }) {
+  const expired = remaining.total <= 0;
   return (
-    <section className="rounded-2xl border border-primary/35 bg-black/20 px-4 py-4 shadow-[0_0_45px_rgba(37,99,235,0.12)]">
-      <div className="mx-auto max-w-4xl">
-        <div className="elfsight-app-5dcb9809-b5d4-4238-9c17-29aad78ee380" data-elfsight-app-lazy />
+    <section className="mx-auto w-full max-w-4xl rounded-2xl border border-primary/35 bg-black/20 px-4 py-5 text-center shadow-[0_0_45px_rgba(37,99,235,0.12)] sm:px-8">
+      <div className="flex items-center justify-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-white/85">
+        <span className="hidden h-px w-20 bg-white/25 sm:block" />
+        <Clock className="h-5 w-5 text-primary" />
+        <span>{expired ? "Private Access Expired" : "Private Access Expires In"}</span>
+        <span className="hidden h-px w-20 bg-white/25 sm:block" />
       </div>
+
+      <div className="mt-5 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-start gap-2 sm:gap-4">
+        <CountdownUnit value={remaining.hours} label="Hours" />
+        <span className="pt-1 text-4xl font-black text-white/80 sm:text-6xl">:</span>
+        <CountdownUnit value={remaining.minutes} label="Minutes" />
+        <span className="pt-1 text-4xl font-black text-white/80 sm:text-6xl">:</span>
+        <CountdownUnit value={remaining.seconds} label="Seconds" />
+      </div>
+
+      <div className="mt-5 flex items-center justify-center gap-4 text-white/50">
+        <span className="h-px flex-1 bg-white/20" />
+        <Lock className="h-4 w-4" />
+        <span className="h-px flex-1 bg-white/20" />
+      </div>
+      <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70">
+        This page may not stay available once the timer expires. Lock in your private access before this page resets.
+      </p>
     </section>
+  );
+}
+
+function CountdownUnit({ value, label }: { value: number; label: string }) {
+  return (
+    <div>
+      <div className="text-5xl font-black leading-none tabular-nums text-white sm:text-7xl">
+        {String(value).padStart(2, "0")}
+      </div>
+      <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-white/70 sm:text-xs">{label}</div>
+    </div>
   );
 }
 
