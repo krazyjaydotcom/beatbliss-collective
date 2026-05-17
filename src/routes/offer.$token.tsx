@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
-import { Check, Download, Loader2, Lock, Music, Play, Waves } from "lucide-react";
+import { Check, Download, Loader2, Lock, Music, Pause, Play, Waves } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
@@ -187,22 +187,27 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
         </div>
       </header>
 
-      <ElfsightCountdown />
-
-      <main className="mx-auto grid max-w-7xl gap-5 px-5 py-3 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-4">
-        <section className="space-y-4">
-          <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-2xl lg:text-left">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">{settings.eyebrow}</p>
-            <h1 className="mt-1 text-2xl font-black leading-[1.05] tracking-tight md:text-4xl">
+      <main className="offer-cinematic-enter mx-auto grid max-w-7xl gap-7 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-7">
+        <section className="space-y-5">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-black uppercase tracking-[0.42em] text-primary">Congratulations</p>
+            <h1 className="mt-3 text-4xl font-black leading-[1.03] tracking-tight md:text-6xl">
               {headline}
             </h1>
             {settings.show_intro_text && settings.intro_text ? (
-              <p className="mx-auto mt-2 max-w-2xl text-xs leading-5 text-white/70 md:text-sm lg:mx-0">{settings.intro_text}</p>
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base">{settings.intro_text}</p>
             ) : null}
           </div>
 
           {orderedSections.map((section) => {
-            if (section === "video") return <VideoSection key={section} settings={settings} videoUrl={videoUrl} />;
+            if (section === "video") {
+              return (
+                <div key={section} className="space-y-5">
+                  <VideoSection settings={settings} videoUrl={videoUrl} />
+                  <ElfsightCountdown />
+                </div>
+              );
+            }
             if (section === "beat") return <BeatPreview key={section} offer={offer} meta={meta} title={settings.beat_title} />;
             return <Benefits key={section} settings={settings} />;
           })}
@@ -259,8 +264,8 @@ function ElfsightCountdown() {
   }, []);
 
   return (
-    <section className="border-b border-primary/20 bg-[#02060b] px-5 py-2">
-      <div className="mx-auto max-w-7xl">
+    <section className="rounded-2xl border border-primary/35 bg-black/20 px-4 py-4 shadow-[0_0_45px_rgba(37,99,235,0.12)]">
+      <div className="mx-auto max-w-4xl">
         <div className="elfsight-app-5dcb9809-b5d4-4238-9c17-29aad78ee380" data-elfsight-app-lazy />
       </div>
     </section>
@@ -273,31 +278,37 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
   }
 
   return (
-    <section className="space-y-3">
-      {settings.show_video_body && settings.video_body ? (
-        <p className="text-xs text-white/55">{settings.video_body}</p>
-      ) : null}
+    <section className="space-y-4">
+      <div className="sr-only">
+        <Lock className="h-5 w-5 text-primary" />
+        <div>
+          <h2>{settings.video_title}</h2>
+          {settings.show_video_body && settings.video_body ? (
+            <p>{settings.video_body}</p>
+          ) : null}
+        </div>
+      </div>
       {videoUrl ? (
         <iframe
           title="Private offer video"
           src={videoUrl}
-          className="aspect-video w-full rounded-xl border border-white/10 bg-black shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
+          className="aspect-video w-full rounded-[1.35rem] border border-white/15 bg-black shadow-[0_24px_80px_rgba(0,0,0,0.48)]"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
         />
       ) : (
-        <div className="flex aspect-video items-center justify-center rounded-xl border border-white/10 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.35),transparent_38%),#03070d] shadow-[0_24px_80px_rgba(0,0,0,0.38)]">
+        <div className="flex aspect-video items-center justify-center rounded-[1.35rem] border border-white/15 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.35),transparent_38%),#03070d] shadow-[0_24px_80px_rgba(0,0,0,0.48)]">
           <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-primary text-primary shadow-[0_0_45px_rgba(37,99,235,0.55)]">
             <Play className="ml-1 h-11 w-11 fill-current" />
           </div>
         </div>
       )}
       {settings.show_video_cta && settings.video_cta_text ? (
-        <div className="mt-3 flex justify-center">
+        <div className="mt-6 flex justify-center">
           <button
             type="button"
             onClick={scrollToOffer}
-            className="rounded-lg bg-primary px-7 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_35px_rgba(37,99,235,0.32)] transition hover:bg-primary/90"
+            className="w-full max-w-md rounded-xl bg-primary px-7 py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_35px_rgba(37,99,235,0.32)] transition hover:bg-primary/90 sm:text-base"
           >
             {settings.video_cta_text}
           </button>
@@ -310,7 +321,33 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
 function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; title: string }) {
   const downloadUrl = offer.audio_url_tagged ?? offer.audio_url;
   const downloadName = `MYBEATCATALOG_${slugifyFileName(offer.title)}.mp3`;
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onEnded = () => setPlaying(false);
+    audio.addEventListener("ended", onEnded);
+    return () => audio.removeEventListener("ended", onEnded);
+  }, []);
+
+  async function togglePlay() {
+    const audio = audioRef.current;
+    if (!audio || !downloadUrl) return;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+      return;
+    }
+    try {
+      await audio.play();
+      setPlaying(true);
+    } catch {
+      setPlaying(false);
+    }
+  }
 
   async function downloadBeat() {
     if (!downloadUrl || downloading) return;
@@ -343,46 +380,62 @@ function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; t
 
   return (
     <section className="border-t border-white/10 pt-6">
-      <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
-        <Music className="h-4 w-4" /> {title}
+      <div className="mb-5 flex items-center justify-center gap-4 text-center text-xs font-bold uppercase tracking-[0.32em] text-white">
+        <span className="h-px flex-1 bg-white/15" />
+        <span className="inline-flex items-center gap-2">
+          <Music className="h-5 w-5 text-primary" /> {title}
+        </span>
+        <span className="h-px flex-1 bg-white/15" />
       </div>
-      <div className="grid gap-4 md:grid-cols-[130px_1fr] md:items-center">
-          <div className="aspect-square overflow-hidden rounded-xl border border-white/10 bg-black/40">
+      <div className="mx-auto max-w-3xl">
+        <button
+          type="button"
+          onClick={togglePlay}
+          disabled={!downloadUrl}
+          className="group relative block aspect-[16/9] w-full overflow-hidden rounded-xl border border-white/15 bg-black/40 text-left shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
+          aria-label={(playing ? "Pause " : "Play ") + offer.title}
+        >
             {offer.cover_url ? (
               <img src={offer.cover_url} alt={offer.title} className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.45),transparent_58%)] text-center text-xl font-black">
+              <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.45),transparent_58%)] p-8 text-center text-3xl font-black">
                 {offer.title}
               </div>
             )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-white/95 text-primary shadow-[0_0_45px_rgba(37,99,235,0.45)] transition group-hover:scale-105">
+              {playing ? <Pause className="h-9 w-9" /> : <Play className="ml-1 h-10 w-10 fill-current" />}
+            </span>
           </div>
-          <div>
+          <div className="absolute bottom-4 left-4 right-4">
             <div className="flex flex-wrap gap-2">
               {offer.genre ? <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary">{offer.genre}</Badge> : null}
               {offer.bpm ? <Badge variant="outline" className="border-white/20 text-white/70">{offer.bpm} BPM</Badge> : null}
             </div>
             <h2 className="mt-3 text-2xl font-black">{offer.title}</h2>
-            <p className="mt-1 text-sm text-white/55">{meta || "Listen again, then lock in your access."}</p>
-            {offer.audio_url_tagged || offer.audio_url ? (
-              <div className="mt-4 space-y-3">
-                <audio controls preload="metadata" src={downloadUrl ?? undefined} className="w-full" />
-                {downloadUrl ? (
+            <p className="mt-1 text-sm text-white/70">{meta || "Tap the cover to preview this beat."}</p>
+          </div>
+        </button>
+        {downloadUrl ? (
+          <>
+            <audio ref={audioRef} preload="metadata" src={downloadUrl} />
+            <div className="mt-4 flex justify-center">
                   <button
                     type="button"
                     onClick={downloadBeat}
                     disabled={downloading}
-                    className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_30px_rgba(37,99,235,0.28)] transition hover:bg-primary/90 sm:w-auto"
+                    className="inline-flex w-full max-w-md items-center justify-center rounded-xl bg-primary px-5 py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_30px_rgba(37,99,235,0.28)] transition hover:bg-primary/90"
                   >
                     {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                     {downloading ? "Starting Download" : "Download Beat"}
                   </button>
-                ) : null}
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-white/50">Audio preview is being prepared.</p>
-            )}
-          </div>
-        </div>
+            </div>
+          </>
+        ) : (
+          <p className="mt-4 text-center text-sm text-white/50">Audio preview is being prepared.</p>
+        )}
+      </div>
     </section>
   );
 }
