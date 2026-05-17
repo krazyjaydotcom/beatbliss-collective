@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
-import { Check, Clock, Download, Loader2, Lock, Music, Play, Waves } from "lucide-react";
+import { Check, Download, Loader2, Lock, Music, Play, Waves } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
@@ -182,22 +182,22 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
     <div className="min-h-screen bg-[#02060b] text-white">
       <PaymentTestModeBanner />
       <header className="border-b border-white/10 bg-black/70 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center px-5 py-5">
+        <div className="mx-auto flex max-w-7xl items-center px-5 py-3">
           <Link to="/" aria-label="MYBEATCATALOG home"><KrazyLogo className="text-xl" /></Link>
         </div>
       </header>
 
-      <TopTimer remaining={remaining} />
+      <ElfsightCountdown />
 
-      <main className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-10">
-        <section className="space-y-6">
-          <div>
+      <main className="mx-auto grid max-w-7xl gap-7 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-6">
+        <section className="space-y-5">
+          <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-2xl lg:text-left">
             <p className="text-sm font-black uppercase tracking-[0.22em] text-primary">{settings.eyebrow}</p>
-            <h1 className="mt-3 max-w-2xl text-4xl font-black leading-[1.03] tracking-tight md:text-6xl">
+            <h1 className="mt-3 text-4xl font-black leading-[1.03] tracking-tight md:text-6xl">
               {headline}
             </h1>
             {settings.show_intro_text && settings.intro_text ? (
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base">{settings.intro_text}</p>
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base lg:mx-0">{settings.intro_text}</p>
             ) : null}
           </div>
 
@@ -248,34 +248,22 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
   );
 }
 
-function TopTimer({ remaining }: { remaining: ReturnType<typeof useCountdown> }) {
-  const expired = remaining.total <= 0;
+function ElfsightCountdown() {
+  useEffect(() => {
+    const existing = document.querySelector<HTMLScriptElement>('script[src="https://elfsightcdn.com/platform.js"]');
+    if (existing) return;
+    const script = document.createElement("script");
+    script.src = "https://elfsightcdn.com/platform.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   return (
-    <section className="border-y border-primary/25 bg-[#041121]/95">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <Clock className="h-4 w-4 shrink-0 text-primary" />
-          <div>
-            <p className="truncate text-[10px] font-black uppercase tracking-[0.24em] text-primary">12-hour private access</p>
-            <p className="hidden text-xs text-white/55 sm:block">{expired ? "This private offer window has expired." : "Offer expires in"}</p>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-5">
-          <TimerCell value={remaining.hours} label="hrs" />
-          <TimerCell value={remaining.minutes} label="min" />
-          <TimerCell value={remaining.seconds} label="sec" />
-        </div>
+    <section className="border-b border-primary/20 bg-[#02060b] px-5 py-2">
+      <div className="mx-auto max-w-7xl">
+        <div className="elfsight-app-5dcb9809-b5d4-4238-9c17-29aad78ee380" data-elfsight-app-lazy />
       </div>
     </section>
-  );
-}
-
-function TimerCell({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="flex min-w-[58px] items-baseline justify-end gap-1.5 sm:min-w-[70px]">
-      <span className="text-lg font-black leading-none tabular-nums sm:text-xl">{String(value).padStart(2, "0")}</span>
-      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/50">{label}</span>
-    </div>
   );
 }
 
@@ -328,6 +316,37 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
 function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; title: string }) {
   const downloadUrl = offer.audio_url_tagged ?? offer.audio_url;
   const downloadName = `MYBEATCATALOG_${slugifyFileName(offer.title)}.mp3`;
+  const [downloading, setDownloading] = useState(false);
+
+  async function downloadBeat() {
+    if (!downloadUrl || downloading) return;
+    setDownloading(true);
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = downloadName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch {
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = downloadName;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   return (
     <section className="border-t border-white/10 pt-6">
       <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
@@ -354,14 +373,15 @@ function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; t
               <div className="mt-4 space-y-3">
                 <audio controls preload="metadata" src={downloadUrl ?? undefined} className="w-full" />
                 {downloadUrl ? (
-                  <a
-                    href={downloadUrl}
-                    download={downloadName}
+                  <button
+                    type="button"
+                    onClick={downloadBeat}
+                    disabled={downloading}
                     className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_30px_rgba(37,99,235,0.28)] transition hover:bg-primary/90 sm:w-auto"
                   >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Beat
-                  </a>
+                    {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {downloading ? "Starting Download" : "Download Beat"}
+                  </button>
                 ) : null}
               </div>
             ) : (
