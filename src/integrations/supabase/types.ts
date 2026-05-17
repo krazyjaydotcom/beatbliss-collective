@@ -1104,6 +1104,8 @@ export type Database = {
         }
         Returns: number
       }
+      admin_delete_beat_claim: { Args: { _id: string }; Returns: undefined }
+      admin_delete_beat_request: { Args: { _id: string }; Returns: undefined }
       admin_gift_credits: {
         Args: { _amount: number; _note?: string; _user_id: string }
         Returns: Json
