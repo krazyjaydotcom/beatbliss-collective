@@ -29,6 +29,12 @@ type OfferSettings = {
   section_order: string[];
 };
 
+type HomepageSettings = {
+  id: string;
+  hero_media_type: "image" | "video";
+  hero_media_url: string;
+};
+
 const DEFAULT_SETTINGS: OfferSettings = {
   id: "main",
   video_url: "",
@@ -47,6 +53,12 @@ const DEFAULT_SETTINGS: OfferSettings = {
   section_order: ["video", "beat", "benefits"],
 };
 
+const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
+  id: "main",
+  hero_media_type: "image",
+  hero_media_url: "",
+};
+
 const SECTION_LABELS: Record<string, string> = {
   video: "Private video",
   beat: "Beat preview",
@@ -61,6 +73,17 @@ function normalize(row: Partial<OfferSettings> | null | undefined): OfferSetting
     video_url: row.video_url ?? "",
     benefits: Array.isArray(row.benefits) ? row.benefits : DEFAULT_SETTINGS.benefits,
     section_order: Array.isArray(row.section_order) && row.section_order.length ? row.section_order : DEFAULT_SETTINGS.section_order,
+  };
+}
+
+function normalizeHomepage(row: Partial<HomepageSettings> | null | undefined): HomepageSettings {
+  if (!row) return DEFAULT_HOMEPAGE_SETTINGS;
+  return {
+    ...DEFAULT_HOMEPAGE_SETTINGS,
+    ...row,
+    id: "main",
+    hero_media_type: row.hero_media_type === "video" ? "video" : "image",
+    hero_media_url: row.hero_media_url ?? "",
   };
 }
 
@@ -158,6 +181,8 @@ export function OfferPageEditor() {
         </div>
       ) : null}
 
+      <HomepageHeroEditor />
+
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <Field label="YouTube or video URL">
@@ -235,6 +260,85 @@ export function OfferPageEditor() {
         </aside>
       </div>
     </div>
+  );
+}
+
+function HomepageHeroEditor() {
+  const queryClient = useQueryClient();
+  const [settings, setSettings] = useState<HomepageSettings>(DEFAULT_HOMEPAGE_SETTINGS);
+  const [saving, setSaving] = useState(false);
+
+  const settingsQ = useQuery({
+    queryKey: ["admin-homepage-settings"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("homepage_settings")
+        .select("*")
+        .eq("id", "main")
+        .maybeSingle();
+      if (error) return DEFAULT_HOMEPAGE_SETTINGS;
+      return normalizeHomepage(data as Partial<HomepageSettings> | null);
+    },
+  });
+
+  useEffect(() => {
+    if (settingsQ.data) setSettings(settingsQ.data);
+  }, [settingsQ.data]);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const payload = {
+        id: "main",
+        hero_media_type: settings.hero_media_type,
+        hero_media_url: settings.hero_media_url.trim() || null,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await (supabase as any).from("homepage_settings").upsert(payload, { onConflict: "id" });
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["admin-homepage-settings"] });
+      await queryClient.invalidateQueries({ queryKey: ["homepage-settings"] });
+      toast.success("Homepage media saved.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unable to save homepage media.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 className="text-xl font-black">Homepage Main Media</h2>
+          <p className="mt-1 text-sm text-slate-600">Swap the front-page studio image for a different image or a muted looping video.</p>
+        </div>
+        <Button type="button" variant="hero" onClick={save} disabled={saving}>
+          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          Save Homepage Media
+        </Button>
+      </div>
+      <div className="mt-5 grid gap-4 lg:grid-cols-[220px_1fr]">
+        <Field label="Media type">
+          <select
+            value={settings.hero_media_type}
+            onChange={(e) => setSettings((current) => ({ ...current, hero_media_type: e.target.value === "video" ? "video" : "image" }))}
+            className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950"
+          >
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+          </select>
+        </Field>
+        <Field label="Image or video URL">
+          <Input
+            value={settings.hero_media_url}
+            onChange={(e) => setSettings((current) => ({ ...current, hero_media_url: e.target.value }))}
+            placeholder={settings.hero_media_type === "video" ? "https://.../studio-video.mp4" : "https://.../studio-image.jpg"}
+          />
+          <p className="mt-1 text-xs text-slate-500">Leave this blank to use the default MYBEATCATALOG studio image.</p>
+        </Field>
+      </div>
+    </section>
   );
 }
 

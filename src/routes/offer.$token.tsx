@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
-import { Check, Clock, Loader2, Lock, Music, Play, Waves } from "lucide-react";
+import { Check, Clock, Download, Loader2, Lock, Music, Play, Waves } from "lucide-react";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
@@ -100,6 +100,10 @@ function getEmbedUrl(url: string) {
   } catch {
     return url;
   }
+}
+
+function slugifyFileName(value: string) {
+  return value.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "") || "beat";
 }
 
 function mergeSettings(row: Partial<OfferSettings> | null | undefined): OfferSettings {
@@ -199,7 +203,7 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
 
           {orderedSections.map((section) => {
             if (section === "video") return <VideoSection key={section} settings={settings} videoUrl={videoUrl} />;
-            if (section === "beat") return <BeatPreview key={section} offer={offer} meta={meta} />;
+            if (section === "beat") return <BeatPreview key={section} offer={offer} meta={meta} title={settings.beat_title} />;
             return <Benefits key={section} settings={settings} />;
           })}
         </section>
@@ -247,8 +251,8 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
 function TopTimer({ remaining }: { remaining: ReturnType<typeof useCountdown> }) {
   const expired = remaining.total <= 0;
   return (
-    <section className="border-b border-primary/30 bg-[#041121]/95">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-2">
+    <section className="border-y border-primary/25 bg-[#041121]/95">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <Clock className="h-4 w-4 shrink-0 text-primary" />
           <div>
@@ -256,7 +260,7 @@ function TopTimer({ remaining }: { remaining: ReturnType<typeof useCountdown> })
             <p className="hidden text-xs text-white/55 sm:block">{expired ? "This private offer window has expired." : "Offer expires in"}</p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-4 sm:gap-8">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-5">
           <TimerCell value={remaining.hours} label="hrs" />
           <TimerCell value={remaining.minutes} label="min" />
           <TimerCell value={remaining.seconds} label="sec" />
@@ -268,9 +272,9 @@ function TopTimer({ remaining }: { remaining: ReturnType<typeof useCountdown> })
 
 function TimerCell({ value, label }: { value: number; label: string }) {
   return (
-    <div className="min-w-[42px] text-center">
-      <div className="text-lg font-black leading-none tabular-nums sm:text-xl">{String(value).padStart(2, "0")}</div>
-      <div className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.18em] text-white/45">{label}</div>
+    <div className="flex min-w-[58px] items-baseline justify-end gap-1.5 sm:min-w-[70px]">
+      <span className="text-lg font-black leading-none tabular-nums sm:text-xl">{String(value).padStart(2, "0")}</span>
+      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/50">{label}</span>
     </div>
   );
 }
@@ -281,7 +285,7 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-[#07111d] p-5">
+    <section className="space-y-4 border-t border-white/10 pt-6">
       <div className="mb-4 flex items-center gap-3">
         <Lock className="h-5 w-5 text-primary" />
         <div>
@@ -295,12 +299,12 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
         <iframe
           title="Private offer video"
           src={videoUrl}
-          className="aspect-video w-full rounded-xl border border-white/10 bg-black"
+          className="aspect-video w-full rounded-xl border border-white/10 bg-black shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
         />
       ) : (
-        <div className="flex aspect-video items-center justify-center rounded-xl border border-white/10 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.35),transparent_38%),#03070d]">
+        <div className="flex aspect-video items-center justify-center rounded-xl border border-white/10 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.35),transparent_38%),#03070d] shadow-[0_24px_80px_rgba(0,0,0,0.38)]">
           <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-primary text-primary shadow-[0_0_45px_rgba(37,99,235,0.55)]">
             <Play className="ml-1 h-11 w-11 fill-current" />
           </div>
@@ -321,14 +325,15 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
   );
 }
 
-function BeatPreview({ offer, meta }: { offer: BeatOffer; meta: string }) {
+function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; title: string }) {
+  const downloadUrl = offer.audio_url_tagged ?? offer.audio_url;
+  const downloadName = `MYBEATCATALOG_${slugifyFileName(offer.title)}.mp3`;
   return (
-    <section>
+    <section className="border-t border-white/10 pt-6">
       <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
-        <Music className="h-4 w-4" /> Preview the beat
+        <Music className="h-4 w-4" /> {title}
       </div>
-      <div className="rounded-2xl border border-white/10 bg-[#07111d] p-4">
-        <div className="grid gap-4 md:grid-cols-[130px_1fr] md:items-center">
+      <div className="grid gap-4 md:grid-cols-[130px_1fr] md:items-center">
           <div className="aspect-square overflow-hidden rounded-xl border border-white/10 bg-black/40">
             {offer.cover_url ? (
               <img src={offer.cover_url} alt={offer.title} className="h-full w-full object-cover" />
@@ -346,23 +351,34 @@ function BeatPreview({ offer, meta }: { offer: BeatOffer; meta: string }) {
             <h2 className="mt-3 text-2xl font-black">{offer.title}</h2>
             <p className="mt-1 text-sm text-white/55">{meta || "Listen again, then lock in your access."}</p>
             {offer.audio_url_tagged || offer.audio_url ? (
-              <audio controls preload="metadata" src={offer.audio_url_tagged ?? offer.audio_url ?? undefined} className="mt-4 w-full" />
+              <div className="mt-4 space-y-3">
+                <audio controls preload="metadata" src={downloadUrl ?? undefined} className="w-full" />
+                {downloadUrl ? (
+                  <a
+                    href={downloadUrl}
+                    download={downloadName}
+                    className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_30px_rgba(37,99,235,0.28)] transition hover:bg-primary/90 sm:w-auto"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Beat
+                  </a>
+                ) : null}
+              </div>
             ) : (
               <p className="mt-4 text-sm text-white/50">Audio preview is being prepared.</p>
             )}
           </div>
         </div>
-      </div>
     </section>
   );
 }
 
 function Benefits({ settings }: { settings: OfferSettings }) {
   return (
-    <section>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="border-t border-white/10 pt-6">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {settings.benefits.map((benefit) => (
-          <div key={benefit} className="rounded-xl border border-white/10 bg-[#07111d] p-4">
+          <div key={benefit} className="border-l border-primary/40 pl-4">
             <Waves className="h-5 w-5 text-primary" />
             <h3 className="mt-3 text-sm font-black">{benefit}</h3>
             <p className="mt-2 text-xs leading-5 text-white/55">{settings.benefits_title}</p>

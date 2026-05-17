@@ -1,13 +1,43 @@
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Crown, Lock, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-producer.jpg";
 
 type HeroProps = {
   onApplyForAccess?: () => void;
 };
 
+type HomepageSettings = {
+  hero_media_type: "image" | "video";
+  hero_media_url: string | null;
+};
+
+const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
+  hero_media_type: "image",
+  hero_media_url: null,
+};
+
 export function Hero({ onApplyForAccess }: HeroProps) {
+  const settingsQ = useQuery({
+    queryKey: ["homepage-settings"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("homepage_settings")
+        .select("hero_media_type, hero_media_url")
+        .eq("id", "main")
+        .maybeSingle();
+      if (error || !data) return DEFAULT_HOMEPAGE_SETTINGS;
+      return {
+        hero_media_type: data.hero_media_type === "video" ? "video" : "image",
+        hero_media_url: data.hero_media_url || null,
+      } as HomepageSettings;
+    },
+  });
+  const media = settingsQ.data ?? DEFAULT_HOMEPAGE_SETTINGS;
+  const customMediaUrl = media.hero_media_url?.trim();
+
   return (
     <section className="relative overflow-hidden pt-24 pb-12 lg:min-h-[calc(100vh-0px)] lg:flex lg:items-center">
       <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-radial-red)" }} />
@@ -54,11 +84,23 @@ export function Hero({ onApplyForAccess }: HeroProps) {
         </div>
         <div className="relative">
           <div className="absolute inset-0 rounded-[2rem] bg-primary/10 blur-3xl" />
-          <img
-            src={heroImage}
-            alt="Producer in the studio"
-            className="relative mx-auto w-full max-w-2xl rounded-[2rem] border border-border object-cover shadow-2xl"
-          />
+          {customMediaUrl && media.hero_media_type === "video" ? (
+            <video
+              src={customMediaUrl}
+              className="relative mx-auto aspect-[4/3] w-full max-w-2xl rounded-[2rem] border border-border object-cover shadow-2xl"
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster={heroImage}
+            />
+          ) : (
+            <img
+              src={customMediaUrl || heroImage}
+              alt="Producer in the studio"
+              className="relative mx-auto w-full max-w-2xl rounded-[2rem] border border-border object-cover shadow-2xl"
+            />
+          )}
         </div>
       </div>
     </section>
