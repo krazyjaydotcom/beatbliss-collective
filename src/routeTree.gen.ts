@@ -38,7 +38,9 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as BSlugOfferRouteImport } from './routes/b.$slug.offer'
 import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat-claim'
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
+import { Route as AuthenticatedAdminTagsRouteImport } from './routes/_authenticated/admin/tags'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
+import { Route as AuthenticatedAdminSeoPagesRouteImport } from './routes/_authenticated/admin/seo-pages'
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
 import { Route as AuthenticatedAdminOfferPageRouteImport } from './routes/_authenticated/admin/offer-page'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
@@ -203,10 +205,21 @@ const AuthenticatedAdminWhitelistRoute =
     path: '/whitelist',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminTagsRoute = AuthenticatedAdminTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminSupportRoute =
   AuthenticatedAdminSupportRouteImport.update({
     id: '/support',
     path: '/support',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSeoPagesRoute =
+  AuthenticatedAdminSeoPagesRouteImport.update({
+    id: '/seo-pages',
+    path: '/seo-pages',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminOnlineRoute =
@@ -342,7 +355,9 @@ export interface FileRoutesByFullPath {
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
+  '/admin/seo-pages': typeof AuthenticatedAdminSeoPagesRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
+  '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
@@ -388,7 +403,9 @@ export interface FileRoutesByTo {
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
+  '/admin/seo-pages': typeof AuthenticatedAdminSeoPagesRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
+  '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
@@ -437,7 +454,9 @@ export interface FileRoutesById {
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
+  '/_authenticated/admin/seo-pages': typeof AuthenticatedAdminSeoPagesRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
+  '/_authenticated/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
@@ -486,7 +505,9 @@ export interface FileRouteTypes {
     | '/admin/members'
     | '/admin/offer-page'
     | '/admin/online'
+    | '/admin/seo-pages'
     | '/admin/support'
+    | '/admin/tags'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
     | '/b/$slug/offer'
@@ -532,7 +553,9 @@ export interface FileRouteTypes {
     | '/admin/members'
     | '/admin/offer-page'
     | '/admin/online'
+    | '/admin/seo-pages'
     | '/admin/support'
+    | '/admin/tags'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
     | '/b/$slug/offer'
@@ -580,7 +603,9 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/offer-page'
     | '/_authenticated/admin/online'
+    | '/_authenticated/admin/seo-pages'
     | '/_authenticated/admin/support'
+    | '/_authenticated/admin/tags'
     | '/_authenticated/admin/whitelist'
     | '/api/public/beat-claim'
     | '/b/$slug/offer'
@@ -814,11 +839,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminWhitelistRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/tags': {
+      id: '/_authenticated/admin/tags'
+      path: '/tags'
+      fullPath: '/admin/tags'
+      preLoaderRoute: typeof AuthenticatedAdminTagsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/support': {
       id: '/_authenticated/admin/support'
       path: '/support'
       fullPath: '/admin/support'
       preLoaderRoute: typeof AuthenticatedAdminSupportRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/seo-pages': {
+      id: '/_authenticated/admin/seo-pages'
+      path: '/seo-pages'
+      fullPath: '/admin/seo-pages'
+      preLoaderRoute: typeof AuthenticatedAdminSeoPagesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/online': {
@@ -950,7 +989,9 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminOfferPageRoute: typeof AuthenticatedAdminOfferPageRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
+  AuthenticatedAdminSeoPagesRoute: typeof AuthenticatedAdminSeoPagesRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
+  AuthenticatedAdminTagsRoute: typeof AuthenticatedAdminTagsRoute
   AuthenticatedAdminWhitelistRoute: typeof AuthenticatedAdminWhitelistRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminFunnelsIdRoute: typeof AuthenticatedAdminFunnelsIdRoute
@@ -970,7 +1011,9 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminOfferPageRoute: AuthenticatedAdminOfferPageRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
+  AuthenticatedAdminSeoPagesRoute: AuthenticatedAdminSeoPagesRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
+  AuthenticatedAdminTagsRoute: AuthenticatedAdminTagsRoute,
   AuthenticatedAdminWhitelistRoute: AuthenticatedAdminWhitelistRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminFunnelsIdRoute: AuthenticatedAdminFunnelsIdRoute,
