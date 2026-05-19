@@ -16,7 +16,11 @@ import {
   Link2,
   Clock,
   PanelsTopLeft,
+  Tag,
+  FileText,
 } from "lucide-react";
+
+
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +36,8 @@ const NAV = [
   { to: "/admin/beats", label: "Beats", icon: Music },
   { to: "/admin/beat-requests", label: "Beat Requests", icon: Music },
   { to: "/admin/funnels", label: "Offer Page", icon: PanelsTopLeft },
+  { to: "/admin/seo-pages", label: "SEO Pages", icon: FileText },
+  { to: "/admin/tags", label: "Tags", icon: Tag },
   { to: "/admin/beat-claims", label: "Beat Claims", icon: Clock },
   { to: "/admin/members", label: "Members", icon: Users },
   { to: "/admin/access", label: "Manual Access", icon: UserCheck },

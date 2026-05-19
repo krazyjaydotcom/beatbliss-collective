@@ -1,61 +1,64 @@
-## Beat Funnel — One Page Per Beat
+# SEO Beat Discovery System
 
-A new flow you control from `/admin/funnels`. You create a funnel for each beat you DM out, share the link, capture the email, deliver the beat, and pitch the catalog with a 12-hour timer.
+A scalable tag-driven SEO landing page system. Each page targets one keyword, renders editor-managed copy, pulls active beats by tag, and reuses the existing claim modal flow.
 
-### 1. Database
+## What gets built
 
-Two new tables:
+### 1. Database (Supabase migration)
 
-- `beat_funnels` — `slug` (unique, URL-friendly), `title`, `headline`, `video_url` (YouTube/Loom embed), `beat_id` (optional FK to beats) OR `audio_url` + `cover_url` for ad-hoc beats, `download_url` (the file you actually deliver), `is_active`, `created_at`.
-- `beat_funnel_leads` — `funnel_id`, `email`, `captured_at`, `forwarded_at` (when the webhook fired). Public INSERT (anyone can opt in); admin-only SELECT.
+New tables (all RLS: public read where active/published, admins manage):
 
-### 2. Admin: `/admin/funnels`
+- **`beat_tags`** — master tag list
+  - `slug` (text, unique), `label` (text), `created_at`
+- **`beat_tag_assignments`** — many-to-many
+  - `beat_id` (uuid), `tag_slug` (text), unique(beat_id, tag_slug)
+- **`seo_pages`** — landing page configs
+  - `slug` (text, unique), `target_keyword`, `seo_title`, `meta_description`, `h1`, `intro`, `sections` (jsonb array of `{heading, body}`), `tag_slugs` (text[]), `related_page_slugs` (text[]), `is_published` (bool), `sort_order` (int), `featured` (bool), timestamps
+- **`beats`** add columns: `is_active` (bool default true), `is_featured` (bool default false)
 
-- Table of all funnels with view counts + lead counts + a "Copy link" button.
-- "New funnel" form: slug, title, headline, pick a beat from your catalog (or paste audio URL), download URL, video URL.
-- Edit / deactivate.
+Seed the 10 tag rows + 10 SEO pages with copy.
 
-### 3. Public landing: `/b/$slug`
+Helper RPC `list_beats_by_tags(_slugs text[])` returns active beats matching ANY of the tags, ordered featured→created_at.
 
-- Hero with beat title, mini player (uses your existing tagged audio).
-- Below that: the embedded video.
-- Email capture form: "Enter your email to download the beat free".
-- On submit:
-  1. Insert into `beat_funnel_leads`.
-  2. Fire webhook → your external email tool (ConvertKit/Mailchimp/Zapier).
-  3. Redirect to `/b/$slug/offer?e={email}` (also stamps a 12h start time keyed to the email).
+### 2. Public routes
 
-### 4. Offer page: `/b/$slug/offer`
+- **`/beats/$slug`** (`src/routes/beats.$slug.tsx`)
+  - Loader fetches `seo_pages` row + matching beats via RPC
+  - `head()` sets seo_title, meta_description, og tags, canonical
+  - Renders: H1, intro, dynamic beat grid, body sections, related pages internal links, empty state when no beats
+  - Reuses styling from `beat-claim.tsx` (dark theme, blue CTA, mini wave)
 
-- Big "Your beat is on the way to {email}" confirmation + download button (uses funnel's `download_url`).
-- Below it, the catalog pitch with a **12-hour countdown timer** keyed off the lead's `captured_at` (server-truth, not just localStorage).
-- CTA → `/checkout?plan=artist_monthly_v2` ($37/mo) and `/checkout?plan=artist_yearly` ($599/yr).
-- After timer expires, the special offer copy switches to a softer evergreen pitch (still functional, no fake "expired" wall).
+### 3. Shared claim modal
 
-### 5. Webhook to your email tool
+Extract the existing modal from `src/routes/beat-claim.tsx` into `src/components/beat-claim-modal.tsx` (props: `beat`, `open`, `onClose`, `source`). Both `beat-claim` route and new SEO pages import it. Calls the same `/api/public/beat-claim` endpoint → routes to `/offer/$token`.
 
-- New secret: `BEAT_FUNNEL_LEAD_WEBHOOK_URL`. You set it once with your ConvertKit/Mailchimp/Zapier hook URL.
-- Server function POSTs JSON: `{ email, funnel_slug, funnel_title, beat_title, captured_at }`.
-- Your external tool runs the 7-email sequence — Lovable just hands off the lead. If the secret isn't set, the lead is still captured in the DB; the webhook step is skipped silently.
+### 4. Admin
 
-### Out of scope (ask later)
+New page `src/routes/_authenticated/admin/seo-pages.tsx` — list/create/edit SEO pages (slug, keyword, title, meta, H1, intro, sections JSON, tag slugs, related slugs, published, featured, sort).
 
-- Built-in 7-email sequence (you opted to use external).
-- Bulk-importing leads into your existing email tool.
-- A/B testing variants of the offer page.
-- Auto-creating funnels from every beat (you chose manual).
+Update existing `src/routes/_authenticated/admin/beats.tsx` to add: tag multi-select (from `beat_tags`), active toggle, featured toggle.
 
-### Files
+New `src/routes/_authenticated/admin/tags.tsx` — manage `beat_tags`.
 
-New:
-- migration: `beat_funnels`, `beat_funnel_leads`
-- `src/lib/funnels.functions.ts` — public `submitFunnelLead`, admin `createFunnel`/`listFunnels`/`toggleFunnel`
-- `src/lib/funnels.server.ts` — webhook forwarder
-- `src/routes/b.$slug.tsx` — public landing
-- `src/routes/b.$slug.offer.tsx` — upsell with timer
-- `src/routes/_authenticated/admin/funnels.tsx`
-- `src/components/CountdownTimer.tsx`
+Admin nav gets two new links.
 
-Edited:
-- `src/routes/_authenticated/admin/index.tsx` — add Funnels tile
-- secret added: `BEAT_FUNNEL_LEAD_WEBHOOK_URL`
+### 5. Seed pages
+
+Cinematic R&B, Emotional Trap, Night Drive, Dark Cinematic, Late Night R&B, Cyberpunk, Ambient Trap, Emotional Background Music, Dark Trap Soul, Moody R&B — each with 700–1000 words across intro + 4 sections + tag mapping per spec.
+
+## Technical notes
+
+- `list_claimable_beats()` already filters by audio availability — new RPC will additionally require `is_active = true` and intersect with `beat_tag_assignments`.
+- SEO route uses `createFileRoute("/beats/$slug")` loader pattern with `head({loaderData})` for per-page meta.
+- Canonical host: `https://mybeatcatalog.com`.
+- All copy stored in DB so future pages need no code changes.
+
+## Out of scope
+
+- No new payment/claim backend logic — reuses existing `claimBeatAndSendFox` flow.
+- Doesn't modify offer page, existing admin beats CRUD beyond adding tag/active/featured fields, or auth.
+
+## Files touched
+
+- new: migration, `src/routes/beats.$slug.tsx`, `src/components/beat-claim-modal.tsx`, `src/routes/_authenticated/admin/seo-pages.tsx`, `src/routes/_authenticated/admin/tags.tsx`
+- edited: `src/routes/beat-claim.tsx` (use shared modal), `src/routes/_authenticated/admin/beats.tsx` (tag/active/featured controls), `src/routes/_authenticated/admin.tsx` (nav links)
