@@ -16,7 +16,9 @@ import {
   Link2,
   Clock,
   PanelsTopLeft,
-} from "lucide-react";
+  Tag,
+  FileText,
+
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Badge } from "@/components/ui/badge";
