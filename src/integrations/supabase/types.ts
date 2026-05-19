@@ -275,6 +275,60 @@ export type Database = {
         }
         Relationships: []
       }
+      beat_tag_assignments: {
+        Row: {
+          beat_id: string
+          created_at: string
+          id: string
+          tag_slug: string
+        }
+        Insert: {
+          beat_id: string
+          created_at?: string
+          id?: string
+          tag_slug: string
+        }
+        Update: {
+          beat_id?: string
+          created_at?: string
+          id?: string
+          tag_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_tag_assignments_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beat_tag_assignments_tag_slug_fkey"
+            columns: ["tag_slug"]
+            isOneToOne: false
+            referencedRelation: "beat_tags"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      beat_tags: {
+        Row: {
+          created_at: string
+          label: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          label: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          label?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       beats: {
         Row: {
           audio_url: string | null
@@ -286,6 +340,8 @@ export type Database = {
           duration_seconds: number
           genre: string
           id: string
+          is_active: boolean
+          is_featured: boolean
           is_member_only: boolean
           mood: string
           music_key: string
@@ -303,6 +359,8 @@ export type Database = {
           duration_seconds: number
           genre: string
           id?: string
+          is_active?: boolean
+          is_featured?: boolean
           is_member_only?: boolean
           mood: string
           music_key: string
@@ -320,6 +378,8 @@ export type Database = {
           duration_seconds?: number
           genre?: string
           id?: string
+          is_active?: boolean
+          is_featured?: boolean
           is_member_only?: boolean
           mood?: string
           music_key?: string
@@ -993,6 +1053,60 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_pages: {
+        Row: {
+          created_at: string
+          featured: boolean
+          h1: string
+          id: string
+          intro: string
+          is_published: boolean
+          meta_description: string
+          related_page_slugs: string[]
+          sections: Json
+          seo_title: string
+          slug: string
+          sort_order: number
+          tag_slugs: string[]
+          target_keyword: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          featured?: boolean
+          h1: string
+          id?: string
+          intro: string
+          is_published?: boolean
+          meta_description: string
+          related_page_slugs?: string[]
+          sections?: Json
+          seo_title: string
+          slug: string
+          sort_order?: number
+          tag_slugs?: string[]
+          target_keyword: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          featured?: boolean
+          h1?: string
+          id?: string
+          intro?: string
+          is_published?: boolean
+          meta_description?: string
+          related_page_slugs?: string[]
+          sections?: Json
+          seo_title?: string
+          slug?: string
+          sort_order?: number
+          tag_slugs?: string[]
+          target_keyword?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -1228,6 +1342,25 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_beats_by_tags: {
+        Args: { _slugs: string[] }
+        Returns: {
+          audio_url: string
+          audio_url_tagged: string
+          bpm: number
+          cover_url: string
+          created_at: string
+          duration_seconds: number
+          genre: string
+          id: string
+          is_featured: boolean
+          mood: string
+          music_key: string
+          producer_name: string
+          tag_slugs: string[]
+          title: string
+        }[]
       }
       list_claimable_beats: {
         Args: never
