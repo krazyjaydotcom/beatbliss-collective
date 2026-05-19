@@ -106,7 +106,11 @@ function formatDuration(seconds: number | null | undefined) {
 }
 
 function SeoBeatsPage() {
-  const { page, beats, related } = Route.useLoaderData();
+  const { page, beats, related } = Route.useLoaderData() as {
+    page: SeoPage;
+    beats: SeoBeat[];
+    related: RelatedPage[];
+  };
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playingId, setPlayingId] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
