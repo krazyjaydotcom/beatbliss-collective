@@ -775,6 +775,7 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
         nextCoverUrl = supabase.storage.from("beat-covers").getPublicUrl(coverPath).data.publicUrl;
       }
 
+      const priceCents = saleEnabled && salePrice ? Math.round(parseFloat(salePrice) * 100) : null;
       const { error } = await (supabase as any).from("beats").update({
         title: title.trim(),
         producer_name: producer.trim() || null,
@@ -786,11 +787,15 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
         cover_url: nextCoverUrl,
         is_member_only: memberOnly,
         release_at: releaseAt ? new Date(releaseAt).toISOString() : null,
+        single_sale_enabled: saleEnabled,
+        single_sale_price_cents: priceCents,
+        single_sale_description: saleDescription.trim() || null,
       }).eq("id", beat.id);
 
       if (error) throw error;
       toast.success("Beat updated");
       onDone();
+
     } catch (e: any) {
       toast.error(e.message ?? "Could not update beat");
     } finally {
