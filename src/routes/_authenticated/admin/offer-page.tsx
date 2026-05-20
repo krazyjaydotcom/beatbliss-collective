@@ -29,10 +29,21 @@ type OfferSettings = {
   section_order: string[];
 };
 
+type HeroImageFilter = {
+  grayscale?: number;
+  sepia?: number;
+  brightness?: number;
+  contrast?: number;
+  saturate?: number;
+  blur?: number;
+  hueRotate?: number;
+};
+
 type HomepageSettings = {
   id: string;
   hero_media_type: "image" | "video";
   hero_media_url: string;
+  hero_image_filter: HeroImageFilter;
 };
 
 const DEFAULT_SETTINGS: OfferSettings = {
@@ -57,6 +68,7 @@ const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   id: "main",
   hero_media_type: "image",
   hero_media_url: "",
+  hero_image_filter: {},
 };
 
 const SECTION_LABELS: Record<string, string> = {
@@ -78,14 +90,30 @@ function normalize(row: Partial<OfferSettings> | null | undefined): OfferSetting
 
 function normalizeHomepage(row: Partial<HomepageSettings> | null | undefined): HomepageSettings {
   if (!row) return DEFAULT_HOMEPAGE_SETTINGS;
+  const filterRaw = (row as any).hero_image_filter;
+  const filter: HeroImageFilter = filterRaw && typeof filterRaw === "object" ? filterRaw : {};
   return {
     ...DEFAULT_HOMEPAGE_SETTINGS,
     ...row,
     id: "main",
     hero_media_type: row.hero_media_type === "video" ? "video" : "image",
     hero_media_url: row.hero_media_url ?? "",
+    hero_image_filter: filter,
   };
 }
+
+function filterToCss(f: HeroImageFilter): string | undefined {
+  const parts: string[] = [];
+  if (f.grayscale) parts.push(`grayscale(${f.grayscale}%)`);
+  if (f.sepia) parts.push(`sepia(${f.sepia}%)`);
+  if (typeof f.brightness === "number" && f.brightness !== 100) parts.push(`brightness(${f.brightness}%)`);
+  if (typeof f.contrast === "number" && f.contrast !== 100) parts.push(`contrast(${f.contrast}%)`);
+  if (typeof f.saturate === "number" && f.saturate !== 100) parts.push(`saturate(${f.saturate}%)`);
+  if (f.blur) parts.push(`blur(${f.blur}px)`);
+  if (f.hueRotate) parts.push(`hue-rotate(${f.hueRotate}deg)`);
+  return parts.length ? parts.join(" ") : undefined;
+}
+
 
 export function OfferPageEditor() {
   const queryClient = useQueryClient();
