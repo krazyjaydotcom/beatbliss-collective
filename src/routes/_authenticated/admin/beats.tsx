@@ -751,7 +751,11 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
     setThumbnailFile(null);
     setMemberOnly(!!beat.is_member_only);
     setReleaseAt(toDateTimeLocal(beat.release_at));
+    setSaleEnabled(!!beat.single_sale_enabled);
+    setSalePrice(beat.single_sale_price_cents ? (beat.single_sale_price_cents / 100).toFixed(2) : "");
+    setSaleDescription(beat.single_sale_description ?? "");
   }, [beat?.id]);
+
 
   async function save() {
     if (!beat) return;
