@@ -313,6 +313,26 @@ function HomepageHeroEditor() {
     if (settingsQ.data) setSettings(settingsQ.data);
   }, [settingsQ.data]);
 
+  async function uploadImage(file: File) {
+    setSaving(true);
+    try {
+      const safe = file.name.replace(/[^a-zA-Z0-9.]+/g, "_");
+      const path = `hero_${Date.now()}_${safe}`;
+      const up = await supabase.storage.from("homepage-media").upload(path, file, {
+        upsert: false,
+        contentType: file.type || "image/jpeg",
+      });
+      if (up.error) throw up.error;
+      const url = supabase.storage.from("homepage-media").getPublicUrl(path).data.publicUrl;
+      setSettings((cur) => ({ ...cur, hero_media_type: "image", hero_media_url: url }));
+      toast.success("Image uploaded. Click Save to apply.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function save() {
     setSaving(true);
     try {
@@ -320,6 +340,7 @@ function HomepageHeroEditor() {
         id: "main",
         hero_media_type: settings.hero_media_type,
         hero_media_url: settings.hero_media_url.trim() || null,
+        hero_image_filter: settings.hero_image_filter,
         updated_at: new Date().toISOString(),
       };
       const { error } = await (supabase as any).from("homepage_settings").upsert(payload, { onConflict: "id" });
@@ -334,40 +355,112 @@ function HomepageHeroEditor() {
     }
   }
 
+  function setFilter(patch: Partial<HeroImageFilter>) {
+    setSettings((cur) => ({ ...cur, hero_image_filter: { ...cur.hero_image_filter, ...patch } }));
+  }
+
+  const previewUrl = settings.hero_media_url.trim();
+  const filterCss = filterToCss(settings.hero_image_filter);
+  const f = settings.hero_image_filter;
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-xl font-black">Homepage Main Media</h2>
-          <p className="mt-1 text-sm text-slate-600">Swap the front-page studio image for a different image or a muted looping video.</p>
+          <p className="mt-1 text-sm text-slate-600">Upload or link an image / video for the front-page box. Add filter effects to make the image pop.</p>
         </div>
         <Button type="button" variant="hero" onClick={save} disabled={saving}>
           {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           Save Homepage Media
         </Button>
       </div>
-      <div className="mt-5 grid gap-4 lg:grid-cols-[220px_1fr]">
-        <Field label="Media type">
-          <select
-            value={settings.hero_media_type}
-            onChange={(e) => setSettings((current) => ({ ...current, hero_media_type: e.target.value === "video" ? "video" : "image" }))}
-            className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950"
-          >
-            <option value="image">Image</option>
-            <option value="video">Video</option>
-          </select>
-        </Field>
-        <Field label="Image or video URL">
-          <Input
-            value={settings.hero_media_url}
-            onChange={(e) => setSettings((current) => ({ ...current, hero_media_url: e.target.value }))}
-            placeholder={settings.hero_media_type === "video" ? "https://.../studio-video.mp4" : "https://.../studio-image.jpg"}
-          />
-          <p className="mt-1 text-xs text-slate-500">Leave this blank to use the default MYBEATCATALOG studio image.</p>
-        </Field>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[260px_1fr]">
+        <div className="space-y-3">
+          <div className="aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+            {previewUrl && settings.hero_media_type === "image" ? (
+              <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" style={filterCss ? { filter: filterCss } : undefined} />
+            ) : previewUrl && settings.hero_media_type === "video" ? (
+              <video src={previewUrl} className="h-full w-full object-cover" muted loop playsInline autoPlay />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">Preview</div>
+            )}
+          </div>
+          <Field label="Upload image">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadImage(file); }}
+            />
+          </Field>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+            <Field label="Media type">
+              <select
+                value={settings.hero_media_type}
+                onChange={(e) => setSettings((current) => ({ ...current, hero_media_type: e.target.value === "video" ? "video" : "image" }))}
+                className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950"
+              >
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+              </select>
+            </Field>
+            <Field label="Image or video URL">
+              <Input
+                value={settings.hero_media_url}
+                onChange={(e) => setSettings((current) => ({ ...current, hero_media_url: e.target.value }))}
+                placeholder={settings.hero_media_type === "video" ? "https://.../studio-video.mp4" : "https://.../studio-image.jpg"}
+              />
+            </Field>
+          </div>
+
+          {settings.hero_media_type === "image" ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-800">Image filter effects</h3>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setSettings((c) => ({ ...c, hero_image_filter: {} }))}>
+                  Reset
+                </Button>
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <FilterSlider label="Grayscale" value={f.grayscale ?? 0} min={0} max={100} unit="%" onChange={(v) => setFilter({ grayscale: v })} />
+                <FilterSlider label="Sepia" value={f.sepia ?? 0} min={0} max={100} unit="%" onChange={(v) => setFilter({ sepia: v })} />
+                <FilterSlider label="Brightness" value={f.brightness ?? 100} min={50} max={200} unit="%" onChange={(v) => setFilter({ brightness: v })} />
+                <FilterSlider label="Contrast" value={f.contrast ?? 100} min={50} max={200} unit="%" onChange={(v) => setFilter({ contrast: v })} />
+                <FilterSlider label="Saturation" value={f.saturate ?? 100} min={0} max={200} unit="%" onChange={(v) => setFilter({ saturate: v })} />
+                <FilterSlider label="Blur" value={f.blur ?? 0} min={0} max={20} unit="px" onChange={(v) => setFilter({ blur: v })} />
+                <FilterSlider label="Hue rotate" value={f.hueRotate ?? 0} min={0} max={360} unit="°" onChange={(v) => setFilter({ hueRotate: v })} />
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
     </section>
   );
+}
+
+function FilterSlider({ label, value, min, max, unit, onChange }: { label: string; value: number; min: number; max: number; unit: string; onChange: (v: number) => void }) {
+  return (
+    <label className="block">
+      <div className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-700">
+        <span>{label}</span>
+        <span className="text-slate-500">{value}{unit}</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value, 10))}
+        className="w-full accent-blue-600"
+      />
+    </label>
+  );
+}
+
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
