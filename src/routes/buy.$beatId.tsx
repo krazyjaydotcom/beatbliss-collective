@@ -130,8 +130,9 @@ function BuyBeatPage() {
 
   const bullets = (beat.single_sale_description ?? "")
     .split("\n")
-    .map((l) => l.trim())
+    .map((l: string) => l.trim())
     .filter(Boolean);
+
 
   return (
     <div className="min-h-screen bg-[#02060a] text-white">
