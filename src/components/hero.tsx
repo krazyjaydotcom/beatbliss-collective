@@ -9,15 +9,40 @@ type HeroProps = {
   onApplyForAccess?: () => void;
 };
 
+export type HeroImageFilter = {
+  grayscale?: number; // 0-100
+  sepia?: number; // 0-100
+  brightness?: number; // 50-200 (100 = normal)
+  contrast?: number; // 50-200
+  saturate?: number; // 0-200
+  blur?: number; // 0-20 (px)
+  hueRotate?: number; // 0-360
+};
+
 type HomepageSettings = {
   hero_media_type: "image" | "video";
   hero_media_url: string | null;
+  hero_image_filter: HeroImageFilter;
 };
 
 const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   hero_media_type: "image",
   hero_media_url: null,
+  hero_image_filter: {},
 };
+
+export function heroFilterToCss(f: HeroImageFilter | null | undefined): string | undefined {
+  if (!f) return undefined;
+  const parts: string[] = [];
+  if (f.grayscale) parts.push(`grayscale(${f.grayscale}%)`);
+  if (f.sepia) parts.push(`sepia(${f.sepia}%)`);
+  if (typeof f.brightness === "number" && f.brightness !== 100) parts.push(`brightness(${f.brightness}%)`);
+  if (typeof f.contrast === "number" && f.contrast !== 100) parts.push(`contrast(${f.contrast}%)`);
+  if (typeof f.saturate === "number" && f.saturate !== 100) parts.push(`saturate(${f.saturate}%)`);
+  if (f.blur) parts.push(`blur(${f.blur}px)`);
+  if (f.hueRotate) parts.push(`hue-rotate(${f.hueRotate}deg)`);
+  return parts.length ? parts.join(" ") : undefined;
+}
 
 export function Hero({ onApplyForAccess }: HeroProps) {
   const settingsQ = useQuery({
@@ -25,18 +50,21 @@ export function Hero({ onApplyForAccess }: HeroProps) {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("homepage_settings")
-        .select("hero_media_type, hero_media_url")
+        .select("hero_media_type, hero_media_url, hero_image_filter")
         .eq("id", "main")
         .maybeSingle();
       if (error || !data) return DEFAULT_HOMEPAGE_SETTINGS;
       return {
         hero_media_type: data.hero_media_type === "video" ? "video" : "image",
         hero_media_url: data.hero_media_url || null,
+        hero_image_filter: (data.hero_image_filter as HeroImageFilter) || {},
       } as HomepageSettings;
     },
   });
   const media = settingsQ.data ?? DEFAULT_HOMEPAGE_SETTINGS;
   const customMediaUrl = media.hero_media_url?.trim();
+  const filterCss = heroFilterToCss(media.hero_image_filter);
+
 
   return (
     <section className="relative overflow-hidden pt-24 pb-12 lg:min-h-[calc(100vh-0px)] lg:flex lg:items-center">
