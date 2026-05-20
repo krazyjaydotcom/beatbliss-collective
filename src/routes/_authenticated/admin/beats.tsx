@@ -843,6 +843,61 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
           </div>
         </div>
 
+        <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="flex items-center gap-2 font-semibold"><DollarSign className="h-4 w-4 text-primary" /> Single-beat sales page</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Turn on to generate a public buy link you can email. Visitors checkout via Stripe with zero distractions.
+              </p>
+            </div>
+            <Switch checked={saleEnabled} onCheckedChange={setSaleEnabled} />
+          </div>
+
+          {saleEnabled && (
+            <>
+              <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
+                <Field label="Price (USD)">
+                  <Input
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={salePrice}
+                    onChange={(e) => setSalePrice(e.target.value)}
+                    placeholder="49.00"
+                  />
+                </Field>
+                <Field label="Buy link">
+                  <div className="flex gap-2">
+                    <Input readOnly value={typeof window !== "undefined" ? `${window.location.origin}/buy/${beat?.id}` : ""} />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const url = `${window.location.origin}/buy/${beat?.id}`;
+                        navigator.clipboard.writeText(url).then(
+                          () => toast.success("Buy link copied"),
+                          () => toast.error("Could not copy"),
+                        );
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </Field>
+              </div>
+              <Field label='"What you get" bullets (one per line)'>
+                <Textarea
+                  rows={4}
+                  value={saleDescription}
+                  onChange={(e) => setSaleDescription(e.target.value)}
+                  placeholder={"Untagged MP3 + WAV\nUnlimited streams\nInstant delivery"}
+                />
+              </Field>
+            </>
+          )}
+        </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
           <Button onClick={save} disabled={saving}>
