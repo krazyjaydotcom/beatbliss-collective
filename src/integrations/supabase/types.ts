@@ -347,6 +347,9 @@ export type Database = {
           music_key: string
           producer_name: string
           release_at: string | null
+          single_sale_description: string | null
+          single_sale_enabled: boolean
+          single_sale_price_cents: number | null
           title: string
         }
         Insert: {
@@ -366,6 +369,9 @@ export type Database = {
           music_key: string
           producer_name?: string
           release_at?: string | null
+          single_sale_description?: string | null
+          single_sale_enabled?: boolean
+          single_sale_price_cents?: number | null
           title: string
         }
         Update: {
@@ -385,6 +391,9 @@ export type Database = {
           music_key?: string
           producer_name?: string
           release_at?: string | null
+          single_sale_description?: string | null
+          single_sale_enabled?: boolean
+          single_sale_price_cents?: number | null
           title?: string
         }
         Relationships: []
@@ -771,18 +780,21 @@ export type Database = {
       }
       homepage_settings: {
         Row: {
+          hero_image_filter: Json
           hero_media_type: string
           hero_media_url: string | null
           id: string
           updated_at: string
         }
         Insert: {
+          hero_image_filter?: Json
           hero_media_type?: string
           hero_media_url?: string | null
           id?: string
           updated_at?: string
         }
         Update: {
+          hero_image_filter?: Json
           hero_media_type?: string
           hero_media_url?: string | null
           id?: string
