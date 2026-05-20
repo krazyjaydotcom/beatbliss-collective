@@ -198,7 +198,7 @@ function BuyBeatPage() {
                     "Unlimited plays",
                     "Track-outs available on request",
                     "Instant delivery after payment",
-                  ]).map((line, i) => (
+                  ]).map((line: string, i: number) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-primary" />
                       <span>{line}</span>
