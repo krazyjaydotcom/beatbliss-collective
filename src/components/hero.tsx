@@ -127,8 +127,10 @@ export function Hero({ onApplyForAccess }: HeroProps) {
               src={customMediaUrl || heroImage}
               alt="Producer in the studio"
               className="relative mx-auto w-full max-w-2xl rounded-[2rem] border border-border object-cover shadow-2xl"
+              style={filterCss ? { filter: filterCss } : undefined}
             />
           )}
+
         </div>
       </div>
     </section>
