@@ -174,6 +174,22 @@ function AdminBeatsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  {b.single_sale_enabled ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      title="Copy buy link"
+                      onClick={() => {
+                        const url = `${window.location.origin}/buy/${b.id}`;
+                        navigator.clipboard.writeText(url).then(
+                          () => toast.success("Buy link copied"),
+                          () => toast.error("Could not copy"),
+                        );
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  ) : null}
                   <Button size="sm" variant="ghost" onClick={() => setEditingBeat(b)}><Pencil className="h-4 w-4" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => handleDelete(b.id, b.title)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
