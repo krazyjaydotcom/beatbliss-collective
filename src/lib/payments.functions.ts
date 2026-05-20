@@ -222,3 +222,63 @@ export const createGuestCheckoutSession = createServerFn({ method: "POST" })
       return { clientSecret: null, error: err instanceof Error ? err.message : "Unknown error" };
     }
   });
+
+// Public, no-auth one-off checkout for a single beat sales page.
+// Looks up the beat server-side, refuses to charge unless single_sale_enabled + price are set.
+export const createBeatPurchaseCheckout = createServerFn({ method: "POST" })
+  .inputValidator((input: { beatId: string; email?: string; returnUrl: string; environment: StripeEnv }) =>
+    z
+      .object({
+        beatId: z.string().uuid(),
+        email: z.string().email().max(254).optional(),
+        returnUrl: z.string().url().max(2048),
+        environment: z.enum(["sandbox", "live"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<{ clientSecret: string | null; error: string | null }> => {
+    try {
+      const { data: beat, error: beatErr } = await (supabaseAdmin as any)
+        .from("beats")
+        .select("id, title, single_sale_price_cents, single_sale_enabled")
+        .eq("id", data.beatId)
+        .maybeSingle();
+      if (beatErr) throw beatErr;
+      if (!beat) throw new Error("Beat not found.");
+      if (!beat.single_sale_enabled) throw new Error("This beat is not available for sale.");
+      const amount = Number(beat.single_sale_price_cents ?? 0);
+      if (!amount || amount < 50) throw new Error("Beat price is not configured.");
+
+      const stripe = createStripeClient(data.environment);
+      const email = data.email?.trim().toLowerCase();
+      const customerId = email
+        ? (await stripe.customers.list({ email, limit: 1 })).data[0]?.id ??
+          (await stripe.customers.create({ email })).id
+        : undefined;
+
+      const description = `Beat — ${beat.title}`;
+      const session = await stripe.checkout.sessions.create({
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              unit_amount: amount,
+              product_data: { name: description },
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        ui_mode: "embedded_page",
+        return_url: data.returnUrl,
+        ...(customerId && { customer: customerId }),
+        payment_intent_data: { description },
+        metadata: { beatId: beat.id, beatSale: "true" },
+      });
+
+      return { clientSecret: session.client_secret ?? null, error: null };
+    } catch (err) {
+      console.error("createBeatPurchaseCheckout failed:", err);
+      return { clientSecret: null, error: err instanceof Error ? err.message : "Unknown error" };
+    }
+  });

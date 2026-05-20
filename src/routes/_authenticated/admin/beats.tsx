@@ -730,7 +730,11 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [memberOnly, setMemberOnly] = useState(false);
   const [releaseAt, setReleaseAt] = useState("");
+  const [saleEnabled, setSaleEnabled] = useState(false);
+  const [salePrice, setSalePrice] = useState(""); // dollars input
+  const [saleDescription, setSaleDescription] = useState("");
   const [saving, setSaving] = useState(false);
+
   const { data: signatureSounds = fallbackOptions("signature_sound") } = useCatalogOptions("signature_sound");
   const { data: moods = fallbackOptions("mood") } = useCatalogOptions("mood");
 
@@ -747,7 +751,11 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
     setThumbnailFile(null);
     setMemberOnly(!!beat.is_member_only);
     setReleaseAt(toDateTimeLocal(beat.release_at));
+    setSaleEnabled(!!beat.single_sale_enabled);
+    setSalePrice(beat.single_sale_price_cents ? (beat.single_sale_price_cents / 100).toFixed(2) : "");
+    setSaleDescription(beat.single_sale_description ?? "");
   }, [beat?.id]);
+
 
   async function save() {
     if (!beat) return;
@@ -767,6 +775,7 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
         nextCoverUrl = supabase.storage.from("beat-covers").getPublicUrl(coverPath).data.publicUrl;
       }
 
+      const priceCents = saleEnabled && salePrice ? Math.round(parseFloat(salePrice) * 100) : null;
       const { error } = await (supabase as any).from("beats").update({
         title: title.trim(),
         producer_name: producer.trim() || null,
@@ -778,11 +787,15 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
         cover_url: nextCoverUrl,
         is_member_only: memberOnly,
         release_at: releaseAt ? new Date(releaseAt).toISOString() : null,
+        single_sale_enabled: saleEnabled,
+        single_sale_price_cents: priceCents,
+        single_sale_description: saleDescription.trim() || null,
       }).eq("id", beat.id);
 
       if (error) throw error;
       toast.success("Beat updated");
       onDone();
+
     } catch (e: any) {
       toast.error(e.message ?? "Could not update beat");
     } finally {
