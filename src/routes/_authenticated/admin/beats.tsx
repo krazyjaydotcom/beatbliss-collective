@@ -730,7 +730,11 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [memberOnly, setMemberOnly] = useState(false);
   const [releaseAt, setReleaseAt] = useState("");
+  const [saleEnabled, setSaleEnabled] = useState(false);
+  const [salePrice, setSalePrice] = useState(""); // dollars input
+  const [saleDescription, setSaleDescription] = useState("");
   const [saving, setSaving] = useState(false);
+
   const { data: signatureSounds = fallbackOptions("signature_sound") } = useCatalogOptions("signature_sound");
   const { data: moods = fallbackOptions("mood") } = useCatalogOptions("mood");
 
