@@ -461,7 +461,7 @@ function FilterSlider({ label, value, min, max, unit, onChange }: { label: strin
   );
 }
 
-}
+
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
