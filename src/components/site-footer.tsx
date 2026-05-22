@@ -1,4 +1,8 @@
-export function SiteFooter() {
+type SiteFooterProps = {
+  onApplyForAccess?: () => void;
+};
+
+export function SiteFooter({ onApplyForAccess }: SiteFooterProps) {
   return (
     <footer id="contact" className="border-t border-border bg-card/40">
       <div className="container mx-auto grid gap-8 px-6 py-12 md:grid-cols-4">
@@ -13,7 +17,15 @@ export function SiteFooter() {
         <div>
           <h4 className="text-sm font-bold">Membership</h4>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><a href="/checkout" className="hover:text-foreground">Apply For Access</a></li>
+            <li>
+              {onApplyForAccess ? (
+                <button onClick={onApplyForAccess} className="hover:text-foreground">
+                  Apply For Access
+                </button>
+              ) : (
+                <a href="/checkout" className="hover:text-foreground">Apply For Access</a>
+              )}
+            </li>
             <li><a href="/login" className="hover:text-foreground">Member Login</a></li>
           </ul>
         </div>
