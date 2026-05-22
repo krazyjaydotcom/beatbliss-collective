@@ -343,10 +343,9 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
 
 function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; title: string }) {
   const downloadUrl = offer.audio_url_tagged ?? offer.audio_url;
-  const downloadName = `MYBEATCATALOG_${slugifyFileName(offer.title)}.mp3`;
+  const downloadHref = `/api/public/download-beat?token=${encodeURIComponent(offer.token)}`;
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -369,35 +368,6 @@ function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; t
       setPlaying(true);
     } catch {
       setPlaying(false);
-    }
-  }
-
-  async function downloadBeat() {
-    if (!downloadUrl || downloading) return;
-    setDownloading(true);
-    try {
-      const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error("Download failed");
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = downloadName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-    } catch {
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = downloadName;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } finally {
-      setDownloading(false);
     }
   }
 
