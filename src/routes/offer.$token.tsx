@@ -413,16 +413,19 @@ function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; t
         {downloadUrl ? (
           <>
             <audio ref={audioRef} preload="metadata" src={downloadUrl} />
-            <div className="mt-4 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={downloadBeat}
-                    disabled={downloading}
-                    className="inline-flex w-full max-w-md items-center justify-center rounded-xl bg-primary px-5 py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_30px_rgba(37,99,235,0.28)] transition hover:bg-primary/90"
-                  >
-                    {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                    {downloading ? "Starting Download" : "Download Beat"}
-                  </button>
+            <div className="mt-4 flex flex-col items-center gap-3">
+              <a
+                href={downloadHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full max-w-md items-center justify-center rounded-xl bg-primary px-5 py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_30px_rgba(37,99,235,0.28)] transition hover:bg-primary/90"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download Beat
+              </a>
+              <p className="max-w-md text-center text-xs leading-5 text-white/55">
+                If Instagram has trouble downloading, tap the three dots and open this page in your browser.
+              </p>
             </div>
           </>
         ) : (
