@@ -1,4 +1,8 @@
-export function SiteFooter() {
+type SiteFooterProps = {
+  onApplyForAccess?: () => void;
+};
+
+export function SiteFooter({ onApplyForAccess }: SiteFooterProps) {
   return (
     <footer id="contact" className="border-t border-border bg-card/40">
       <div className="container mx-auto grid gap-8 px-6 py-12 md:grid-cols-4">
