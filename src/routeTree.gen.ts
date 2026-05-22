@@ -37,6 +37,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugOfferRouteImport } from './routes/b.$slug.offer'
+import { Route as ApiPublicDownloadBeatRouteImport } from './routes/api/public/download-beat'
 import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat-claim'
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
 import { Route as AuthenticatedAdminTagsRouteImport } from './routes/_authenticated/admin/tags'
@@ -199,6 +200,11 @@ const BSlugOfferRoute = BSlugOfferRouteImport.update({
   id: '/offer',
   path: '/offer',
   getParentRoute: () => BSlugRoute,
+} as any)
+const ApiPublicDownloadBeatRoute = ApiPublicDownloadBeatRouteImport.update({
+  id: '/api/public/download-beat',
+  path: '/api/public/download-beat',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBeatClaimRoute = ApiPublicBeatClaimRouteImport.update({
   id: '/api/public/beat-claim',
@@ -367,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
+  '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
@@ -416,6 +423,7 @@ export interface FileRoutesByTo {
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
+  '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/funnels/$id': typeof AuthenticatedAdminFunnelsIdRoute
@@ -468,6 +476,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
+  '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/funnels_/$id': typeof AuthenticatedAdminFunnelsIdRoute
@@ -520,6 +529,7 @@ export interface FileRouteTypes {
     | '/admin/tags'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
+    | '/api/public/download-beat'
     | '/b/$slug/offer'
     | '/admin/'
     | '/admin/funnels/$id'
@@ -569,6 +579,7 @@ export interface FileRouteTypes {
     | '/admin/tags'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
+    | '/api/public/download-beat'
     | '/b/$slug/offer'
     | '/admin'
     | '/admin/funnels/$id'
@@ -620,6 +631,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/tags'
     | '/_authenticated/admin/whitelist'
     | '/api/public/beat-claim'
+    | '/api/public/download-beat'
     | '/b/$slug/offer'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/funnels_/$id'
@@ -643,6 +655,7 @@ export interface RootRouteChildren {
   JoinTokenRoute: typeof JoinTokenRoute
   OfferTokenRoute: typeof OfferTokenRoute
   ApiPublicBeatClaimRoute: typeof ApiPublicBeatClaimRoute
+  ApiPublicDownloadBeatRoute: typeof ApiPublicDownloadBeatRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
@@ -844,6 +857,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/b/$slug/offer'
       preLoaderRoute: typeof BSlugOfferRouteImport
       parentRoute: typeof BSlugRoute
+    }
+    '/api/public/download-beat': {
+      id: '/api/public/download-beat'
+      path: '/api/public/download-beat'
+      fullPath: '/api/public/download-beat'
+      preLoaderRoute: typeof ApiPublicDownloadBeatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/beat-claim': {
       id: '/api/public/beat-claim'
@@ -1112,6 +1132,7 @@ const rootRouteChildren: RootRouteChildren = {
   JoinTokenRoute: JoinTokenRoute,
   OfferTokenRoute: OfferTokenRoute,
   ApiPublicBeatClaimRoute: ApiPublicBeatClaimRoute,
+  ApiPublicDownloadBeatRoute: ApiPublicDownloadBeatRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
