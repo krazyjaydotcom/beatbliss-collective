@@ -19,7 +19,7 @@ function IndexPage() {
       <main>
         <Hero onApplyForAccess={() => setApplicationOpen(true)} />
       </main>
-      <SiteFooter />
+      <SiteFooter onApplyForAccess={() => setApplicationOpen(true)} />
       <PublicSupportButton />
       <AccessApplicationModal open={applicationOpen} onOpenChange={setApplicationOpen} />
     </div>
