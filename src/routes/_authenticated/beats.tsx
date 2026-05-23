@@ -130,6 +130,7 @@ type SidebarAction =
   | "notepad"
   | "whitelist"
   | "settings"
+  | "messages"
   | "support";
 
 const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge?: string }[] = [
@@ -146,6 +147,7 @@ const SIDEBAR: { icon: typeof Music; label: string; action: SidebarAction; badge
   { icon: NotebookPen, label: "Notepad", action: "notepad" },
   { icon: FileText, label: "Whitelist", action: "whitelist" },
   { icon: Settings, label: "Settings", action: "settings" },
+  { icon: MessageCircle, label: "Messages", action: "messages" },
   { icon: LifeBuoy, label: "Support", action: "support" },
 ];
 
