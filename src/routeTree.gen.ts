@@ -27,6 +27,7 @@ import { Route as ArtistUsernameRouteImport } from './routes/artist.$username'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
 import { Route as AuthenticatedStoreRouteImport } from './routes/_authenticated/store'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedLicenseExampleRouteImport } from './routes/_authenticated/license-example'
 import { Route as AuthenticatedDownloadsRouteImport } from './routes/_authenticated/downloads'
 import { Route as AuthenticatedClassroomRouteImport } from './routes/_authenticated/classroom'
@@ -147,6 +148,11 @@ const AuthenticatedStoreRoute = AuthenticatedStoreRouteImport.update({
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedLicenseExampleRoute =
@@ -343,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/classroom': typeof AuthenticatedClassroomRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/license-example': typeof AuthenticatedLicenseExampleRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/store': typeof AuthenticatedStoreRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
@@ -393,6 +400,7 @@ export interface FileRoutesByTo {
   '/classroom': typeof AuthenticatedClassroomRoute
   '/downloads': typeof AuthenticatedDownloadsRoute
   '/license-example': typeof AuthenticatedLicenseExampleRoute
+  '/messages': typeof AuthenticatedMessagesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/store': typeof AuthenticatedStoreRoute
   '/whitelist': typeof AuthenticatedWhitelistRoute
@@ -446,6 +454,7 @@ export interface FileRoutesById {
   '/_authenticated/classroom': typeof AuthenticatedClassroomRoute
   '/_authenticated/downloads': typeof AuthenticatedDownloadsRoute
   '/_authenticated/license-example': typeof AuthenticatedLicenseExampleRoute
+  '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/store': typeof AuthenticatedStoreRoute
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
@@ -499,6 +508,7 @@ export interface FileRouteTypes {
     | '/classroom'
     | '/downloads'
     | '/license-example'
+    | '/messages'
     | '/profile'
     | '/store'
     | '/whitelist'
@@ -549,6 +559,7 @@ export interface FileRouteTypes {
     | '/classroom'
     | '/downloads'
     | '/license-example'
+    | '/messages'
     | '/profile'
     | '/store'
     | '/whitelist'
@@ -601,6 +612,7 @@ export interface FileRouteTypes {
     | '/_authenticated/classroom'
     | '/_authenticated/downloads'
     | '/_authenticated/license-example'
+    | '/_authenticated/messages'
     | '/_authenticated/profile'
     | '/_authenticated/store'
     | '/_authenticated/whitelist'
@@ -786,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/messages': {
+      id: '/_authenticated/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/license-example': {
@@ -1071,6 +1090,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedClassroomRoute: typeof AuthenticatedClassroomRoute
   AuthenticatedDownloadsRoute: typeof AuthenticatedDownloadsRoute
   AuthenticatedLicenseExampleRoute: typeof AuthenticatedLicenseExampleRoute
+  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedStoreRoute: typeof AuthenticatedStoreRoute
   AuthenticatedWhitelistRoute: typeof AuthenticatedWhitelistRoute
@@ -1085,6 +1105,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedClassroomRoute: AuthenticatedClassroomRoute,
   AuthenticatedDownloadsRoute: AuthenticatedDownloadsRoute,
   AuthenticatedLicenseExampleRoute: AuthenticatedLicenseExampleRoute,
+  AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedStoreRoute: AuthenticatedStoreRoute,
   AuthenticatedWhitelistRoute: AuthenticatedWhitelistRoute,

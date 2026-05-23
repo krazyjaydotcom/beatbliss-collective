@@ -903,7 +903,9 @@ export type Database = {
           created_at: string
           id: string
           is_read: boolean
+          target_url: string | null
           title: string
+          type: string
           user_id: string
         }
         Insert: {
@@ -911,7 +913,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          target_url?: string | null
           title: string
+          type?: string
           user_id: string
         }
         Update: {
@@ -919,7 +923,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          target_url?: string | null
           title?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
@@ -1252,6 +1258,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_broadcast_chat_message: {
+        Args: {
+          _audio_duration_seconds?: number
+          _audio_mime?: string
+          _audio_url?: string
+          _body?: string
+          _user_id?: string
+        }
+        Returns: number
+      }
       admin_bulk_update_beats: {
         Args: {
           _bpm?: number
@@ -1260,6 +1276,16 @@ export type Database = {
           _is_member_only?: boolean
           _mood?: string
           _music_key?: string
+        }
+        Returns: number
+      }
+      admin_create_notification: {
+        Args: {
+          _body?: string
+          _target_url?: string
+          _title: string
+          _type?: string
+          _user_id?: string
         }
         Returns: number
       }
