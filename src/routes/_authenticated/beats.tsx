@@ -1601,17 +1601,26 @@ function DownloadDialog({
 
 /* ============ NOTIFICATIONS BELL ============ */
 
-type Notif = { id: string; title: string; body: string; is_read: boolean; created_at: string };
+type Notif = {
+  id: string;
+  title: string;
+  body: string;
+  is_read: boolean;
+  created_at: string;
+  type: string | null;
+  target_url: string | null;
+};
 
 function NotificationsBell({ userId }: { userId?: string }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { data: notifs = [] } = useQuery({
     queryKey: ["notifications", userId],
     enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("notifications")
-        .select("*")
+        .select("id, title, body, is_read, created_at, type, target_url")
         .eq("user_id", userId!)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -1651,6 +1660,20 @@ function NotificationsBell({ userId }: { userId?: string }) {
     qc.invalidateQueries({ queryKey: ["notifications", userId] });
   };
 
+  const handleNotifClick = async (n: Notif) => {
+    if (!n.is_read) {
+      await supabase.from("notifications").update({ is_read: true }).eq("id", n.id);
+      qc.invalidateQueries({ queryKey: ["notifications", userId] });
+    }
+    if (n.target_url) {
+      if (n.target_url.startsWith("/")) {
+        navigate({ to: n.target_url as any });
+      } else {
+        window.location.href = n.target_url;
+      }
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -1677,22 +1700,32 @@ function NotificationsBell({ userId }: { userId?: string }) {
             <div className="p-8 text-center text-sm text-muted-foreground">You're all caught up</div>
           ) : (
             <div className="divide-y divide-border">
-              {notifs.map((n) => (
-                <div key={n.id} className={`px-4 py-3 ${n.is_read ? "" : "bg-electric/5"}`}>
-                  <div className="flex items-start gap-2">
-                    {!n.is_read && <span className="mt-1.5 h-2 w-2 rounded-full bg-electric shrink-0" />}
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-sm">{n.title}</div>
-                      {n.body && (
-                        <div className="text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.body}</div>
-                      )}
-                      <div className="text-[10px] text-muted-foreground mt-1">
-                        {new Date(n.created_at).toLocaleString()}
+              {notifs.map((n) => {
+                const clickable = !!n.target_url;
+                return (
+                  <button
+                    key={n.id}
+                    onClick={() => handleNotifClick(n)}
+                    disabled={!clickable && n.is_read}
+                    className={`w-full text-left px-4 py-3 transition-colors ${
+                      n.is_read ? "" : "bg-electric/5"
+                    } ${clickable ? "hover:bg-muted/30 cursor-pointer" : "cursor-default"}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      {!n.is_read && <span className="mt-1.5 h-2 w-2 rounded-full bg-electric shrink-0" />}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-sm">{n.title}</div>
+                        {n.body && (
+                          <div className="text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.body}</div>
+                        )}
+                        <div className="text-[10px] text-muted-foreground mt-1">
+                          {new Date(n.created_at).toLocaleString()}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           )}
         </ScrollArea>
