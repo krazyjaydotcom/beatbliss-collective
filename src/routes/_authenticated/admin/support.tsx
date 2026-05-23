@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Megaphone, Send } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { VoiceMemoButton } from "@/components/voice-memo-button";
 import { playSentDing, uploadVoiceMemo } from "@/lib/chat-audio";
@@ -13,6 +15,95 @@ import { playSentDing, uploadVoiceMemo } from "@/lib/chat-audio";
 export const Route = createFileRoute("/_authenticated/admin/support")({
   component: SupportInbox,
 });
+
+function BroadcastsPanel() {
+  const { user } = useAuth();
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [broadcastingAudio, setBroadcastingAudio] = useState(false);
+
+  const sendAnnouncement = async () => {
+    if (!title.trim()) {
+      toast.error("Add a title for the announcement.");
+      return;
+    }
+    setSending(true);
+    const { data, error } = await supabase.rpc("admin_create_notification", {
+      _title: title.trim(),
+      _body: body.trim(),
+      _type: "announcement",
+      _target_url: "/messages",
+    });
+    setSending(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Sent to ${data ?? 0} active members.`);
+    setTitle("");
+    setBody("");
+  };
+
+  const broadcastVoiceMemo = async (blob: Blob, durationSeconds: number) => {
+    if (!user) return;
+    setBroadcastingAudio(true);
+    try {
+      const uploaded = await uploadVoiceMemo(blob, user.id);
+      const { data, error } = await supabase.rpc("admin_broadcast_chat_message", {
+        _body: "",
+        _audio_url: uploaded.audioUrl,
+        _audio_mime: uploaded.mimeType,
+        _audio_duration_seconds: durationSeconds,
+      });
+      if (error) throw error;
+      playSentDing();
+      toast.success(`Voice memo sent to ${data ?? 0} active members.`);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not broadcast voice memo.");
+    } finally {
+      setBroadcastingAudio(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <Megaphone className="h-5 w-5 text-electric" />
+        <h2 className="text-lg font-bold">Broadcast to all active members</h2>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs uppercase tracking-wide text-muted-foreground">Text announcement</label>
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Announcement title"
+        />
+        <Textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Message body (optional)"
+          rows={3}
+        />
+        <Button onClick={sendAnnouncement} disabled={sending} variant="hero">
+          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send announcement"}
+        </Button>
+      </div>
+
+      <div className="border-t border-border pt-4 space-y-2">
+        <label className="text-xs uppercase tracking-wide text-muted-foreground">Voice broadcast</label>
+        <p className="text-xs text-muted-foreground">
+          Record a voice memo. It will appear in every active member's Messages and trigger a bell notification.
+        </p>
+        <div className="flex items-center gap-3">
+          <VoiceMemoButton disabled={!user || broadcastingAudio} onRecorded={broadcastVoiceMemo} />
+          {broadcastingAudio && <span className="text-xs text-muted-foreground">Broadcasting…</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface Thread {
   id: string;
