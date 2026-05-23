@@ -225,6 +225,7 @@ function SupportInbox() {
         <h1 className="text-3xl font-black tracking-tight">Support Inbox</h1>
         <p className="text-muted-foreground mt-1">Live conversations with users</p>
       </div>
+      <BroadcastsPanel />
       <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-[600px]">
         <div className="rounded-2xl border border-border bg-card overflow-y-auto">
           {isLoading ? (
