@@ -355,6 +355,9 @@ function BeatsDashboard() {
       case "whitelist":
         navigate({ to: "/whitelist" });
         break;
+      case "messages":
+        navigate({ to: "/messages" });
+        break;
       case "support":
         window.dispatchEvent(new CustomEvent("mbc:open-chat"));
         break;
