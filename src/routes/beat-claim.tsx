@@ -276,40 +276,14 @@ function BeatClaimPage() {
 
         <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5">
           <section className="overflow-hidden rounded-xl border border-black/10 bg-black shadow-2xl shadow-black/20">
-            <div className="relative aspect-video min-h-[220px] sm:min-h-[320px]">
-              {selectedBeat?.cover_url ? (
-                <img
-                  src={selectedBeat.cover_url}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover opacity-70"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-[linear-gradient(135deg,#111827,#2a2110_55%,#050505)]" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/80" />
-              <div className="absolute left-4 top-4 rounded bg-black/70 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white/80">
-                Beat preview
-              </div>
-              <button
-                type="button"
-                onClick={() => selectedBeat && playBeat(selectedBeat)}
-                className="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:scale-105 hover:bg-white/25"
-                aria-label={isSelectedPlaying ? "Pause beat" : "Play beat"}
-              >
-                {isSelectedPlaying ? <Pause className="h-9 w-9" /> : <Play className="ml-1 h-9 w-9 fill-current" />}
-              </button>
-              <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-sky-300">Now playing</p>
-                <div className="mt-1 overflow-hidden">
-                  <p className="whitespace-nowrap text-3xl font-black text-white">
-                    {selectedBeat?.title ?? "Loading beats..."}
-                  </p>
-                </div>
-                <p className="mt-1 text-sm text-white/65">
-                  {selectedBeat ? beatStyle(selectedBeat) : "Loading"}{" "}
-                  {selectedBeat?.bpm ? `- ${selectedBeat.bpm} BPM` : ""}
-                </p>
-              </div>
+            <div className="relative h-0 w-full pb-[46.6666666667%]">
+              <iframe
+                src="https://sendspark.com/embed/i1fgwr7wqqw912msrs2hsmc8qtiegwjr"
+                title="KRAZYJAYDOTCOM beat claim video"
+                frameBorder="0"
+                allowFullScreen
+                className="absolute left-0 top-0 h-full w-full rounded-md"
+              />
             </div>
           </section>
 
