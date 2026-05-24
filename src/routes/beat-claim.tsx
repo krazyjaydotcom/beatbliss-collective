@@ -82,17 +82,6 @@ function beatAudio(beat: ClaimableBeat | null) {
   return beat?.audio_url_tagged || beat?.audio_url || "";
 }
 
-function claimTitleSize(title: string | undefined) {
-  // Use clamp so the title scales smoothly with viewport width on mobile
-  // and never falls back to ellipsis on small screens.
-  const length = title?.length ?? 0;
-  if (length > 60) return "clamp(0.7rem, 3.4vw, 1rem)";
-  if (length > 42) return "clamp(0.78rem, 3.8vw, 1.1rem)";
-  if (length > 32) return "clamp(0.85rem, 4.2vw, 1.25rem)";
-  if (length > 24) return "clamp(0.95rem, 4.6vw, 1.45rem)";
-  return "clamp(1.1rem, 5.2vw, 1.75rem)";
-}
-
 function getDeviceFingerprint() {
   if (typeof window === "undefined") return "";
   const key = "mbc_beat_claim_device";
@@ -279,13 +268,13 @@ function BeatClaimPage() {
 
         <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5">
           <section className="overflow-hidden rounded-xl border border-black/10 bg-black shadow-2xl shadow-black/20">
-            <div className="relative h-0 w-full pb-[46.6666666667%]">
+            <div className="relative h-0 w-full overflow-hidden bg-black pb-[46.6666666667%]">
               <iframe
                 src="https://sendspark.com/embed/i1fgwr7wqqw912msrs2hsmc8qtiegwjr"
                 title="KRAZYJAYDOTCOM beat claim video"
                 frameBorder="0"
                 allowFullScreen
-                className="absolute left-0 top-0 h-full w-full rounded-md"
+                className="absolute -left-px top-0 block h-full w-[calc(100%+2px)] border-0 bg-black"
               />
             </div>
           </section>
@@ -296,11 +285,11 @@ function BeatClaimPage() {
             </p>
             <h1
               key={selectedPulseKey}
-              className="mx-auto mt-2 max-w-full animate-in fade-in duration-700 overflow-hidden text-ellipsis whitespace-nowrap text-center font-black leading-tight text-black"
-              style={{ fontSize: claimTitleSize(selectedBeat?.title) }}
+              className="mx-auto mt-2 max-w-full animate-in fade-in duration-700 text-center text-2xl font-black leading-tight text-black sm:text-3xl"
               title={`GET "${selectedBeat?.title ?? "THIS BEAT"}" FREE (Demo license)`}
             >
-              GET "{selectedBeat?.title ?? "THIS BEAT"}" FREE <span className="font-bold">(Demo license)</span>
+              GET <span className="block sm:inline">"{selectedBeat?.title ?? "THIS BEAT"}" FREE</span>{" "}
+              <span className="block font-bold sm:inline">(Demo license)</span>
             </h1>
             <p className="mt-3 text-center text-sm leading-6 text-black/60">
               Enter your email below to download this beat.
