@@ -56,6 +56,7 @@ import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminBeatRequestsRouteImport } from './routes/_authenticated/admin/beat-requests'
 import { Route as AuthenticatedAdminBeatClaimsRouteImport } from './routes/_authenticated/admin/beat-claims'
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
+import { Route as AuthenticatedAdminAccessQuestionsRouteImport } from './routes/_authenticated/admin/access-questions'
 import { Route as AuthenticatedAdminAccessRouteImport } from './routes/_authenticated/admin/access'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -310,6 +311,12 @@ const AuthenticatedAdminAgreementsRoute =
     path: '/agreements',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAccessQuestionsRoute =
+  AuthenticatedAdminAccessQuestionsRouteImport.update({
+    id: '/access-questions',
+    path: '/access-questions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAccessRoute =
   AuthenticatedAdminAccessRouteImport.update({
     id: '/access',
@@ -363,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
+  '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -414,6 +422,7 @@ export interface FileRoutesByTo {
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
+  '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -468,6 +477,7 @@ export interface FileRoutesById {
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
+  '/_authenticated/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/_authenticated/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/offer/$token'
     | '/admin/access'
+    | '/admin/access-questions'
     | '/admin/agreements'
     | '/admin/beat-claims'
     | '/admin/beat-requests'
@@ -573,6 +584,7 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/offer/$token'
     | '/admin/access'
+    | '/admin/access-questions'
     | '/admin/agreements'
     | '/admin/beat-claims'
     | '/admin/beat-requests'
@@ -626,6 +638,7 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/offer/$token'
     | '/_authenticated/admin/access'
+    | '/_authenticated/admin/access-questions'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/beat-claims'
     | '/_authenticated/admin/beat-requests'
@@ -1003,6 +1016,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAgreementsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/access-questions': {
+      id: '/_authenticated/admin/access-questions'
+      path: '/access-questions'
+      fullPath: '/admin/access-questions'
+      preLoaderRoute: typeof AuthenticatedAdminAccessQuestionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/access': {
       id: '/_authenticated/admin/access'
       path: '/access'
@@ -1036,6 +1056,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAccessRoute: typeof AuthenticatedAdminAccessRoute
+  AuthenticatedAdminAccessQuestionsRoute: typeof AuthenticatedAdminAccessQuestionsRoute
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
   AuthenticatedAdminBeatClaimsRoute: typeof AuthenticatedAdminBeatClaimsRoute
   AuthenticatedAdminBeatRequestsRoute: typeof AuthenticatedAdminBeatRequestsRoute
@@ -1058,6 +1079,8 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAccessRoute: AuthenticatedAdminAccessRoute,
+  AuthenticatedAdminAccessQuestionsRoute:
+    AuthenticatedAdminAccessQuestionsRoute,
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
   AuthenticatedAdminBeatClaimsRoute: AuthenticatedAdminBeatClaimsRoute,
   AuthenticatedAdminBeatRequestsRoute: AuthenticatedAdminBeatRequestsRoute,

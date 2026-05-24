@@ -83,11 +83,14 @@ function beatAudio(beat: ClaimableBeat | null) {
 }
 
 function claimTitleSize(title: string | undefined) {
+  // Use clamp so the title scales smoothly with viewport width on mobile
+  // and never falls back to ellipsis on small screens.
   const length = title?.length ?? 0;
-  if (length > 42) return "1rem";
-  if (length > 32) return "1.15rem";
-  if (length > 24) return "1.35rem";
-  return "1.75rem";
+  if (length > 60) return "clamp(0.7rem, 3.4vw, 1rem)";
+  if (length > 42) return "clamp(0.78rem, 3.8vw, 1.1rem)";
+  if (length > 32) return "clamp(0.85rem, 4.2vw, 1.25rem)";
+  if (length > 24) return "clamp(0.95rem, 4.6vw, 1.45rem)";
+  return "clamp(1.1rem, 5.2vw, 1.75rem)";
 }
 
 function getDeviceFingerprint() {
