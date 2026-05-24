@@ -13,13 +13,11 @@ import {
   SkipForward,
   Square,
   Volume2,
-  Waves,
 } from "lucide-react";
 import { toast } from "sonner";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/beat-claim")({
@@ -260,13 +258,12 @@ function BeatClaimPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3efe6] text-[#101114]">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 pb-24 pt-4 sm:px-6 lg:pb-28">
         <header className="flex items-center justify-between py-2">
           <Link to="/" aria-label="MYBEATCATALOG home">
-            <KrazyLogo className="text-xl text-black" />
+            <KrazyLogo className="text-xl" />
           </Link>
-          <Badge className="bg-sky-100 text-sky-700 hover:bg-sky-100">Beat claim</Badge>
         </header>
 
         <main className="grid flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
@@ -424,10 +421,6 @@ function BeatClaimPage() {
           >
             <SkipForward className="h-5 w-5 fill-current" />
           </button>
-
-          <div className="mx-2 hidden h-12 w-12 shrink-0 items-center justify-center rounded-md bg-white/10 text-white sm:flex">
-            <Waves className="h-6 w-6" />
-          </div>
 
           <div className="min-w-0 flex-1">
             <div className="overflow-hidden">
