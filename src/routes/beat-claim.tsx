@@ -281,17 +281,20 @@ function BeatClaimPage() {
 
           <section className="rounded-xl border border-black/10 bg-white p-5 text-black shadow-xl shadow-black/10">
             <p className="text-center text-xs font-black uppercase tracking-[0.2em] text-sky-600">
-              Get the selected beat free
+              Produced by KRAZYJAYDOTCOM
             </p>
             <h1
               key={selectedPulseKey}
               className="mx-auto mt-2 max-w-full animate-in fade-in duration-700 text-center text-2xl font-black leading-tight text-black sm:text-3xl"
-              title={`GET "${selectedBeat?.title ?? "THIS BEAT"}" FREE (Demo license)`}
+              title={selectedBeat?.title ?? "Selected beat"}
             >
-              GET <span className="block sm:inline">"{selectedBeat?.title ?? "THIS BEAT"}" FREE</span>{" "}
-              <span className="block font-bold sm:inline">(Demo license)</span>
+              {selectedBeat?.title ?? "Selected Beat"}
             </h1>
-            <p className="mt-3 text-center text-sm leading-6 text-black/60">
+            <p className="mt-1 text-center text-base font-black text-sky-600">Free Demo License</p>
+            <p className="mx-auto mt-3 max-w-md text-center text-sm leading-6 text-black/65">
+              Download this beat free with a demo license. Use it to write, record, and test your song idea.
+            </p>
+            <p className="mt-3 text-center text-sm font-semibold leading-6 text-black/75">
               Enter your email below to download this beat.
             </p>
             <form onSubmit={handleSubmit} className="mt-5 space-y-3">
@@ -316,9 +319,12 @@ function BeatClaimPage() {
               </Button>
               <div className="flex items-center justify-center gap-1 text-xs font-medium text-black/45">
                 <Lock className="h-3.5 w-3.5" />
-                We respect your privacy. No spam.
+                Demo license for writing and recording. No spam.
               </div>
             </form>
+            <p className="mt-3 text-center text-[11px] leading-5 text-black/45">
+              Commercial release requires a paid license.
+            </p>
           </section>
         </main>
       </div>
