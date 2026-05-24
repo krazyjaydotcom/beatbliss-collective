@@ -266,7 +266,7 @@ function BeatClaimPage() {
           </Link>
         </header>
 
-        <main className="grid flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5">
           <section className="overflow-hidden rounded-xl border border-black/10 bg-black shadow-2xl shadow-black/20">
             <div className="relative aspect-video min-h-[220px] sm:min-h-[320px]">
               {selectedBeat?.cover_url ? (
@@ -305,18 +305,18 @@ function BeatClaimPage() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-black/10 bg-white p-5 shadow-xl shadow-black/10 lg:sticky lg:top-5">
+          <section className="rounded-xl border border-black/10 bg-white p-5 text-black shadow-xl shadow-black/10">
             <p className="text-center text-xs font-black uppercase tracking-[0.2em] text-sky-600">
               Get the selected beat free
             </p>
             <h1
               key={selectedPulseKey}
-              className="mx-auto mt-2 max-w-[320px] animate-in fade-in duration-700 text-center text-3xl font-black leading-tight"
+              className="mx-auto mt-2 max-w-[320px] animate-in fade-in duration-700 text-center text-3xl font-black leading-tight text-black"
             >
               GET "{selectedBeat?.title ?? "THIS BEAT"}" FREE
             </h1>
             <p className="mt-3 text-center text-sm leading-6 text-black/60">
-              Enter your email and I will send the private beat page with playback, download access, and next steps.
+              Enter your email below to download this beat.
             </p>
             <form onSubmit={handleSubmit} className="mt-5 space-y-3">
               <div className="relative">
