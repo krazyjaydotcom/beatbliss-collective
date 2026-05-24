@@ -1,7 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Loader2, Lock, Mail, Pause, Play, Search, Waves } from "lucide-react";
+import {
+  ListMusic,
+  Loader2,
+  Lock,
+  Mail,
+  Pause,
+  Play,
+  Search,
+  SkipBack,
+  SkipForward,
+  Square,
+  Volume2,
+  Waves,
+} from "lucide-react";
 import { toast } from "sonner";
 import { KrazyLogo } from "@/components/krazy-logo";
 import { Button } from "@/components/ui/button";
@@ -83,11 +96,11 @@ function getDeviceFingerprint() {
 
 function WaveBars({ active }: { active: boolean }) {
   return (
-    <div className="flex h-12 flex-1 items-end gap-1 overflow-hidden rounded-lg bg-black/35 px-3 py-2">
-      {Array.from({ length: 30 }).map((_, index) => (
+    <div className="flex h-7 w-32 items-end gap-0.5 overflow-hidden rounded bg-white/5 px-2 py-1 sm:w-52">
+      {Array.from({ length: 24 }).map((_, index) => (
         <span
           key={index}
-          className={`w-full rounded-full bg-sky-400 ${active ? "animate-pulse" : ""}`}
+          className={`w-full rounded-full bg-sky-300 ${active ? "animate-pulse" : ""}`}
           style={{
             height: `${22 + ((index * 29) % 68)}%`,
             opacity: active ? 0.7 + (index % 4) * 0.075 : 0.28,
@@ -109,6 +122,8 @@ function BeatClaimPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [email, setEmail] = useState("");
   const [beatSearch, setBeatSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [volume, setVolume] = useState(1);
   const [selectedPulseKey, setSelectedPulseKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
@@ -157,6 +172,10 @@ function BeatClaimPage() {
   }, []);
 
   useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume]);
+
+  useEffect(() => {
     if (!playingBeat) return;
     const audio = audioRef.current;
     if (!audio) return;
@@ -192,6 +211,14 @@ function BeatClaimPage() {
     const nextBeat = beats[(Math.max(0, current) + offset + beats.length) % beats.length];
     chooseBeat(nextBeat);
     if (isPlaying) void playBeat(nextBeat);
+  }
+
+  function stopBeat() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    setIsPlaying(false);
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -234,7 +261,7 @@ function BeatClaimPage() {
 
   return (
     <div className="min-h-screen bg-[#f3efe6] text-[#101114]">
-      <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 pb-40 pt-4 sm:px-6 lg:pb-44">
+      <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 pb-24 pt-4 sm:px-6 lg:pb-28">
         <header className="flex items-center justify-between py-2">
           <Link to="/" aria-label="MYBEATCATALOG home">
             <KrazyLogo className="text-xl text-black" />
@@ -323,79 +350,134 @@ function BeatClaimPage() {
         </main>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 shadow-2xl shadow-black/25 backdrop-blur">
-        <div className="mx-auto grid max-w-5xl gap-3 px-4 py-3 sm:px-6 lg:grid-cols-[1fr_1.15fr] lg:items-center">
-          <div className="flex min-w-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => selectByOffset(-1)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-black/10 bg-white"
-              aria-label="Previous beat"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => selectedBeat && playBeat(selectedBeat)}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-white"
-              aria-label={isSelectedPlaying ? "Pause beat" : "Play beat"}
-            >
-              {isSelectedPlaying ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5 fill-current" />}
-            </button>
-            <WaveBars active={isSelectedPlaying} />
-            <button
-              type="button"
-              onClick={() => selectByOffset(1)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-black/10 bg-white"
-              aria-label="Next beat"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t-4 border-[#a94d4d] bg-black text-white shadow-2xl shadow-black/40">
+        <div className="relative mx-auto flex h-16 max-w-6xl items-center gap-1 px-2 sm:px-4">
+          {searchOpen ? (
+            <div className="absolute bottom-full left-2 right-2 mb-2 rounded-lg border border-white/10 bg-[#111] p-3 shadow-2xl sm:left-auto sm:w-[420px]">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                <Input
+                  autoFocus
+                  value={beatSearch}
+                  onChange={(event) => setBeatSearch(event.target.value)}
+                  placeholder="Search beat name"
+                  className="h-10 border-white/10 bg-black pl-9 text-white placeholder:text-white/40"
+                  aria-label="Search beat name"
+                />
+              </div>
+              {beatSearch.trim() ? (
+                <div className="mt-2 max-h-48 overflow-auto rounded-md border border-white/10 bg-black">
+                  {filteredBeats.length ? (
+                    filteredBeats.map((beat) => (
+                      <button
+                        key={beat.id}
+                        type="button"
+                        onClick={() => {
+                          chooseBeat(beat);
+                          setSearchOpen(false);
+                        }}
+                        className="flex w-full items-center justify-between gap-3 border-b border-white/10 px-3 py-2 text-left last:border-0 hover:bg-white/10"
+                      >
+                        <span className="truncate text-sm font-bold">{beat.title}</span>
+                        <span className="shrink-0 text-[10px] font-bold uppercase text-white/45">
+                          {beat.bpm ? `${beat.bpm} BPM` : beatStyle(beat)}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-white/55">No beat found by that name.</div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => selectByOffset(-1)}
+            className="flex h-11 w-10 shrink-0 items-center justify-center text-white hover:bg-white/10"
+            aria-label="Previous beat"
+          >
+            <SkipBack className="h-5 w-5 fill-current" />
+          </button>
+          <button
+            type="button"
+            onClick={() => selectedBeat && playBeat(selectedBeat)}
+            className="flex h-12 w-12 shrink-0 items-center justify-center text-white hover:bg-white/10"
+            aria-label={isSelectedPlaying ? "Pause beat" : "Play beat"}
+          >
+            {isSelectedPlaying ? <Pause className="h-8 w-8 fill-current" /> : <Play className="h-7 w-7 fill-current" />}
+          </button>
+          <button
+            type="button"
+            onClick={stopBeat}
+            className="hidden h-10 w-10 shrink-0 items-center justify-center text-white/85 hover:bg-white/10 sm:flex"
+            aria-label="Stop beat"
+          >
+            <Square className="h-4 w-4 fill-current" />
+          </button>
+          <button
+            type="button"
+            onClick={() => selectByOffset(1)}
+            className="flex h-11 w-10 shrink-0 items-center justify-center text-white hover:bg-white/10"
+            aria-label="Next beat"
+          >
+            <SkipForward className="h-5 w-5 fill-current" />
+          </button>
+
+          <div className="mx-2 hidden h-12 w-12 shrink-0 items-center justify-center rounded-md bg-white/10 text-white sm:flex">
+            <Waves className="h-6 w-6" />
           </div>
 
-          <div className="min-w-0">
-            <div className="mb-2 overflow-hidden rounded-md bg-black px-3 py-1.5 text-white">
-              <p className="animate-[marquee_12s_linear_infinite] whitespace-nowrap text-sm font-black">
+          <div className="min-w-0 flex-1">
+            <div className="overflow-hidden">
+              <p className="animate-[marquee_13s_linear_infinite] whitespace-nowrap text-sm font-black">
                 {selectedBeat?.title ?? "Search or swipe to choose a beat"} -{" "}
                 {selectedBeat ? beatStyle(selectedBeat) : "Beat preview"} -{" "}
                 {formatDuration(selectedBeat?.duration_seconds)}
               </p>
             </div>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black/35" />
-              <Input
-                value={beatSearch}
-                onChange={(event) => setBeatSearch(event.target.value)}
-                placeholder="Search beat name"
-                className="h-11 border-black/10 bg-white pl-9 text-black placeholder:text-black/35"
-                aria-label="Search beat name"
-              />
-              {beatSearch.trim() && filteredBeats.length ? (
-                <div className="absolute bottom-full left-0 right-0 mb-2 overflow-hidden rounded-lg border border-black/10 bg-white shadow-xl">
-                  {filteredBeats.map((beat) => (
-                    <button
-                      key={beat.id}
-                      type="button"
-                      onClick={() => chooseBeat(beat)}
-                      className="flex w-full items-center justify-between gap-3 border-b border-black/5 px-3 py-2 text-left last:border-0 hover:bg-sky-50"
-                    >
-                      <span className="truncate text-sm font-bold">{beat.title}</span>
-                      <span className="shrink-0 text-[10px] font-bold uppercase text-black/45">
-                        {beat.bpm ? `${beat.bpm} BPM` : beatStyle(beat)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
+            <div className="mt-1">
+              <WaveBars active={isSelectedPlaying} />
             </div>
           </div>
+
+          <div className="ml-auto hidden items-center gap-2 sm:flex">
+            <Volume2 className="h-4 w-4 text-white" />
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={(event) => setVolume(Number(event.target.value))}
+              className="h-1 w-20 accent-sky-500"
+              aria-label="Volume"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setSearchOpen((open) => !open)}
+            className="flex h-11 w-10 shrink-0 items-center justify-center text-white hover:bg-white/10"
+            aria-label="Search beats"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setSearchOpen((open) => !open)}
+            className="flex h-11 w-10 shrink-0 items-center justify-center text-white hover:bg-white/10"
+            aria-label="Beat list"
+          >
+            <ListMusic className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
       <audio ref={audioRef} className="hidden" />
       <style>{`
         @keyframes marquee {
-          0% { transform: translateX(100%); }
+          0% { transform: translateX(65%); }
           100% { transform: translateX(-100%); }
         }
       `}</style>
