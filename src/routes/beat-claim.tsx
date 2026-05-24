@@ -82,6 +82,14 @@ function beatAudio(beat: ClaimableBeat | null) {
   return beat?.audio_url_tagged || beat?.audio_url || "";
 }
 
+function claimTitleSize(title: string | undefined) {
+  const length = title?.length ?? 0;
+  if (length > 42) return "1rem";
+  if (length > 32) return "1.15rem";
+  if (length > 24) return "1.35rem";
+  return "1.75rem";
+}
+
 function getDeviceFingerprint() {
   if (typeof window === "undefined") return "";
   const key = "mbc_beat_claim_device";
@@ -311,9 +319,11 @@ function BeatClaimPage() {
             </p>
             <h1
               key={selectedPulseKey}
-              className="mx-auto mt-2 max-w-[320px] animate-in fade-in duration-700 text-center text-3xl font-black leading-tight text-black"
+              className="mx-auto mt-2 max-w-full animate-in fade-in duration-700 overflow-hidden text-ellipsis whitespace-nowrap text-center font-black leading-tight text-black"
+              style={{ fontSize: claimTitleSize(selectedBeat?.title) }}
+              title={`GET "${selectedBeat?.title ?? "THIS BEAT"}" FREE (Demo license)`}
             >
-              GET "{selectedBeat?.title ?? "THIS BEAT"}" FREE
+              GET "{selectedBeat?.title ?? "THIS BEAT"}" FREE <span className="font-bold">(Demo license)</span>
             </h1>
             <p className="mt-3 text-center text-sm leading-6 text-black/60">
               Enter your email below to download this beat.
