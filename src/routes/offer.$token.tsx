@@ -59,18 +59,27 @@ type OfferSettings = {
 const DEFAULT_SETTINGS: OfferSettings = {
   id: "main",
   video_url: import.meta.env.VITE_OFFER_VIDEO_URL || "",
-  eyebrow: "Your beat is reserved",
-  headline_template: "{beat} is Reserved For You",
-  intro_text: "This is a private offer. Watch the video below to see everything you get with your membership before the timer expires.",
-  video_title: "Watch the private offer video",
-  video_body: "A quick breakdown of how MYBEATCATALOG helps artists create, release, and stay consistent.",
+  eyebrow: "Private access unlocked",
+  headline_template: "{beat} is ready. Stop Hunting For Beats. Build Songs Faster.",
+  intro_text:
+    "Your free beat is ready below. Before you download it, watch the quick video and grab private catalog access while this intro price is still open.",
+  video_title: "Watch the private catalog video",
+  video_body:
+    "See how private catalog access helps you write, record, and release without hunting through random beat sites.",
   show_intro_text: true,
   show_video_body: true,
   show_video_cta: true,
-  video_cta_text: "See Special Offer",
-  beat_title: "Preview the beat",
-  benefits_title: "Membership includes",
-  benefits: ["Full Beat Catalog", "New Beats Weekly", "Direct Artist Access", "Cancel Anytime"],
+  video_cta_text: "Start Private Access",
+  beat_title: "Download your free beat",
+  benefits_title: "Private membership access",
+  benefits: [
+    "Full private catalog access",
+    "Fresh beats added weekly",
+    "Use beats for songs, releases, and content",
+    "Direct line to KrazyJay after joining",
+    "Cancel anytime",
+    "Stop hunting random beat sites",
+  ],
   section_order: ["video", "beat", "benefits"],
 };
 
@@ -114,7 +123,8 @@ function mergeSettings(row: Partial<OfferSettings> | null | undefined): OfferSet
     (merged as any)[key] = value;
   }
   merged.benefits = Array.isArray(row.benefits) && row.benefits.length ? row.benefits : DEFAULT_SETTINGS.benefits;
-  merged.section_order = Array.isArray(row.section_order) && row.section_order.length ? row.section_order : DEFAULT_SETTINGS.section_order;
+  merged.section_order =
+    Array.isArray(row.section_order) && row.section_order.length ? row.section_order : DEFAULT_SETTINGS.section_order;
   return merged;
 }
 
@@ -143,7 +153,11 @@ function BeatOfferPage() {
   });
 
   if (offerQuery.isLoading) {
-    return <Centered><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></Centered>;
+    return (
+      <Centered>
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </Centered>
+    );
   }
 
   if (!offerQuery.data) {
@@ -152,7 +166,12 @@ function BeatOfferPage() {
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-black">This private link was not found.</h1>
           <p className="mt-2 text-muted-foreground">Choose a beat again to create a fresh private offer page.</p>
-          <Link to="/beat-claim" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Choose a Beat</Link>
+          <Link
+            to="/beat-claim"
+            className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
+          >
+            Choose a Beat
+          </Link>
         </div>
       </Centered>
     );
@@ -170,7 +189,6 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
     if (!expired || purchased) return;
     window.location.replace("https://mybeatcatalog.com");
   }, [expired, purchased]);
-  const headline = settings.headline_template.replace("{beat}", offer.title);
   const meta = [offer.genre, offer.mood, offer.bpm ? String(offer.bpm) + " BPM" : null].filter(Boolean).join(" / ");
   const videoUrl = getEmbedUrl(settings.video_url || "");
   const orderedSections = useMemo(() => {
@@ -183,20 +201,24 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
       <PaymentTestModeBanner />
       <header className="border-b border-white/10 bg-black/70 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center px-5 py-3">
-          <Link to="/" aria-label="MYBEATCATALOG home"><KrazyLogo className="text-xl" /></Link>
+          <Link to="/" aria-label="MYBEATCATALOG home">
+            <KrazyLogo className="text-xl" />
+          </Link>
         </div>
       </header>
 
       <main className="offer-cinematic-enter mx-auto grid max-w-7xl gap-7 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-7">
         <section className="space-y-5">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[0.42em] text-primary">Congratulations</p>
+            <p className="text-sm font-black uppercase tracking-[0.42em] text-primary">Your beat is ready</p>
             <h1 className="mt-3 text-4xl font-black leading-[1.03] tracking-tight md:text-6xl">
-              {headline}
+              <span className="block text-primary">{offer.title} is ready.</span>
+              Stop Hunting For Beats. Build Songs Faster.
             </h1>
-            {settings.show_intro_text && settings.intro_text ? (
-              <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base">{settings.intro_text}</p>
-            ) : null}
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70 md:text-base">
+              Your free beat is ready below. Before you download it, see how private catalog access helps you write,
+              record, and release without hunting through random beat sites.
+            </p>
           </div>
 
           {orderedSections.map((section) => {
@@ -208,7 +230,8 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
                 </div>
               );
             }
-            if (section === "beat") return <BeatPreview key={section} offer={offer} meta={meta} title={settings.beat_title} />;
+            if (section === "beat")
+              return <BeatPreview key={section} offer={offer} meta={meta} title={settings.beat_title} />;
             return <Benefits key={section} settings={settings} />;
           })}
         </section>
@@ -220,18 +243,52 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
                 <Lock className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/55">Special Offer</p>
-                <h2 className="text-2xl font-black">$49.99<span className="ml-1 text-sm font-semibold text-white/60">/mo</span></h2>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/55">
+                  Private Beat Catalog Access
+                </p>
+                <h2 className="text-2xl font-black">
+                  $49.99<span className="ml-1 text-sm font-semibold text-white/60">/mo</span>
+                </h2>
+                <p className="mt-1 max-w-xs text-xs leading-5 text-white/55">
+                  For artists who want fresh beats every week without hunting through random marketplaces.
+                </p>
               </div>
             </div>
 
             <div className="mt-5 space-y-2">
-              {["Unlock full catalog access", "New beats added every week", "Use beats for songs, releases, and content", "Direct line to KrazyJay after joining", "Cancel anytime"].map((item) => (
+              {[
+                "Full private catalog access",
+                "Fresh beats added weekly",
+                "Use beats for songs, releases, and content",
+                "Direct line to KrazyJay after joining",
+                "Cancel anytime",
+                "No more scrolling random beat sites looking for the right sound",
+              ].map((item) => (
                 <div key={item} className="flex gap-2 text-sm text-white/75">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <span>{item}</span>
                 </div>
               ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                document
+                  .querySelector(".stripe-checkout-shell")
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" })
+              }
+              className="mt-5 w-full rounded-xl bg-primary px-5 py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_32px_rgba(37,99,235,0.28)] transition hover:bg-primary/90"
+            >
+              Start Private Access
+            </button>
+            <div className="mt-3 space-y-1 text-center text-xs leading-5 text-white/55">
+              <p>Unlocks instantly. Cancel anytime.</p>
+              <p className="inline-flex items-center justify-center gap-1.5 font-semibold text-white/70">
+                <Lock className="h-3.5 w-3.5 text-primary" />
+                Secure checkout powered by Stripe
+              </p>
+              <p>After joining, you can access the full catalog and start downloading beats today.</p>
             </div>
 
             <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-4">
@@ -240,9 +297,15 @@ function OfferContent({ offer, settings }: { offer: BeatOffer; settings: OfferSe
             </div>
 
             {purchased ? (
-              <ClosedBox title="Offer already used" message="This private offer has already been used for a purchase." />
+              <ClosedBox
+                title="Offer already used"
+                message="This private offer has already been used for a purchase."
+              />
             ) : expired ? (
-              <ClosedBox title="Offer expired" message="This private checkout window is closed. The same email, device, or IP cannot restart this offer automatically." />
+              <ClosedBox
+                title="Offer expired"
+                message="This private checkout window is closed. The same email, device, or IP cannot restart this offer automatically."
+              />
             ) : (
               <OfferEmbeddedCheckout offer={offer} />
             )}
@@ -278,7 +341,8 @@ function OfferCountdown({ remaining }: { remaining: ReturnType<typeof useCountdo
         <span className="h-px flex-1 bg-white/20" />
       </div>
       <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70">
-        Once this timer hits zero, this private offer disappears for good.
+        This private intro price is only available from this beat-claim page. Once the timer hits zero, this offer
+        closes.
       </p>
     </section>
   );
@@ -306,9 +370,7 @@ function VideoSection({ settings, videoUrl }: { settings: OfferSettings; videoUr
         <Lock className="h-5 w-5 text-primary" />
         <div>
           <h2>{settings.video_title}</h2>
-          {settings.show_video_body && settings.video_body ? (
-            <p>{settings.video_body}</p>
-          ) : null}
+          {settings.show_video_body && settings.video_body ? <p>{settings.video_body}</p> : null}
         </div>
       </div>
       {videoUrl ? (
@@ -388,13 +450,13 @@ function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; t
           className="group relative block aspect-[16/9] w-full overflow-hidden rounded-xl border border-white/15 bg-black/40 text-left shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
           aria-label={(playing ? "Pause " : "Play ") + offer.title}
         >
-            {offer.cover_url ? (
-              <img src={offer.cover_url} alt={offer.title} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.45),transparent_58%)] p-8 text-center text-3xl font-black">
-                {offer.title}
-              </div>
-            )}
+          {offer.cover_url ? (
+            <img src={offer.cover_url} alt={offer.title} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.45),transparent_58%)] p-8 text-center text-3xl font-black">
+              {offer.title}
+            </div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="flex h-20 w-20 items-center justify-center rounded-full bg-white/95 text-primary shadow-[0_0_45px_rgba(37,99,235,0.45)] transition group-hover:scale-105">
@@ -403,8 +465,16 @@ function BeatPreview({ offer, meta, title }: { offer: BeatOffer; meta: string; t
           </div>
           <div className="absolute bottom-4 left-4 right-4">
             <div className="flex flex-wrap gap-2">
-              {offer.genre ? <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary">{offer.genre}</Badge> : null}
-              {offer.bpm ? <Badge variant="outline" className="border-white/20 text-white/70">{offer.bpm} BPM</Badge> : null}
+              {offer.genre ? (
+                <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary">
+                  {offer.genre}
+                </Badge>
+              ) : null}
+              {offer.bpm ? (
+                <Badge variant="outline" className="border-white/20 text-white/70">
+                  {offer.bpm} BPM
+                </Badge>
+              ) : null}
             </div>
             <h2 className="mt-3 text-2xl font-black">{offer.title}</h2>
             <p className="mt-1 text-sm text-white/70">{meta || "Tap the cover to preview this beat."}</p>
@@ -519,5 +589,7 @@ function useCountdown(expiresAt: string) {
 }
 
 function Centered({ children }: { children: ReactNode }) {
-  return <div className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">{children}</div>;
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">{children}</div>
+  );
 }
