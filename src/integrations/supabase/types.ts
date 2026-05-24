@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_application_questions: {
+        Row: {
+          created_at: string
+          helper_text: string
+          icon: string
+          id: string
+          input_type: string
+          is_active: boolean
+          is_required: boolean
+          label: string
+          placeholder: string
+          question_text: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          helper_text?: string
+          icon?: string
+          id?: string
+          input_type?: string
+          is_active?: boolean
+          is_required?: boolean
+          label: string
+          placeholder?: string
+          question_text: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          helper_text?: string
+          icon?: string
+          id?: string
+          input_type?: string
+          is_active?: boolean
+          is_required?: boolean
+          label?: string
+          placeholder?: string
+          question_text?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agreements: {
         Row: {
           accepted_at: string
