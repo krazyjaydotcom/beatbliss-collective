@@ -15,18 +15,17 @@ function InviteTokenPage() {
 
   useEffect(() => {
     const checkInvite = async () => {
-      const { data, error } = await (supabase as any)
-        .from("invites")
-        .select("id, token, used_at")
-        .eq("token", token)
-        .maybeSingle();
+      const { data, error } = await (supabase as any).rpc("get_invite_by_token", {
+        _token: token,
+      });
 
-      if (error || !data) {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) {
         setState("invalid");
         return;
       }
 
-      if (data.used_at) {
+      if (row.used_at) {
         setState("used");
         return;
       }
