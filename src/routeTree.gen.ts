@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VipRouteImport } from './routes/vip'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CheckoutRouteImport } from './routes/checkout'
@@ -62,6 +63,11 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAdminFunnelsIdRouteImport } from './routes/_authenticated/admin/funnels_.$id'
 
+const VipRoute = VipRouteImport.update({
+  id: '/vip',
+  path: '/vip',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -348,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/vip': typeof VipRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/agreements': typeof AuthenticatedAgreementsRoute
@@ -401,6 +408,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/vip': typeof VipRoute
   '/account': typeof AuthenticatedAccountRoute
   '/agreements': typeof AuthenticatedAgreementsRoute
   '/beat-request': typeof AuthenticatedBeatRequestRoute
@@ -455,6 +463,7 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/vip': typeof VipRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/agreements': typeof AuthenticatedAgreementsRoute
@@ -510,6 +519,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/login'
     | '/signup'
+    | '/vip'
     | '/account'
     | '/admin'
     | '/agreements'
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/login'
     | '/signup'
+    | '/vip'
     | '/account'
     | '/agreements'
     | '/beat-request'
@@ -616,6 +627,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/login'
     | '/signup'
+    | '/vip'
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/_authenticated/agreements'
@@ -671,6 +683,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  VipRoute: typeof VipRoute
   ArtistUsernameRoute: typeof ArtistUsernameRoute
   BSlugRoute: typeof BSlugRouteWithChildren
   BeatsSlugRoute: typeof BeatsSlugRoute
@@ -687,6 +700,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vip': {
+      id: '/vip'
+      path: '/vip'
+      fullPath: '/vip'
+      preLoaderRoute: typeof VipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -1167,6 +1187,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  VipRoute: VipRoute,
   ArtistUsernameRoute: ArtistUsernameRoute,
   BSlugRoute: BSlugRouteWithChildren,
   BeatsSlugRoute: BeatsSlugRoute,
@@ -1183,13 +1204,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
