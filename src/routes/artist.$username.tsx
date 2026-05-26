@@ -40,13 +40,11 @@ function ArtistStorePage() {
 
   useEffect(() => {
     (supabase as any)
-      .from("profiles")
-      .select("store_name, store_bio, store_artwork_url, store_tracks, store_buy_url, store_donate_url, display_name, avatar_url")
-      .eq("store_username", username)
-      .maybeSingle()
-      .then(({ data }: { data: any | null }) => {
-        if (!data) { setNotFound(true); }
-        else { setProfile({ ...data, store_tracks: (data.store_tracks as Track[]) ?? [] }); }
+      .rpc("get_storefront_profile", { _username: username })
+      .then(({ data }: { data: any }) => {
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row) { setNotFound(true); }
+        else { setProfile({ ...row, store_tracks: (row.store_tracks as Track[]) ?? [] }); }
         setLoading(false);
       });
   }, [username]);
