@@ -1419,6 +1419,27 @@ export type Database = {
           token: string
         }[]
       }
+      get_invite_by_token: {
+        Args: { _token: string }
+        Returns: {
+          id: string
+          used_at: string
+        }[]
+      }
+      get_storefront_profile: {
+        Args: { _username: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          store_artwork_url: string
+          store_bio: string
+          store_buy_url: string
+          store_donate_url: string
+          store_name: string
+          store_tracks: Json
+          store_username: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
