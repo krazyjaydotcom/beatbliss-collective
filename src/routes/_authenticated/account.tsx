@@ -83,7 +83,15 @@ function AccountPage() {
   };
 
   const tier = profile?.subscription_tier ?? "none";
-  const isSubscribed = tier !== "none" && profile?.subscription_status === "active";
+  const status = profile?.subscription_status ?? null;
+  const isSubscribed =
+    tier !== "none" && (status === "active" || status === "trialing" || status === "past_due");
+  const hasBillingAccount = Boolean(profile?.stripe_customer_id);
+  const billingHelpCopy = isSubscribed
+    ? "Manage your payment method, download invoices, or cancel anytime in Stripe."
+    : hasBillingAccount
+      ? "Open Stripe to view past invoices and payment history. If your plan is eligible, you can resume it from the portal — otherwise use Reactivate membership to subscribe again."
+      : "Pick a plan to unlock member features.";
 
   return (
     <div className="min-h-screen bg-background">
@@ -104,18 +112,22 @@ function AccountPage() {
                   {new Date(profile.current_period_end).toLocaleDateString()}
                 </p>
               )}
+              <p className="mt-2 text-sm text-muted-foreground max-w-md">{billingHelpCopy}</p>
             </div>
-            {isSubscribed ? (
-              <Button variant="heroOutline" onClick={openPortal} disabled={loadingPortal}>
-                {loadingPortal ? "Opening…" : "Manage billing"}
-              </Button>
-            ) : (
-              <Button variant="hero" asChild>
-                <Link to="/" hash="pricing">
-                  Choose a plan
-                </Link>
-              </Button>
-            )}
+            <div className="flex flex-wrap gap-2 justify-end">
+              {hasBillingAccount && (
+                <Button variant="heroOutline" onClick={openPortal} disabled={loadingPortal}>
+                  {loadingPortal ? "Opening…" : "Manage billing"}
+                </Button>
+              )}
+              {!isSubscribed && (
+                <Button variant="hero" asChild>
+                  <Link to="/" hash="pricing">
+                    {hasBillingAccount ? "Reactivate membership" : "Choose a plan"}
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
