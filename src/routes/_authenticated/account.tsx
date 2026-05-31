@@ -84,10 +84,10 @@ function AccountPage() {
 
   const tier = profile?.subscription_tier ?? "none";
   const status = profile?.subscription_status ?? null;
-  const isSubscribed =
-    tier !== "none" && (status === "active" || status === "trialing" || status === "past_due");
+  const isSubscribed = tier !== "none" && status === "active";
+  const canManageBilling = tier !== "none" && (status === "active" || status === "trialing" || status === "past_due");
   const hasBillingAccount = Boolean(profile?.stripe_customer_id);
-  const billingHelpCopy = isSubscribed
+  const billingHelpCopy = canManageBilling
     ? "Manage your payment method, download invoices, or cancel anytime in Stripe."
     : hasBillingAccount
       ? "Open Stripe to view past invoices and payment history. If your plan is eligible, you can resume it from the portal — otherwise use Reactivate membership to subscribe again."
