@@ -120,7 +120,7 @@ function AccountPage() {
                   {loadingPortal ? "Opening…" : "Manage billing"}
                 </Button>
               )}
-              {!isSubscribed && (
+              {!canManageBilling && (
                 <Button variant="hero" asChild>
                   <Link to="/" hash="pricing">
                     {hasBillingAccount ? "Reactivate membership" : "Choose a plan"}
