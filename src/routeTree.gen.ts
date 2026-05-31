@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VipRouteImport } from './routes/vip'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CheckoutRouteImport } from './routes/checkout'
@@ -72,6 +73,11 @@ const VipRoute = VipRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/vip': typeof VipRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -415,6 +422,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/vip': typeof VipRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -471,6 +479,7 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/vip': typeof VipRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
@@ -528,6 +537,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/forgot-password'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/vip'
     | '/account'
@@ -583,6 +593,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/forgot-password'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/vip'
     | '/account'
@@ -638,6 +649,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/forgot-password'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/vip'
     | '/_authenticated/account'
@@ -695,6 +707,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   VipRoute: typeof VipRoute
   ArtistUsernameRoute: typeof ArtistUsernameRoute
@@ -725,6 +738,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1207,6 +1227,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   VipRoute: VipRoute,
   ArtistUsernameRoute: ArtistUsernameRoute,

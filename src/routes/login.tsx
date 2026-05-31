@@ -60,7 +60,12 @@ function LoginPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Password</label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Password</label>
+                <Link to="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative mt-1">
                 <input
                   type={showPassword ? "text" : "password"}
