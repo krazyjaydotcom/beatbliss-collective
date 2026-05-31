@@ -1354,6 +1354,10 @@ export type Database = {
         }
         Returns: string
       }
+      beat_audio_access_level: {
+        Args: { _object_name: string }
+        Returns: string
+      }
       capture_funnel_lead: {
         Args: { _email: string; _ip?: string; _slug: string; _ua?: string }
         Returns: Json
