@@ -1,64 +1,60 @@
-# SEO Beat Discovery System
+## Why this is a great idea (and how to make it stronger)
 
-A scalable tag-driven SEO landing page system. Each page targets one keyword, renders editor-managed copy, pulls active beats by tag, and reuses the existing claim modal flow.
+Sending a personalized "here's the beat I made you" link is one of the highest-converting funnel patterns in beat sales — the recipient feels singled out, the bar to listen is zero, and the upsell ("there are 100s more like this") is honest.
+
+A few small upgrades to your original idea that make it convert better:
+
+1. **Auto-play the linked beat on arrival.** That's the whole reason they clicked. No "press play" friction.
+2. **Show the recipient's "personal" beat visibly at the top of the queue** ("Sent to you →"), so they feel the personal touch even though the rest of the page is generic.
+3. **Count plays, not page time.** A "5 listens, then join" rule is concrete and feels fair — much better than a hard timer.
+4. **Persist the play count in localStorage** so refreshing the page doesn't reset it (otherwise the gate is meaningless).
+5. **Track which beat link drove each signup.** That tells you which beats actually convert, so you know which ones to send next time.
 
 ## What gets built
 
-### 1. Database (Supabase migration)
+### 1. Sticky bottom player on `/` (home page only)
+- Reuses the visual style of the existing beat store player.
+- Always visible at the bottom of the home page; rest of the homepage scrolls above it.
+- Shows current beat artwork, title, play/pause, progress bar, next/previous, and a small "Queue (5)" list that expands upward.
 
-New tables (all RLS: public read where active/published, admins manage):
+### 2. Shareable link format: `mybeatcatalog.com/?b=<beat-slug-or-id>`
+- When `?b=` is present: that beat loads first, auto-plays, labeled "🎧 Sent to you".
+- The next 4 in the queue are the 4 newest claimable beats (excluding the linked one).
+- When `?b=` is missing: just the 5 newest beats, no auto-play, no "sent to you" label. So the home page still works normally for organic traffic.
 
-- **`beat_tags`** — master tag list
-  - `slug` (text, unique), `label` (text), `created_at`
-- **`beat_tag_assignments`** — many-to-many
-  - `beat_id` (uuid), `tag_slug` (text), unique(beat_id, tag_slug)
-- **`seo_pages`** — landing page configs
-  - `slug` (text, unique), `target_keyword`, `seo_title`, `meta_description`, `h1`, `intro`, `sections` (jsonb array of `{heading, body}`), `tag_slugs` (text[]), `related_page_slugs` (text[]), `is_published` (bool), `sort_order` (int), `featured` (bool), timestamps
-- **`beats`** add columns: `is_active` (bool default true), `is_featured` (bool default false)
+### 3. Play-count gate
+- Each time a beat finishes (or the user manually skips after >10s of listening), increment a counter in `localStorage`.
+- After 5 plays, the next play attempt opens a modal:
+  > **You've heard 5. There are 100s more.**
+  > Join the Beat Catalog to unlock the full library — start free, no card required.
+  > [ Create Free Account ] [ Already a member? Sign in ]
+- Modal cannot be dismissed back into more playback — only by signing up, signing in, or closing (which keeps the player paused).
 
-Seed the 10 tag rows + 10 SEO pages with copy.
+### 4. Attribution tracking
+- When the modal opens (and again on signup), record the `?b=` slug that brought them in.
+- Stored on the new user's profile as `signup_source_beat_id` so you can later see "this link → this signup".
 
-Helper RPC `list_beats_by_tags(_slugs text[])` returns active beats matching ANY of the tags, ordered featured→created_at.
+## Technical details
 
-### 2. Public routes
+**New / changed files:**
+- `src/routes/index.tsx` — add sticky player + queue logic; read `?b=` via `validateSearch`.
+- `src/components/home-funnel-player.tsx` (new) — the sticky bar UI, audio element, play counter, "sent to you" label.
+- `src/components/join-catalog-modal.tsx` (new) — the gate modal with "Create Free Account" CTA pointing at `/signup?b=<slug>`.
+- `src/lib/funnel-attribution.ts` (new) — small helpers: read/write play count from `localStorage`, persist `signup_source_beat_id` after auth.
+- `src/lib/home-player.functions.ts` (new) — one `createServerFn` that returns `{ featuredBeat, queue }` given an optional `?b=` slug. Uses the publishable-key server client (public-safe) and calls the existing `list_claimable_beats` RPC, then filters/orders.
+- `supabase/migrations/<timestamp>_signup_source_beat.sql` — add nullable `signup_source_beat_id uuid` column to `profiles` so we can attribute conversions. No RLS changes needed (the user can already update their own profile).
 
-- **`/beats/$slug`** (`src/routes/beats.$slug.tsx`)
-  - Loader fetches `seo_pages` row + matching beats via RPC
-  - `head()` sets seo_title, meta_description, og tags, canonical
-  - Renders: H1, intro, dynamic beat grid, body sections, related pages internal links, empty state when no beats
-  - Reuses styling from `beat-claim.tsx` (dark theme, blue CTA, mini wave)
+**Audio source for previews:**
+Uses `audio_url_tagged` (the tagged MP3) for all 5 beats — same as the existing public claim flow. No member-only audio is exposed.
 
-### 3. Shared claim modal
+**Play count rule (specifics):**
+- A "play" counts when: (a) the audio's `ended` event fires, OR (b) the user manually skips/changes track after listening ≥10 seconds. Scrubbing doesn't count.
+- Counter key: `mbc_home_plays_v1`. Stored as a small JSON `{ count, beatIds: string[] }` so we don't double-count replays of the same beat.
 
-Extract the existing modal from `src/routes/beat-claim.tsx` into `src/components/beat-claim-modal.tsx` (props: `beat`, `open`, `onClose`, `source`). Both `beat-claim` route and new SEO pages import it. Calls the same `/api/public/beat-claim` endpoint → routes to `/offer/$token`.
+**What this plan does NOT change:**
+- `/beats`, `/beat-claim`, `/beats/$slug`, member features, downloads, credits, Stripe, or any existing modal/flow.
+- The existing hero/landing content on `/` stays — the player is added underneath, not in place of it.
 
-### 4. Admin
-
-New page `src/routes/_authenticated/admin/seo-pages.tsx` — list/create/edit SEO pages (slug, keyword, title, meta, H1, intro, sections JSON, tag slugs, related slugs, published, featured, sort).
-
-Update existing `src/routes/_authenticated/admin/beats.tsx` to add: tag multi-select (from `beat_tags`), active toggle, featured toggle.
-
-New `src/routes/_authenticated/admin/tags.tsx` — manage `beat_tags`.
-
-Admin nav gets two new links.
-
-### 5. Seed pages
-
-Cinematic R&B, Emotional Trap, Night Drive, Dark Cinematic, Late Night R&B, Cyberpunk, Ambient Trap, Emotional Background Music, Dark Trap Soul, Moody R&B — each with 700–1000 words across intro + 4 sections + tag mapping per spec.
-
-## Technical notes
-
-- `list_claimable_beats()` already filters by audio availability — new RPC will additionally require `is_active = true` and intersect with `beat_tag_assignments`.
-- SEO route uses `createFileRoute("/beats/$slug")` loader pattern with `head({loaderData})` for per-page meta.
-- Canonical host: `https://mybeatcatalog.com`.
-- All copy stored in DB so future pages need no code changes.
-
-## Out of scope
-
-- No new payment/claim backend logic — reuses existing `claimBeatAndSendFox` flow.
-- Doesn't modify offer page, existing admin beats CRUD beyond adding tag/active/featured fields, or auth.
-
-## Files touched
-
-- new: migration, `src/routes/beats.$slug.tsx`, `src/components/beat-claim-modal.tsx`, `src/routes/_authenticated/admin/seo-pages.tsx`, `src/routes/_authenticated/admin/tags.tsx`
-- edited: `src/routes/beat-claim.tsx` (use shared modal), `src/routes/_authenticated/admin/beats.tsx` (tag/active/featured controls), `src/routes/_authenticated/admin.tsx` (nav links)
+## Open follow-ups (small, can do after first pass)
+- A "Send a private beat link" copy-link button on `/account` so you can grab `mybeatcatalog.com/?b=<slug>` URLs in one click.
+- Optional: track plays + signups in a tiny `beat_link_events` table later, if you want real analytics beyond the per-profile attribution column.
