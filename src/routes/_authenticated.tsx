@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { ChatWidget } from "@/components/ChatWidget";
 import { usePresenceBroadcast } from "@/lib/presence";
+import { supabase } from "@/integrations/supabase/client";
+import { takeSignupSourceBeat } from "@/lib/funnel-attribution";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -20,6 +22,18 @@ function AuthenticatedLayout() {
       navigate({ to: "/login", search: { redirect: window.location.pathname } });
     }
   }, [user, loading, navigate]);
+
+  // Attribute signup to a shared beat link (one-time, if present)
+  useEffect(() => {
+    if (!user) return;
+    const sourceBeatId = takeSignupSourceBeat();
+    if (!sourceBeatId) return;
+    void (supabase as any)
+      .from("profiles")
+      .update({ signup_source_beat_id: sourceBeatId })
+      .eq("id", user.id)
+      .is("signup_source_beat_id", null);
+  }, [user]);
 
   if (loading || !user) {
     return (
