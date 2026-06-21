@@ -23,6 +23,18 @@ function AuthenticatedLayout() {
     }
   }, [user, loading, navigate]);
 
+  // Attribute signup to a shared beat link (one-time, if present)
+  useEffect(() => {
+    if (!user) return;
+    const sourceBeatId = takeSignupSourceBeat();
+    if (!sourceBeatId) return;
+    void (supabase as any)
+      .from("profiles")
+      .update({ signup_source_beat_id: sourceBeatId })
+      .eq("id", user.id)
+      .is("signup_source_beat_id", null);
+  }, [user]);
+
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
