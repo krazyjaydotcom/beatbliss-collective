@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { ChatWidget } from "@/components/ChatWidget";
 import { usePresenceBroadcast } from "@/lib/presence";
+import { supabase } from "@/integrations/supabase/client";
+import { takeSignupSourceBeat } from "@/lib/funnel-attribution";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
