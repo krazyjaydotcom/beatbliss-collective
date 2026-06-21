@@ -1054,6 +1054,7 @@ export type Database = {
           full_name: string | null
           id: string
           music_link: string | null
+          signup_source_beat_id: string | null
           store_artwork_url: string | null
           store_bio: string | null
           store_buy_url: string | null
@@ -1078,6 +1079,7 @@ export type Database = {
           full_name?: string | null
           id: string
           music_link?: string | null
+          signup_source_beat_id?: string | null
           store_artwork_url?: string | null
           store_bio?: string | null
           store_buy_url?: string | null
@@ -1102,6 +1104,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           music_link?: string | null
+          signup_source_beat_id?: string | null
           store_artwork_url?: string | null
           store_bio?: string | null
           store_buy_url?: string | null
@@ -1114,7 +1117,15 @@ export type Database = {
           subscription_tier?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_signup_source_beat_id_fkey"
+            columns: ["signup_source_beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seo_pages: {
         Row: {
