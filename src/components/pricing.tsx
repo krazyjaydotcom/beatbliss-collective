@@ -41,7 +41,7 @@ export function Pricing() {
             </div>
             <div className="text-right">
               <div className="text-4xl font-black leading-none">$49.99</div>
-              <div className="mt-2 text-xs uppercase tracking-[0.25em] text-muted-foreground">per year</div>
+              <div className="mt-2 text-xs uppercase tracking-[0.25em] text-muted-foreground">per month</div>
             </div>
           </div>
 
