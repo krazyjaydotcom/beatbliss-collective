@@ -265,12 +265,12 @@ export function HomeFunnelPlayer({ beatId, onApplyForAccess }: Props) {
           </div>
 
           {/* Queue strip */}
-          <div className="mt-2 flex gap-2 overflow-x-auto">
+          <div className="mt-1 hidden gap-1.5 overflow-x-auto sm:flex">
             {queue.map((b, i) => (
               <button
                 key={b.id}
                 onClick={() => changeTrack(i)}
-                className={`flex-shrink-0 rounded-md border px-2 py-1 text-xs transition ${
+                className={`flex-shrink-0 rounded border px-1.5 py-0.5 text-[10px] transition ${
                   i === index
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border text-muted-foreground hover:text-foreground"
