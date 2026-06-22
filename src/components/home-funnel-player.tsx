@@ -250,16 +250,17 @@ export function HomeFunnelPlayer({ beatId, onApplyForAccess }: Props) {
               </div>
             </div>
 
-            {/* Counter + queue */}
-            <div className="hidden flex-1 items-center justify-end gap-3 md:flex">
-              <div className="text-right">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Free previews left</p>
+            {/* Counter + Join CTA — always visible */}
+            <div className="flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+              <div className="hidden text-right sm:block">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Previews left</p>
                 <p className="text-sm font-bold">
                   {remaining} / {FREE_PLAY_LIMIT}
                 </p>
               </div>
-              <Button size="sm" variant="outline" onClick={() => setShowModal(true)}>
-                Join catalog
+              <Button size="sm" className="font-black uppercase tracking-wider" onClick={() => setShowModal(true)}>
+                <span className="hidden sm:inline">Get Access</span>
+                <span className="sm:hidden">$49</span>
               </Button>
             </div>
           </div>
