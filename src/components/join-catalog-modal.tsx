@@ -44,7 +44,7 @@ export function JoinCatalogModal({ open, onOpenChange, onApplyForAccess }: JoinC
 
           <div className="mt-6 flex items-end gap-2 rounded-xl border border-border bg-card/70 p-4">
             <span className="text-4xl font-black tracking-tight">$49.99</span>
-            <span className="pb-1.5 text-sm text-muted-foreground">/ year</span>
+            <span className="pb-1.5 text-sm text-muted-foreground">/ month</span>
             <span className="ml-auto rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-amber-300">
               Limited time
             </span>
