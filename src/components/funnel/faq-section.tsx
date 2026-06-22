@@ -55,7 +55,7 @@ export function FaqSection({ onApplyForAccess }: Props) {
         <div className="mt-10 rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center">
           <h3 className="text-xl font-black">Ready to unlock the full catalog?</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            $49.99/mo · Cancel anytime · Application reviewed in hours
+            $49.99/yr · Limited time offer · Application reviewed in hours
           </p>
           <Button size="lg" variant="hero" type="button" onClick={onApplyForAccess} className="mt-5">
             Apply For Access
