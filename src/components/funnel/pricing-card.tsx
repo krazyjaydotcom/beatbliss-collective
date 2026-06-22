@@ -6,12 +6,11 @@ type Props = {
 };
 
 const FEATURES = [
-  "Unlimited downloads from the full catalog",
+  "Download up to 12 beats every month",
   "Full monetization rights — keep 100% of your masters",
   "New beats added every week",
   "Members-only exclusive releases",
   "Direct messaging with KrazyJay",
-  "WAV + MP3 stems on every beat",
   "Cancel anytime, no questions asked",
 ];
 
