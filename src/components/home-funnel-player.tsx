@@ -175,27 +175,27 @@ export function HomeFunnelPlayer({ beatId, onApplyForAccess }: Props) {
         preload="metadata"
       />
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-xl shadow-2xl">
-        <div className="mx-auto max-w-7xl px-4 py-3">
-          <div className="flex items-center gap-4">
+        <div className="mx-auto max-w-7xl px-4 py-1.5">
+          <div className="flex items-center gap-3">
             {/* Artwork + title */}
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-muted">
                 {current.cover_url ? (
                   <img src={current.cover_url} alt={current.title} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                    <Sparkles className="h-5 w-5" />
+                    <Sparkles className="h-3 w-3" />
                   </div>
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 leading-tight">
                 {isFeatured && (
-                  <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary">
-                    <Sparkles className="h-3 w-3" /> Sent to you
+                  <p className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-primary">
+                    <Sparkles className="h-2.5 w-2.5" /> Sent to you
                   </p>
                 )}
-                <p className="truncate text-sm font-bold">{current.title}</p>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="truncate text-xs font-bold">{current.title}</p>
+                <p className="truncate text-[10px] text-muted-foreground">
                   {current.producer_name ?? "MYBEATCATALOG"}
                   {current.bpm ? ` • ${current.bpm} BPM` : ""}
                 </p>
@@ -203,33 +203,35 @@ export function HomeFunnelPlayer({ beatId, onApplyForAccess }: Props) {
             </div>
 
             {/* Controls */}
-            <div className="flex flex-1 flex-col items-center gap-1">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-1 flex-col items-center gap-0.5">
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="h-7 w-7"
                   onClick={() => changeTrack(index - 1)}
                   disabled={index === 0}
                   aria-label="Previous"
                 >
-                  <SkipBack className="h-4 w-4" />
+                  <SkipBack className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   size="icon"
-                  className="h-10 w-10 rounded-full"
+                  className="h-7 w-7 rounded-full"
                   onClick={tryPlay}
                   aria-label={isPlaying ? "Pause" : "Play"}
                 >
-                  {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                  {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="h-7 w-7"
                   onClick={() => changeTrack(index + 1)}
                   disabled={index >= queue.length - 1}
                   aria-label="Next"
                 >
-                  <SkipForward className="h-4 w-4" />
+                  <SkipForward className="h-3.5 w-3.5" />
                 </Button>
               </div>
               <div className="flex w-full max-w-md items-center gap-2 text-[10px] text-muted-foreground">
