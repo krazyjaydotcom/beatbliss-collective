@@ -17,6 +17,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as BeatClaimRouteImport } from './routes/beat-claim'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
@@ -102,6 +103,11 @@ const BeatClaimRoute = BeatClaimRouteImport.update({
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlugRoute = SlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -362,6 +368,7 @@ const AuthenticatedAdminFunnelsIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/beat-claim': typeof BeatClaimRoute
   '/checkout': typeof CheckoutRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
@@ -418,6 +425,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/beat-claim': typeof BeatClaimRoute
   '/checkout': typeof CheckoutRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
@@ -474,6 +482,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/beat-claim': typeof BeatClaimRoute
   '/checkout': typeof CheckoutRouteWithChildren
@@ -533,6 +542,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$slug'
     | '/beat-claim'
     | '/checkout'
     | '/forgot-password'
@@ -589,6 +599,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$slug'
     | '/beat-claim'
     | '/checkout'
     | '/forgot-password'
@@ -644,6 +655,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$slug'
     | '/_authenticated'
     | '/beat-claim'
     | '/checkout'
@@ -702,6 +714,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SlugRoute: typeof SlugRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   BeatClaimRoute: typeof BeatClaimRoute
   CheckoutRoute: typeof CheckoutRouteWithChildren
@@ -780,6 +793,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$slug': {
+      id: '/$slug'
+      path: '/$slug'
+      fullPath: '/$slug'
+      preLoaderRoute: typeof SlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -1222,6 +1242,7 @@ const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SlugRoute: SlugRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   BeatClaimRoute: BeatClaimRoute,
   CheckoutRoute: CheckoutRouteWithChildren,

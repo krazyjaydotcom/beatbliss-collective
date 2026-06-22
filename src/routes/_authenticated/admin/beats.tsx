@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { decodeAudioFile, encodeMp3, encodeWav, isMp3, isWav } from "@/lib/audio-convert";
+import { slugifyTitle } from "@/lib/slug";
 
 export const Route = createFileRoute("/_authenticated/admin/beats")({
   component: AdminBeatsPage,
@@ -179,7 +180,10 @@ function AdminBeatsPage() {
                     variant="ghost"
                     title="Copy share link (home page with this beat)"
                     onClick={() => {
-                      const url = `${window.location.origin}/?b=${b.id}`;
+                      const slug = slugifyTitle(b.title);
+                      const url = slug
+                        ? `${window.location.origin}/${slug}`
+                        : `${window.location.origin}/?b=${b.id}`;
                       navigator.clipboard.writeText(url).then(
                         () => toast.success("Share link copied — paste into your email"),
                         () => toast.error("Could not copy"),
