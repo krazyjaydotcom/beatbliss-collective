@@ -11,7 +11,7 @@ export interface JoinCatalogModalProps {
 }
 
 const BENEFITS = [
-  "Unlimited downloads — entire catalog",
+  "Download up to 12 beats every month",
   "Full monetization rights on every release",
   "New beats every week + members-only drops",
   "Direct line to KrazyJay",
@@ -27,10 +27,10 @@ export function JoinCatalogModal({ open, onOpenChange, onApplyForAccess }: JoinC
             You've heard {FREE_PLAY_LIMIT} previews
           </div>
           <h2 className="mt-3 text-3xl font-black leading-tight">
-            Unlock the <span className="text-primary">entire catalog</span> for $49.99/mo.
+            Unlock the <span className="text-primary">entire catalog</span> for $49.99/yr.
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Dozens more beats — and new drops every week. Cancel anytime.
+            Limited time offer — dozens more beats, with new drops every week.
           </p>
 
           <ul className="mt-5 space-y-2">
@@ -44,9 +44,9 @@ export function JoinCatalogModal({ open, onOpenChange, onApplyForAccess }: JoinC
 
           <div className="mt-6 flex items-end gap-2 rounded-xl border border-border bg-card/70 p-4">
             <span className="text-4xl font-black tracking-tight">$49.99</span>
-            <span className="pb-1.5 text-sm text-muted-foreground">/ month</span>
-            <span className="ml-auto rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-300">
-              Cancel anytime
+            <span className="pb-1.5 text-sm text-muted-foreground">/ year</span>
+            <span className="ml-auto rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-amber-300">
+              Limited time
             </span>
           </div>
 
