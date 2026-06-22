@@ -15,7 +15,7 @@ export function JoinCatalogModal({ open, onOpenChange, onApplyForAccess }: JoinC
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <p className="text-xs font-bold tracking-wider text-primary">YOU'VE HEARD {FREE_PLAY_LIMIT}</p>
-          <DialogTitle className="text-2xl">There are hundreds more.</DialogTitle>
+          <DialogTitle className="text-2xl">There are dozens more.</DialogTitle>
           <DialogDescription className="text-base text-muted-foreground">
             Join the Beat Catalog to unlock the full library — fresh beats, full downloads, and
             members-only releases.
