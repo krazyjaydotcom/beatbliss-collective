@@ -179,7 +179,10 @@ function AdminBeatsPage() {
                     variant="ghost"
                     title="Copy share link (home page with this beat)"
                     onClick={() => {
-                      const url = `${window.location.origin}/?b=${b.id}`;
+                      const slug = slugifyTitle(b.title);
+                      const url = slug
+                        ? `${window.location.origin}/${slug}`
+                        : `${window.location.origin}/?b=${b.id}`;
                       navigator.clipboard.writeText(url).then(
                         () => toast.success("Share link copied — paste into your email"),
                         () => toast.error("Could not copy"),
