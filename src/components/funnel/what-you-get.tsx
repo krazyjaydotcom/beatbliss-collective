@@ -3,8 +3,8 @@ import { Download, Music4, MessageCircle, Shield, Zap, Crown } from "lucide-reac
 const ITEMS = [
   {
     icon: Download,
-    title: "Unlimited Downloads",
-    body: "Full WAV + MP3 stems. Pay once a month, take everything you need.",
+    title: "12 Beats Every Month",
+    body: "Download up to 12 beats a month from the full catalog. Yours to keep and release.",
   },
   {
     icon: Music4,
