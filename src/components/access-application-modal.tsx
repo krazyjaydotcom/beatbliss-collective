@@ -253,10 +253,16 @@ export function AccessApplicationModal({ open, onOpenChange }: AccessApplication
       return;
     }
 
+    const answersPayload = questions.map((q) => ({
+      label: q.label,
+      question: q.question_text,
+      answer: getAnswer(q.id).trim(),
+    }));
+
     setSubmitting(true);
     setMessage(null);
     try {
-      // Fire-and-forget: submit application to Sendy
+      // Fire-and-forget: submit application to Sendy + persist to DB for admin review
       submitApplication({
         data: {
           name,
@@ -264,6 +270,10 @@ export function AccessApplicationModal({ open, onOpenChange }: AccessApplication
           phone,
           music,
           source: "apply-for-access-modal",
+          beat_id: currentBeat.id,
+          beat_title: currentBeat.title,
+          answers: answersPayload,
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null,
         },
       }).catch(() => {});
 
