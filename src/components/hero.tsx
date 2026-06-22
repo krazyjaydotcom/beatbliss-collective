@@ -67,32 +67,51 @@ export function Hero({ onApplyForAccess }: HeroProps) {
 
 
   return (
-    <section className="relative overflow-hidden pt-24 pb-12 lg:min-h-[calc(100vh-0px)] lg:flex lg:items-center">
+    <section className="relative overflow-hidden pt-32 pb-12 lg:min-h-[calc(100vh-0px)] lg:flex lg:items-center">
       <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-radial-red)" }} />
       <div className="container mx-auto grid items-center gap-10 px-6 lg:grid-cols-2">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-2 text-xs font-bold tracking-wider">
-            <Crown className="h-3.5 w-3.5 text-primary" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-bold tracking-wider text-primary">
+            <Crown className="h-3.5 w-3.5" />
             PRIVATE MEMBERSHIP ACCESS
           </div>
           <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight md:text-6xl lg:text-7xl">
-            PREMIUM ACCESS TO
+            UNLIMITED BEATS.
             <br />
-            <span className="text-primary">HIGH QUALITY BEATS.</span>
+            <span className="text-primary">$49.99/MO.</span>
           </h1>
-          <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-            Private access to cinematic, inspirational beats built for artists with a message. Apply for access, unlock the catalog, and stay close to KrazyJay.
+          <p className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-primary md:text-base">
+            <Headphones className="h-4 w-4" /> Your beat is playing below — and there's a whole catalog more.
           </p>
+          <p className="mt-3 max-w-xl text-base text-muted-foreground md:text-lg">
+            Get unlimited downloads, full monetization rights, and direct access to KrazyJay. Cancel anytime.
+          </p>
+
+          <ul className="mt-6 space-y-2.5 text-sm md:text-base">
+            <li className="flex items-center gap-2.5">
+              <Check className="h-4 w-4 shrink-0 text-primary" />
+              <span>Unlimited downloads — the entire catalog, every month</span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <Check className="h-4 w-4 shrink-0 text-primary" />
+              <span>Full monetization rights — release on every platform</span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <Check className="h-4 w-4 shrink-0 text-primary" />
+              <span>Cancel anytime — no contracts, no surprises</span>
+            </li>
+          </ul>
+
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {onApplyForAccess ? (
               <Button size="xl" variant="hero" type="button" onClick={onApplyForAccess}>
-                Apply For Access
+                Get Full Access — $49.99/mo
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             ) : (
               <Button size="xl" variant="hero" asChild>
                 <Link to="/checkout">
-                  Apply For Access
+                  Get Full Access — $49.99/mo
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -101,13 +120,19 @@ export function Hero({ onApplyForAccess }: HeroProps) {
               <Link to="/login">Member Login</Link>
             </Button>
           </div>
-          <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
-            <Lock className="h-4 w-4 text-primary" />
-            <span>Private membership - Application required - Member-only access</span>
-          </div>
-          <div className="mt-6 inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <MessageSquareText className="h-4 w-4 text-primary" />
-            Direct line to KrazyJay after signup.
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground sm:text-sm">
+            <span className="inline-flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-primary" />
+              Application required
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="h-3.5 w-3.5 text-emerald-400" />
+              Cancel anytime
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="h-3.5 w-3.5 text-emerald-400" />
+              Approved in hours
+            </span>
           </div>
         </div>
         <div className="relative">
@@ -130,7 +155,6 @@ export function Hero({ onApplyForAccess }: HeroProps) {
               style={filterCss ? { filter: filterCss } : undefined}
             />
           )}
-
         </div>
       </div>
     </section>
