@@ -53,6 +53,7 @@ import { Route as AuthenticatedAdminOfferPageRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
 import { Route as AuthenticatedAdminInvitesRouteImport } from './routes/_authenticated/admin/invites'
 import { Route as AuthenticatedAdminImportRouteImport } from './routes/_authenticated/admin/import'
+import { Route as AuthenticatedAdminHomeGalleryRouteImport } from './routes/_authenticated/admin/home-gallery'
 import { Route as AuthenticatedAdminGiftRouteImport } from './routes/_authenticated/admin/gift'
 import { Route as AuthenticatedAdminFunnelsRouteImport } from './routes/_authenticated/admin/funnels'
 import { Route as AuthenticatedAdminClassroomRouteImport } from './routes/_authenticated/admin/classroom'
@@ -295,6 +296,12 @@ const AuthenticatedAdminImportRoute =
     path: '/import',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminHomeGalleryRoute =
+  AuthenticatedAdminHomeGalleryRouteImport.update({
+    id: '/home-gallery',
+    path: '/home-gallery',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminGiftRoute = AuthenticatedAdminGiftRouteImport.update({
   id: '/gift',
   path: '/gift',
@@ -406,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
+  '/admin/home-gallery': typeof AuthenticatedAdminHomeGalleryRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
@@ -462,6 +470,7 @@ export interface FileRoutesByTo {
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
+  '/admin/home-gallery': typeof AuthenticatedAdminHomeGalleryRoute
   '/admin/import': typeof AuthenticatedAdminImportRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
   '/admin/members': typeof AuthenticatedAdminMembersRoute
@@ -521,6 +530,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/classroom': typeof AuthenticatedAdminClassroomRoute
   '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/_authenticated/admin/gift': typeof AuthenticatedAdminGiftRoute
+  '/_authenticated/admin/home-gallery': typeof AuthenticatedAdminHomeGalleryRoute
   '/_authenticated/admin/import': typeof AuthenticatedAdminImportRoute
   '/_authenticated/admin/invites': typeof AuthenticatedAdminInvitesRoute
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
@@ -580,6 +590,7 @@ export interface FileRouteTypes {
     | '/admin/classroom'
     | '/admin/funnels'
     | '/admin/gift'
+    | '/admin/home-gallery'
     | '/admin/import'
     | '/admin/invites'
     | '/admin/members'
@@ -636,6 +647,7 @@ export interface FileRouteTypes {
     | '/admin/classroom'
     | '/admin/funnels'
     | '/admin/gift'
+    | '/admin/home-gallery'
     | '/admin/import'
     | '/admin/invites'
     | '/admin/members'
@@ -694,6 +706,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/classroom'
     | '/_authenticated/admin/funnels'
     | '/_authenticated/admin/gift'
+    | '/_authenticated/admin/home-gallery'
     | '/_authenticated/admin/import'
     | '/_authenticated/admin/invites'
     | '/_authenticated/admin/members'
@@ -1047,6 +1060,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminImportRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/home-gallery': {
+      id: '/_authenticated/admin/home-gallery'
+      path: '/home-gallery'
+      fullPath: '/admin/home-gallery'
+      preLoaderRoute: typeof AuthenticatedAdminHomeGalleryRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/gift': {
       id: '/_authenticated/admin/gift'
       path: '/gift'
@@ -1144,6 +1164,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminClassroomRoute: typeof AuthenticatedAdminClassroomRoute
   AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRoute
   AuthenticatedAdminGiftRoute: typeof AuthenticatedAdminGiftRoute
+  AuthenticatedAdminHomeGalleryRoute: typeof AuthenticatedAdminHomeGalleryRoute
   AuthenticatedAdminImportRoute: typeof AuthenticatedAdminImportRoute
   AuthenticatedAdminInvitesRoute: typeof AuthenticatedAdminInvitesRoute
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
@@ -1168,6 +1189,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminClassroomRoute: AuthenticatedAdminClassroomRoute,
   AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRoute,
   AuthenticatedAdminGiftRoute: AuthenticatedAdminGiftRoute,
+  AuthenticatedAdminHomeGalleryRoute: AuthenticatedAdminHomeGalleryRoute,
   AuthenticatedAdminImportRoute: AuthenticatedAdminImportRoute,
   AuthenticatedAdminInvitesRoute: AuthenticatedAdminInvitesRoute,
   AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
