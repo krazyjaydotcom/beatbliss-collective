@@ -43,9 +43,9 @@ export function PricingCard({ onApplyForAccess }: Props) {
 
             <div className="mt-6 flex items-end gap-2">
               <span className="text-5xl font-black tracking-tight">$49.99</span>
-              <span className="pb-2 text-sm text-muted-foreground">/ year</span>
+              <span className="pb-2 text-sm text-muted-foreground">/ month</span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Billed yearly — limited time offer, no hidden fees.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Billed monthly — limited time offer, no hidden fees.</p>
 
             <ul className="mt-6 space-y-3">
               {FEATURES.map((f) => (
