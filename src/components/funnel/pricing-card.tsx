@@ -21,10 +21,10 @@ export function PricingCard({ onApplyForAccess }: Props) {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Membership</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">
-            One price. A full year of beats.
+            One price. The whole catalog.
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Less than the cost of one custom beat — for an entire year.
+            Less than the cost of one custom beat — every month.
           </p>
         </div>
 
