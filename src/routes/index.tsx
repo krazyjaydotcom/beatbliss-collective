@@ -9,6 +9,10 @@ import { HomeGallerySection } from "@/components/home-gallery-section";
 import { PublicSupportButton } from "@/components/public-support-button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
+import { StickyOfferBar } from "@/components/funnel/sticky-offer-bar";
+import { WhatYouGet } from "@/components/funnel/what-you-get";
+import { PricingCard } from "@/components/funnel/pricing-card";
+import { FaqSection } from "@/components/funnel/faq-section";
 
 const searchSchema = z.object({
   b: fallback(z.string().uuid().optional(), undefined),
@@ -22,18 +26,23 @@ export const Route = createFileRoute("/")({
 function IndexPage() {
   const [applicationOpen, setApplicationOpen] = useState(false);
   const { b: beatId } = Route.useSearch();
+  const open = () => setApplicationOpen(true);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <SiteNav onApplyForAccess={() => setApplicationOpen(true)} />
+      <StickyOfferBar onApplyForAccess={open} />
+      <SiteNav onApplyForAccess={open} />
       <main className="pb-32">
-        <Hero onApplyForAccess={() => setApplicationOpen(true)} />
+        <Hero onApplyForAccess={open} />
+        <WhatYouGet />
+        <PricingCard onApplyForAccess={open} />
         <HomeGallerySection />
+        <FaqSection onApplyForAccess={open} />
       </main>
-      <SiteFooter onApplyForAccess={() => setApplicationOpen(true)} />
+      <SiteFooter onApplyForAccess={open} />
       <PublicSupportButton />
       <AccessApplicationModal open={applicationOpen} onOpenChange={setApplicationOpen} />
-      <HomeFunnelPlayer beatId={beatId ?? null} onApplyForAccess={() => setApplicationOpen(true)} />
+      <HomeFunnelPlayer beatId={beatId ?? null} onApplyForAccess={open} />
     </div>
   );
 }
