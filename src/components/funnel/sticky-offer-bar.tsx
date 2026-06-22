@@ -12,7 +12,7 @@ export function StickyOfferBar({ onApplyForAccess }: Props) {
           <Sparkles className="h-4 w-4 shrink-0" />
           <span className="truncate">
             <span className="hidden sm:inline">Limited time — </span>
-            <span className="font-black">$49.99/yr</span>
+            <span className="font-black">$49.99/mo</span>
             <span className="hidden text-primary-foreground/80 sm:inline"> · 12 beats/month</span>
           </span>
         </div>

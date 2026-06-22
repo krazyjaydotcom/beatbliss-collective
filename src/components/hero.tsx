@@ -78,7 +78,7 @@ export function Hero({ onApplyForAccess }: HeroProps) {
           <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight md:text-6xl lg:text-7xl">
             12 BEATS / MONTH.
             <br />
-            <span className="text-primary">$49.99/YR.</span>
+            <span className="text-primary">$49.99/MO.</span>
           </h1>
           <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-amber-300">
             ⚡ Limited time offer
@@ -108,13 +108,13 @@ export function Hero({ onApplyForAccess }: HeroProps) {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {onApplyForAccess ? (
               <Button size="xl" variant="hero" type="button" onClick={onApplyForAccess}>
-                Get Full Access — $49.99/yr
+                Get Full Access — $49.99/mo
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             ) : (
               <Button size="xl" variant="hero" asChild>
                 <Link to="/checkout">
-                  Get Full Access — $49.99/yr
+                  Get Full Access — $49.99/mo
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>

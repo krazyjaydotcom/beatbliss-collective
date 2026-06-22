@@ -21,7 +21,7 @@ export function Pricing() {
         <h2 className="mt-5 text-4xl font-black tracking-tight md:text-5xl">
           PRIVATE ACCESS. <span className="text-primary">CLEAR TERMS.</span>
         </h2>
-        <p className="mt-4 text-muted-foreground">A simple yearly membership for artists who want the catalog and direct support. Limited time offer.</p>
+        <p className="mt-4 text-muted-foreground">A simple monthly membership for artists who want the catalog and direct support. Limited time offer.</p>
       </div>
 
       <div className="mx-auto mt-14 max-w-xl">
@@ -41,7 +41,7 @@ export function Pricing() {
             </div>
             <div className="text-right">
               <div className="text-4xl font-black leading-none">$49.99</div>
-              <div className="mt-2 text-xs uppercase tracking-[0.25em] text-muted-foreground">per year</div>
+              <div className="mt-2 text-xs uppercase tracking-[0.25em] text-muted-foreground">per month</div>
             </div>
           </div>
 
