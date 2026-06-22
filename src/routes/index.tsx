@@ -5,6 +5,7 @@ import { z } from "zod";
 import { AccessApplicationModal } from "@/components/access-application-modal";
 import { Hero } from "@/components/hero";
 import { HomeFunnelPlayer } from "@/components/home-funnel-player";
+import { HomeGallerySection } from "@/components/home-gallery-section";
 import { PublicSupportButton } from "@/components/public-support-button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
@@ -27,6 +28,7 @@ function IndexPage() {
       <SiteNav onApplyForAccess={() => setApplicationOpen(true)} />
       <main className="pb-32">
         <Hero onApplyForAccess={() => setApplicationOpen(true)} />
+        <HomeGallerySection />
       </main>
       <SiteFooter onApplyForAccess={() => setApplicationOpen(true)} />
       <PublicSupportButton />

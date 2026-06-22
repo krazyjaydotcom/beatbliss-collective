@@ -18,6 +18,7 @@ import {
   PanelsTopLeft,
   Tag,
   FileText,
+  Image as ImageIcon,
 } from "lucide-react";
 
 
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
   { to: "/admin/beats", label: "Beats", icon: Music },
+  { to: "/admin/home-gallery", label: "Home Gallery", icon: ImageIcon },
   { to: "/admin/access-questions", label: "Access Questions", icon: FileText },
   { to: "/admin/beat-requests", label: "Beat Requests", icon: Music },
   { to: "/admin/funnels", label: "Offer Page", icon: PanelsTopLeft },
