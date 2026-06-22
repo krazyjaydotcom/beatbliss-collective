@@ -76,21 +76,24 @@ export function Hero({ onApplyForAccess }: HeroProps) {
             PRIVATE MEMBERSHIP ACCESS
           </div>
           <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight md:text-6xl lg:text-7xl">
-            UNLIMITED BEATS.
+            12 BEATS / MONTH.
             <br />
-            <span className="text-primary">$49.99/MO.</span>
+            <span className="text-primary">$49.99/YR.</span>
           </h1>
-          <p className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-primary md:text-base">
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-amber-300">
+            ⚡ Limited time offer
+          </p>
+          <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary md:text-base">
             <Headphones className="h-4 w-4" /> Your beat is playing below — and there's a whole catalog more.
           </p>
           <p className="mt-3 max-w-xl text-base text-muted-foreground md:text-lg">
-            Get unlimited downloads, full monetization rights, and direct access to KrazyJay. Cancel anytime.
+            Download up to 12 beats every month, with full monetization rights and a direct line to KrazyJay. Cancel anytime.
           </p>
 
           <ul className="mt-6 space-y-2.5 text-sm md:text-base">
             <li className="flex items-center gap-2.5">
               <Check className="h-4 w-4 shrink-0 text-primary" />
-              <span>Unlimited downloads — the entire catalog, every month</span>
+              <span>Download up to 12 beats from the catalog every month</span>
             </li>
             <li className="flex items-center gap-2.5">
               <Check className="h-4 w-4 shrink-0 text-primary" />
@@ -105,13 +108,13 @@ export function Hero({ onApplyForAccess }: HeroProps) {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {onApplyForAccess ? (
               <Button size="xl" variant="hero" type="button" onClick={onApplyForAccess}>
-                Get Full Access — $49.99/mo
+                Get Full Access — $49.99/yr
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             ) : (
               <Button size="xl" variant="hero" asChild>
                 <Link to="/checkout">
-                  Get Full Access — $49.99/mo
+                  Get Full Access — $49.99/yr
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
