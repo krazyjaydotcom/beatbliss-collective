@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 
 const FEATURES = [
   "Private catalog access",
-  "Unlimited licensing for your releases",
+  "Download up to 12 beats every month",
+  "Full monetization on your releases",
   "Direct line to KrazyJay",
   "Private classroom and support",
   "Cancel anytime",
