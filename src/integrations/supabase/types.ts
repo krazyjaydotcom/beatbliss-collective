@@ -59,6 +59,51 @@ export type Database = {
         }
         Relationships: []
       }
+      access_applications: {
+        Row: {
+          answers: Json
+          beat_id: string | null
+          beat_title: string | null
+          created_at: string
+          email: string | null
+          id: string
+          ip: string | null
+          music: string | null
+          name: string | null
+          phone: string | null
+          source: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          answers?: Json
+          beat_id?: string | null
+          beat_title?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip?: string | null
+          music?: string | null
+          name?: string | null
+          phone?: string | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          answers?: Json
+          beat_id?: string | null
+          beat_title?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip?: string | null
+          music?: string | null
+          name?: string | null
+          phone?: string | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       agreements: {
         Row: {
           accepted_at: string
