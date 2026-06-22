@@ -21,10 +21,10 @@ export function PricingCard({ onApplyForAccess }: Props) {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Membership</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">
-            One price. The whole catalog.
+            One price. A full year of beats.
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Less than the cost of one custom beat — every single month.
+            Less than the cost of one custom beat — for an entire year.
           </p>
         </div>
 
@@ -36,16 +36,16 @@ export function PricingCard({ onApplyForAccess }: Props) {
                 <p className="text-xs font-bold uppercase tracking-wider text-primary">Full Access</p>
                 <h3 className="mt-1 text-2xl font-black">MYBEATCATALOG</h3>
               </div>
-              <span className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-300">
-                Cancel anytime
+              <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-amber-300">
+                Limited time offer
               </span>
             </div>
 
             <div className="mt-6 flex items-end gap-2">
               <span className="text-5xl font-black tracking-tight">$49.99</span>
-              <span className="pb-2 text-sm text-muted-foreground">/ month</span>
+              <span className="pb-2 text-sm text-muted-foreground">/ year</span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Billed monthly — no contracts, no hidden fees.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Billed yearly — limited time offer, no hidden fees.</p>
 
             <ul className="mt-6 space-y-3">
               {FEATURES.map((f) => (
@@ -63,7 +63,7 @@ export function PricingCard({ onApplyForAccess }: Props) {
               onClick={onApplyForAccess}
               className="mt-8 w-full"
             >
-              Get Full Access — $49.99/mo
+              Get Full Access — $49.99/yr
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <p className="mt-3 text-center text-[11px] uppercase tracking-wider text-muted-foreground">
