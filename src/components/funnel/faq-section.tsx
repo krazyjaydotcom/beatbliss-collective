@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 
 const FAQ = [
   {
-    q: "What exactly do I get for $49.99/mo?",
-    a: "Unlimited downloads from the entire MYBEATCATALOG library, including new beats added every week, members-only exclusive releases, and full WAV + MP3 stems on every track. You also get a direct messaging line to KrazyJay.",
+    q: "What exactly do I get for $49.99/yr?",
+    a: "You can download up to 12 beats every month from the entire MYBEATCATALOG library — including new beats added every week and members-only exclusive releases. You also get a direct messaging line to KrazyJay. This is a limited time offer.",
   },
   {
     q: "Can I monetize songs I make with these beats?",
@@ -24,7 +24,7 @@ const FAQ = [
   },
   {
     q: "Are the beats exclusive to me?",
-    a: "No — this is a non-exclusive membership license, which is why it's $49.99/mo instead of $1,500+ per beat. If you want an exclusive lease on a specific beat, members can place bids on exclusives inside the catalog.",
+    a: "No — this is a non-exclusive membership license, which is why it's $49.99/yr instead of $1,500+ per beat. If you want an exclusive lease on a specific beat, members can place bids on exclusives inside the catalog.",
   },
 ];
 
