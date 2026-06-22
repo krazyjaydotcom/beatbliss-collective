@@ -63,7 +63,7 @@ export function PricingCard({ onApplyForAccess }: Props) {
               onClick={onApplyForAccess}
               className="mt-8 w-full"
             >
-              Get Full Access — $49.99/yr
+              Get Full Access — $49.99/mo
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <p className="mt-3 text-center text-[11px] uppercase tracking-wider text-muted-foreground">

@@ -27,7 +27,7 @@ export function JoinCatalogModal({ open, onOpenChange, onApplyForAccess }: JoinC
             You've heard {FREE_PLAY_LIMIT} previews
           </div>
           <h2 className="mt-3 text-3xl font-black leading-tight">
-            Unlock the <span className="text-primary">entire catalog</span> for $49.99/yr.
+            Unlock the <span className="text-primary">entire catalog</span> for $49.99/mo.
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Limited time offer — dozens more beats, with new drops every week.

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 const FAQ = [
   {
-    q: "What exactly do I get for $49.99/yr?",
+    q: "What exactly do I get for $49.99/mo?",
     a: "You can download up to 12 beats every month from the entire MYBEATCATALOG library — including new beats added every week and members-only exclusive releases. You also get a direct messaging line to KrazyJay. This is a limited time offer.",
   },
   {
@@ -24,7 +24,7 @@ const FAQ = [
   },
   {
     q: "Are the beats exclusive to me?",
-    a: "No — this is a non-exclusive membership license, which is why it's $49.99/yr instead of $1,500+ per beat. If you want an exclusive lease on a specific beat, members can place bids on exclusives inside the catalog.",
+    a: "No — this is a non-exclusive membership license, which is why it's $49.99/mo instead of $1,500+ per beat. If you want an exclusive lease on a specific beat, members can place bids on exclusives inside the catalog.",
   },
 ];
 
@@ -55,7 +55,7 @@ export function FaqSection({ onApplyForAccess }: Props) {
         <div className="mt-10 rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center">
           <h3 className="text-xl font-black">Ready to unlock the full catalog?</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            $49.99/yr · Limited time offer · Application reviewed in hours
+            $49.99/mo · Limited time offer · Application reviewed in hours
           </p>
           <Button size="lg" variant="hero" type="button" onClick={onApplyForAccess} className="mt-5">
             Apply For Access
