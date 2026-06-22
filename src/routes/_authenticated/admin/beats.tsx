@@ -174,6 +174,20 @@ function AdminBeatsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title="Copy share link (home page with this beat)"
+                    onClick={() => {
+                      const url = `${window.location.origin}/?b=${b.id}`;
+                      navigator.clipboard.writeText(url).then(
+                        () => toast.success("Share link copied — paste into your email"),
+                        () => toast.error("Could not copy"),
+                      );
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
                   {b.single_sale_enabled ? (
                     <Button
                       size="sm"
