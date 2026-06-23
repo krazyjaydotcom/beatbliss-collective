@@ -9,7 +9,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteNav } from "@/components/site-nav";
 import { StickyOfferBar } from "@/components/funnel/sticky-offer-bar";
 import { WhatYouGet } from "@/components/funnel/what-you-get";
-import { PricingCard } from "@/components/funnel/pricing-card";
 import { FaqSection } from "@/components/funnel/faq-section";
 import { getBeatIdBySlug } from "@/lib/beat-slug.functions";
 
@@ -33,7 +32,6 @@ function SlugBeatPage() {
       <main className="pb-32">
         <Hero onApplyForAccess={open} />
         <WhatYouGet />
-        <PricingCard onApplyForAccess={open} />
         <HomeGallerySection />
         <FaqSection onApplyForAccess={open} />
       </main>
