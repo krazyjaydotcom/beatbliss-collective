@@ -1,21 +1,27 @@
 const PLAY_KEY = "mbc_home_plays_v1";
 const SOURCE_KEY = "mbc_signup_source_beat";
 const MAX_FREE_PLAYS = 5;
+const WINDOW_MS = 24 * 60 * 60 * 1000;
 
-type PlayState = { count: number; beatIds: string[] };
+type PlayState = { count: number; beatIds: string[]; windowStartedAt: number };
 
-function read(): PlayState {
-  if (typeof window === "undefined") return { count: 0, beatIds: [] };
+function emptyState(): PlayState {
+  return { count: 0, beatIds: [], windowStartedAt: 0 };
+}
+
+function rawRead(): PlayState {
+  if (typeof window === "undefined") return emptyState();
   try {
     const raw = window.localStorage.getItem(PLAY_KEY);
-    if (!raw) return { count: 0, beatIds: [] };
+    if (!raw) return emptyState();
     const parsed = JSON.parse(raw);
     return {
       count: Number(parsed.count) || 0,
       beatIds: Array.isArray(parsed.beatIds) ? parsed.beatIds : [],
+      windowStartedAt: Number(parsed.windowStartedAt) || 0,
     };
   } catch {
-    return { count: 0, beatIds: [] };
+    return emptyState();
   }
 }
 
@@ -28,6 +34,20 @@ function write(state: PlayState) {
   }
 }
 
+/** Reads state, auto-resetting if the 24h window has elapsed (or was never started). */
+function read(): PlayState {
+  const state = rawRead();
+  if (state.count === 0) return state;
+  const now = Date.now();
+  const age = now - state.windowStartedAt;
+  if (!state.windowStartedAt || age >= WINDOW_MS || age < 0) {
+    const fresh = emptyState();
+    write(fresh);
+    return fresh;
+  }
+  return state;
+}
+
 export function getPlayCount(): number {
   return read().count;
 }
@@ -38,6 +58,7 @@ export function recordBeatPlayed(beatId: string): number {
   const next: PlayState = {
     count: state.count + 1,
     beatIds: [...state.beatIds, beatId],
+    windowStartedAt: state.windowStartedAt || Date.now(),
   };
   write(next);
   return next.count;
