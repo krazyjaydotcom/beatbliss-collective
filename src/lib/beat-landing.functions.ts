@@ -40,7 +40,7 @@ export const getBeatLandingBySlug = createServerFn({ method: "GET" })
     z.object({ slug: z.string().min(1).max(120) }).parse(input),
   )
   .handler(async ({ data }): Promise<{ beat: BeatLanding | null; global: GlobalVideo | null }> => {
-    const sb = adminClient();
+    const sb = adminClient() as any;
     const [{ data: beat }, { data: global }] = await Promise.all([
       sb.from("beats")
         .select("id,landing_slug,title,producer_name,cover_url,audio_url_tagged,audio_url,price_cents,discount_price_cents,checkout_url,application_url,seo_title,seo_description,custom_video_url,is_landing_published,is_active")
@@ -68,7 +68,7 @@ export const captureBeatLead = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: true; downloadUrl: string | null }> => {
-    const sb = adminClient();
+    const sb = adminClient() as any;
     await sb.from("beat_lead_captures").insert({
       beat_id: data.beatId,
       first_name: data.firstName,
@@ -86,7 +86,7 @@ export const checkDiscountEligibility = createServerFn({ method: "POST" })
     z.object({ email: z.string().trim().email().max(255) }).parse(input),
   )
   .handler(async ({ data }): Promise<{ eligible: boolean }> => {
-    const sb = adminClient();
+    const sb = adminClient() as any;
     const { data: rows } = await sb
       .from("lease_orders")
       .select("id")
@@ -105,7 +105,7 @@ export const recordLeaseIntent = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string; amountCents?: number; checkoutUrl?: string | null }> => {
-    const sb = adminClient();
+    const sb = adminClient() as any;
     const { data: beat } = await sb
       .from("beats")
       .select("price_cents,discount_price_cents,checkout_url")
@@ -152,7 +152,7 @@ export const recordLeaseIntent = createServerFn({ method: "POST" })
 
 // ---------- Admin ----------
 
-async function assertAdmin(context: { supabase: ReturnType<typeof createClient>; userId: string }) {
+async function assertAdmin(context: any) {
   const { data: ok } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
@@ -164,7 +164,7 @@ export const adminListBeats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const sb = adminClient();
+    const sb = adminClient() as any;
     const { data } = await sb.from("beats")
       .select("id,title,landing_slug,is_landing_published,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,audio_url_tagged,audio_url")
       .not("landing_slug", "is", null)
@@ -189,7 +189,7 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
   }) => input)
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = adminClient();
+    const sb = adminClient() as any;
     const { id, ...updates } = data;
     const clean: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
@@ -205,7 +205,7 @@ export const adminGetGlobalVideo = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const sb = adminClient();
+    const sb = adminClient() as any;
     const { data } = await sb.from("global_video").select("*").eq("id", 1).maybeSingle();
     return { global: data as GlobalVideo | null };
   });
@@ -220,7 +220,7 @@ export const adminUpdateGlobalVideo = createServerFn({ method: "POST" })
   }) => input)
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = adminClient();
+    const sb = adminClient() as any;
     const clean: Record<string, unknown> = { id: 1 };
     for (const [k, v] of Object.entries(data)) if (v !== undefined) clean[k] = v;
     const { error } = await sb.from("global_video").upsert(clean, { onConflict: "id" });
@@ -232,7 +232,7 @@ export const adminListLeadCaptures = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const sb = adminClient();
+    const sb = adminClient() as any;
     const { data } = await sb.from("beat_lead_captures")
       .select("id,beat_id,first_name,email,created_at")
       .order("created_at", { ascending: false })
@@ -244,7 +244,7 @@ export const adminListLeaseOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const sb = adminClient();
+    const sb = adminClient() as any;
     const { data } = await sb.from("lease_orders")
       .select("id,beat_id,email,amount_cents,used_first_time_discount,stripe_session_id,created_at")
       .order("created_at", { ascending: false })
