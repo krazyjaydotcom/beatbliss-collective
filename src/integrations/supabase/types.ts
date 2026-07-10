@@ -329,6 +329,38 @@ export type Database = {
           },
         ]
       }
+      beat_lead_captures: {
+        Row: {
+          beat_id: string | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+        }
+        Insert: {
+          beat_id?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+        }
+        Update: {
+          beat_id?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_lead_captures_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beat_requests: {
         Row: {
           created_at: string
@@ -421,66 +453,93 @@ export type Database = {
       }
       beats: {
         Row: {
+          application_url: string | null
           audio_url: string | null
           audio_url_tagged: string | null
           audio_url_wav: string | null
           bpm: number
+          checkout_url: string | null
           cover_url: string | null
           created_at: string
+          custom_video_url: string | null
+          discount_price_cents: number
           duration_seconds: number
           genre: string
           id: string
           is_active: boolean
           is_featured: boolean
+          is_landing_published: boolean
           is_member_only: boolean
+          landing_slug: string | null
           mood: string
           music_key: string
+          price_cents: number
           producer_name: string
           release_at: string | null
+          seo_description: string | null
+          seo_title: string | null
           single_sale_description: string | null
           single_sale_enabled: boolean
           single_sale_price_cents: number | null
           title: string
         }
         Insert: {
+          application_url?: string | null
           audio_url?: string | null
           audio_url_tagged?: string | null
           audio_url_wav?: string | null
           bpm: number
+          checkout_url?: string | null
           cover_url?: string | null
           created_at?: string
+          custom_video_url?: string | null
+          discount_price_cents?: number
           duration_seconds: number
           genre: string
           id?: string
           is_active?: boolean
           is_featured?: boolean
+          is_landing_published?: boolean
           is_member_only?: boolean
+          landing_slug?: string | null
           mood: string
           music_key: string
+          price_cents?: number
           producer_name?: string
           release_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           single_sale_description?: string | null
           single_sale_enabled?: boolean
           single_sale_price_cents?: number | null
           title: string
         }
         Update: {
+          application_url?: string | null
           audio_url?: string | null
           audio_url_tagged?: string | null
           audio_url_wav?: string | null
           bpm?: number
+          checkout_url?: string | null
           cover_url?: string | null
           created_at?: string
+          custom_video_url?: string | null
+          discount_price_cents?: number
           duration_seconds?: number
           genre?: string
           id?: string
           is_active?: boolean
           is_featured?: boolean
+          is_landing_published?: boolean
           is_member_only?: boolean
+          landing_slug?: string | null
           mood?: string
           music_key?: string
+          price_cents?: number
           producer_name?: string
           release_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           single_sale_description?: string | null
           single_sale_enabled?: boolean
           single_sale_price_cents?: number | null
@@ -868,6 +927,33 @@ export type Database = {
           },
         ]
       }
+      global_video: {
+        Row: {
+          contact_email: string | null
+          contact_instagram: string | null
+          contact_phone: string | null
+          id: number
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_instagram?: string | null
+          contact_phone?: string | null
+          id?: number
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_instagram?: string | null
+          contact_phone?: string | null
+          id?: number
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       home_gallery_images: {
         Row: {
           alt: string | null
@@ -978,6 +1064,44 @@ export type Database = {
           used_by?: string | null
         }
         Relationships: []
+      }
+      lease_orders: {
+        Row: {
+          amount_cents: number
+          beat_id: string | null
+          created_at: string
+          email: string
+          id: string
+          stripe_session_id: string | null
+          used_first_time_discount: boolean
+        }
+        Insert: {
+          amount_cents: number
+          beat_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          stripe_session_id?: string | null
+          used_first_time_discount?: boolean
+        }
+        Update: {
+          amount_cents?: number
+          beat_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_session_id?: string | null
+          used_first_time_discount?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_orders_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notes: {
         Row: {
