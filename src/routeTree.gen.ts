@@ -19,6 +19,7 @@ import { Route as BeatClaimRouteImport } from './routes/beat-claim'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TagsSlugRouteImport } from './routes/tags.$slug'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -115,6 +116,11 @@ const SlugRoute = SlugRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TagsSlugRoute = TagsSlugRouteImport.update({
+  id: '/tags/$slug',
+  path: '/tags/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfferTokenRoute = OfferTokenRouteImport.update({
@@ -411,6 +417,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/tags/$slug': typeof TagsSlugRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/tags/$slug': typeof TagsSlugRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
@@ -530,6 +538,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/tags/$slug': typeof TagsSlugRoute
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/_authenticated/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
@@ -591,6 +600,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/join/$token'
     | '/offer/$token'
+    | '/tags/$slug'
     | '/admin/access'
     | '/admin/access-applications'
     | '/admin/access-questions'
@@ -649,6 +659,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/join/$token'
     | '/offer/$token'
+    | '/tags/$slug'
     | '/admin/access'
     | '/admin/access-applications'
     | '/admin/access-questions'
@@ -709,6 +720,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/join/$token'
     | '/offer/$token'
+    | '/tags/$slug'
     | '/_authenticated/admin/access'
     | '/_authenticated/admin/access-applications'
     | '/_authenticated/admin/access-questions'
@@ -757,6 +769,7 @@ export interface RootRouteChildren {
   InviteTokenRoute: typeof InviteTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  TagsSlugRoute: typeof TagsSlugRoute
   ApiPublicBeatClaimRoute: typeof ApiPublicBeatClaimRoute
   ApiPublicDownloadBeatRoute: typeof ApiPublicDownloadBeatRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -833,6 +846,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tags/$slug': {
+      id: '/tags/$slug'
+      path: '/tags/$slug'
+      fullPath: '/tags/$slug'
+      preLoaderRoute: typeof TagsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offer/$token': {
@@ -1304,6 +1324,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteTokenRoute: InviteTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
   OfferTokenRoute: OfferTokenRoute,
+  TagsSlugRoute: TagsSlugRoute,
   ApiPublicBeatClaimRoute: ApiPublicBeatClaimRoute,
   ApiPublicDownloadBeatRoute: ApiPublicDownloadBeatRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
