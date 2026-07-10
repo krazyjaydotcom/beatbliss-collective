@@ -219,7 +219,7 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : beats.length === 0 ? (
-        <p className="text-sm text-gray-500">No beats have landing slugs yet. Go to /admin/beats, edit a beat, and set its landing slug.</p>
+        <p className="text-sm text-gray-500">No beats yet. Create beats in /admin/beats first.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
