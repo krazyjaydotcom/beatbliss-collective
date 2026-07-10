@@ -19,6 +19,7 @@ import { Route as BeatClaimRouteImport } from './routes/beat-claim'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TagsSlugRouteImport } from './routes/tags.$slug'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -59,6 +60,7 @@ import { Route as AuthenticatedAdminFunnelsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminClassroomRouteImport } from './routes/_authenticated/admin/classroom'
 import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authenticated/admin/beats'
 import { Route as AuthenticatedAdminBeatRequestsRouteImport } from './routes/_authenticated/admin/beat-requests'
+import { Route as AuthenticatedAdminBeatLandingRouteImport } from './routes/_authenticated/admin/beat-landing'
 import { Route as AuthenticatedAdminBeatClaimsRouteImport } from './routes/_authenticated/admin/beat-claims'
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as AuthenticatedAdminAccessQuestionsRouteImport } from './routes/_authenticated/admin/access-questions'
@@ -115,6 +117,11 @@ const SlugRoute = SlugRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TagsSlugRoute = TagsSlugRouteImport.update({
+  id: '/tags/$slug',
+  path: '/tags/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfferTokenRoute = OfferTokenRouteImport.update({
@@ -331,6 +338,12 @@ const AuthenticatedAdminBeatRequestsRoute =
     path: '/beat-requests',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminBeatLandingRoute =
+  AuthenticatedAdminBeatLandingRouteImport.update({
+    id: '/beat-landing',
+    path: '/beat-landing',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminBeatClaimsRoute =
   AuthenticatedAdminBeatClaimsRouteImport.update({
     id: '/beat-claims',
@@ -411,11 +424,13 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/tags/$slug': typeof TagsSlugRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
+  '/admin/beat-landing': typeof AuthenticatedAdminBeatLandingRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
@@ -469,11 +484,13 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/tags/$slug': typeof TagsSlugRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
+  '/admin/beat-landing': typeof AuthenticatedAdminBeatLandingRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
@@ -530,11 +547,13 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/tags/$slug': typeof TagsSlugRoute
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/_authenticated/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
+  '/_authenticated/admin/beat-landing': typeof AuthenticatedAdminBeatLandingRoute
   '/_authenticated/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/_authenticated/admin/classroom': typeof AuthenticatedAdminClassroomRoute
@@ -591,11 +610,13 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/join/$token'
     | '/offer/$token'
+    | '/tags/$slug'
     | '/admin/access'
     | '/admin/access-applications'
     | '/admin/access-questions'
     | '/admin/agreements'
     | '/admin/beat-claims'
+    | '/admin/beat-landing'
     | '/admin/beat-requests'
     | '/admin/beats'
     | '/admin/classroom'
@@ -649,11 +670,13 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/join/$token'
     | '/offer/$token'
+    | '/tags/$slug'
     | '/admin/access'
     | '/admin/access-applications'
     | '/admin/access-questions'
     | '/admin/agreements'
     | '/admin/beat-claims'
+    | '/admin/beat-landing'
     | '/admin/beat-requests'
     | '/admin/beats'
     | '/admin/classroom'
@@ -709,11 +732,13 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/join/$token'
     | '/offer/$token'
+    | '/tags/$slug'
     | '/_authenticated/admin/access'
     | '/_authenticated/admin/access-applications'
     | '/_authenticated/admin/access-questions'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/beat-claims'
+    | '/_authenticated/admin/beat-landing'
     | '/_authenticated/admin/beat-requests'
     | '/_authenticated/admin/beats'
     | '/_authenticated/admin/classroom'
@@ -757,6 +782,7 @@ export interface RootRouteChildren {
   InviteTokenRoute: typeof InviteTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  TagsSlugRoute: typeof TagsSlugRoute
   ApiPublicBeatClaimRoute: typeof ApiPublicBeatClaimRoute
   ApiPublicDownloadBeatRoute: typeof ApiPublicDownloadBeatRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -833,6 +859,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tags/$slug': {
+      id: '/tags/$slug'
+      path: '/tags/$slug'
+      fullPath: '/tags/$slug'
+      preLoaderRoute: typeof TagsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offer/$token': {
@@ -1115,6 +1148,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBeatRequestsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/beat-landing': {
+      id: '/_authenticated/admin/beat-landing'
+      path: '/beat-landing'
+      fullPath: '/admin/beat-landing'
+      preLoaderRoute: typeof AuthenticatedAdminBeatLandingRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/beat-claims': {
       id: '/_authenticated/admin/beat-claims'
       path: '/beat-claims'
@@ -1180,6 +1220,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAccessQuestionsRoute: typeof AuthenticatedAdminAccessQuestionsRoute
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
   AuthenticatedAdminBeatClaimsRoute: typeof AuthenticatedAdminBeatClaimsRoute
+  AuthenticatedAdminBeatLandingRoute: typeof AuthenticatedAdminBeatLandingRoute
   AuthenticatedAdminBeatRequestsRoute: typeof AuthenticatedAdminBeatRequestsRoute
   AuthenticatedAdminBeatsRoute: typeof AuthenticatedAdminBeatsRoute
   AuthenticatedAdminClassroomRoute: typeof AuthenticatedAdminClassroomRoute
@@ -1207,6 +1248,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminAccessQuestionsRoute,
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
   AuthenticatedAdminBeatClaimsRoute: AuthenticatedAdminBeatClaimsRoute,
+  AuthenticatedAdminBeatLandingRoute: AuthenticatedAdminBeatLandingRoute,
   AuthenticatedAdminBeatRequestsRoute: AuthenticatedAdminBeatRequestsRoute,
   AuthenticatedAdminBeatsRoute: AuthenticatedAdminBeatsRoute,
   AuthenticatedAdminClassroomRoute: AuthenticatedAdminClassroomRoute,
@@ -1304,6 +1346,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteTokenRoute: InviteTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
   OfferTokenRoute: OfferTokenRoute,
+  TagsSlugRoute: TagsSlugRoute,
   ApiPublicBeatClaimRoute: ApiPublicBeatClaimRoute,
   ApiPublicDownloadBeatRoute: ApiPublicDownloadBeatRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
