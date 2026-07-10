@@ -169,7 +169,7 @@ export const adminListBeats = createServerFn({ method: "GET" })
       .select("id,title,landing_slug,is_landing_published,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,audio_url_tagged,audio_url")
       .not("landing_slug", "is", null)
       .order("title", { ascending: true });
-    return { beats: (data ?? []) as Array<Record<string, unknown>> };
+    return { beats: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
   });
 
 export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
@@ -237,7 +237,7 @@ export const adminListLeadCaptures = createServerFn({ method: "GET" })
       .select("id,beat_id,first_name,email,created_at")
       .order("created_at", { ascending: false })
       .limit(500);
-    return { leads: (data ?? []) as Array<Record<string, unknown>> };
+    return { leads: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
   });
 
 export const adminListLeaseOrders = createServerFn({ method: "GET" })
@@ -249,5 +249,5 @@ export const adminListLeaseOrders = createServerFn({ method: "GET" })
       .select("id,beat_id,email,amount_cents,used_first_time_discount,stripe_session_id,created_at")
       .order("created_at", { ascending: false })
       .limit(500);
-    return { orders: (data ?? []) as Array<Record<string, unknown>> };
+    return { orders: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
   });
