@@ -1,302 +1,467 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Pause, Play, Sparkles, Waves } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { KrazyLogo } from "@/components/krazy-logo";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { BeatClaimModal, type ClaimableBeatLite } from "@/components/beat-claim-modal";
-
-type SeoPage = {
-  slug: string;
-  target_keyword: string;
-  seo_title: string;
-  meta_description: string;
-  h1: string;
-  intro: string;
-  sections: Array<{ heading: string; body: string }>;
-  tag_slugs: string[];
-  related_page_slugs: string[];
-};
-
-type SeoBeat = {
-  id: string;
-  title: string;
-  producer_name: string | null;
-  genre: string | null;
-  mood: string | null;
-  bpm: number | null;
-  duration_seconds: number | null;
-  cover_url: string | null;
-  audio_url: string | null;
-  audio_url_tagged: string | null;
-  is_featured: boolean;
-  tag_slugs: string[];
-};
-
-type RelatedPage = { slug: string; h1: string; target_keyword: string };
+import { useServerFn } from "@tanstack/react-start";
+import { HeadphonesIcon, Play, Pause, Volume2, Download, Crown, User, Gift, Instagram, Mail, Phone, X } from "lucide-react";
+import {
+  getBeatLandingBySlug,
+  captureBeatLead,
+  checkDiscountEligibility,
+  recordLeaseIntent,
+} from "@/lib/beat-landing.functions";
 
 const SITE = "https://mybeatcatalog.com";
 
 export const Route = createFileRoute("/beats/$slug")({
   loader: async ({ params }) => {
-    const { data: page, error } = await (supabase as any)
-      .from("seo_pages")
-      .select("slug,target_keyword,seo_title,meta_description,h1,intro,sections,tag_slugs,related_page_slugs")
-      .eq("slug", params.slug)
-      .eq("is_published", true)
-      .maybeSingle();
-    if (error) throw error;
-    if (!page) throw notFound();
-
-    const [{ data: beats }, { data: related }] = await Promise.all([
-      (supabase as any).rpc("list_beats_by_tags", { _slugs: page.tag_slugs }),
-      (supabase as any)
-        .from("seo_pages")
-        .select("slug,h1,target_keyword")
-        .in("slug", page.related_page_slugs?.length ? page.related_page_slugs : ["__none__"])
-        .eq("is_published", true),
-    ]);
-
-    return {
-      page: page as SeoPage,
-      beats: (beats ?? []) as SeoBeat[],
-      related: (related ?? []) as RelatedPage[],
-    };
+    const res = await getBeatLandingBySlug({ data: { slug: params.slug } });
+    if (!res.beat) throw notFound();
+    return res;
   },
   head: ({ loaderData, params }) => {
-    const p = loaderData?.page;
+    const b = loaderData?.beat;
     const url = `${SITE}/beats/${params.slug}`;
+    const title = b?.seo_title || (b ? `${b.title} — MYBEATCATALOG` : "Beat — MYBEATCATALOG");
+    const desc = b?.seo_description || "Preview the beat, download the tagged version free, purchase a lease, or apply to work direct.";
     return {
       meta: [
-        { title: p?.seo_title ?? "Beats — MYBEATCATALOG" },
-        { name: "description", content: p?.meta_description ?? "Premium beats and instrumentals." },
-        { property: "og:title", content: p?.seo_title ?? "Beats — MYBEATCATALOG" },
-        { property: "og:description", content: p?.meta_description ?? "Premium beats and instrumentals." },
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
         { property: "og:url", content: url },
-        { property: "og:type", content: "article" },
+        { property: "og:type", content: "product" },
+        ...(b?.cover_url ? [{ property: "og:image", content: b.cover_url }] : []),
       ],
       links: [{ rel: "canonical", href: url }],
-      scripts: p
-        ? [
-            {
-              type: "application/ld+json",
-              children: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Article",
-                headline: p.h1,
-                description: p.meta_description,
-                mainEntityOfPage: url,
-                author: { "@type": "Organization", name: "MYBEATCATALOG" },
-              }),
-            },
-          ]
-        : [],
     };
   },
-  component: SeoBeatsPage,
+  notFoundComponent: () => (
+    <div className="min-h-screen bg-white flex items-center justify-center text-black">
+      <div className="text-center">
+        <h1 className="text-2xl font-black">Beat not found</h1>
+        <p className="mt-2 text-gray-500">This beat page doesn't exist or has been unpublished.</p>
+      </div>
+    </div>
+  ),
+  errorComponent: () => (
+    <div className="min-h-screen bg-white flex items-center justify-center text-black">
+      <p>Something went wrong. Please refresh.</p>
+    </div>
+  ),
+  component: BeatLandingPage,
 });
 
-function formatDuration(seconds: number | null | undefined) {
-  const total = Math.max(0, Number(seconds ?? 0));
-  if (!total) return "--:--";
-  const min = Math.floor(total / 60);
-  const sec = Math.floor(total % 60);
-  return String(min).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+const OFFER_DURATION_MS = 20 * 60 * 1000;
+
+function useOfferTimer(slug: string) {
+  const [remaining, setRemaining] = useState<number>(OFFER_DURATION_MS);
+  useEffect(() => {
+    const key = `mbc_offer_start_${slug}`;
+    let start = Number(localStorage.getItem(key) || 0);
+    if (!start) {
+      start = Date.now();
+      localStorage.setItem(key, String(start));
+    }
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      setRemaining(Math.max(0, OFFER_DURATION_MS - elapsed));
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [slug]);
+  const active = remaining > 0;
+  const min = Math.floor(remaining / 60000);
+  const sec = Math.floor((remaining % 60000) / 1000);
+  return { active, min, sec };
 }
 
-function SeoBeatsPage() {
-  const { page, beats, related } = Route.useLoaderData() as {
-    page: SeoPage;
-    beats: SeoBeat[];
-    related: RelatedPage[];
-  };
+function BeatLandingPage() {
+  const { beat, global } = Route.useLoaderData();
+  const params = Route.useParams();
+  const timer = useOfferTimer(params.slug);
+
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const [leaseOpen, setLeaseOpen] = useState(false);
+
+  const videoUrl = beat!.custom_video_url || global?.video_url || null;
+  const price = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+  const showDiscount = timer.active;
+  const displayPrice = showDiscount ? beat!.discount_price_cents : beat!.price_cents;
+
+  return (
+    <div className="min-h-screen bg-white text-black">
+      {/* Header */}
+      <header className="mx-auto max-w-5xl px-4 pt-6 sm:pt-8 flex items-start justify-between gap-4">
+        <div>
+          <div className="text-xl font-black tracking-wide">MYBEATCATALOG</div>
+          <div className="text-xs sm:text-sm text-purple-600 font-medium mt-0.5">by KRAZYJAYDOTCOM</div>
+        </div>
+        <button
+          onClick={() => setHelpOpen(true)}
+          className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:border-gray-300 transition"
+        >
+          <HeadphonesIcon className="h-4 w-4" />
+          Need Help?
+        </button>
+      </header>
+
+      <main className="mx-auto max-w-4xl px-4 pt-10 pb-20">
+        <h1 className="text-center text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+          Find Your Next Record in 60 Seconds.
+        </h1>
+        <p className="mt-4 text-center text-sm sm:text-base text-gray-500 max-w-2xl mx-auto">
+          Preview the beat, download the tagged version free, purchase a lease, or apply to work with me directly.
+        </p>
+
+        {/* Discount bar */}
+        {showDiscount && (
+          <div className="mt-8 rounded-2xl bg-orange-50 border border-orange-100 px-5 py-4 flex items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Gift className="h-6 w-6 text-orange-500" />
+              <div className="text-sm sm:text-base">
+                <span className="font-bold text-orange-600">50% Off</span>{" "}
+                <span className="font-semibold">Your First Lease for the Next 20 Minutes</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-orange-600 font-black tabular-nums">
+              <div className="text-center"><div className="text-xl sm:text-2xl leading-none">{String(timer.min).padStart(2, "0")}</div><div className="text-[10px] text-gray-500 mt-0.5">MIN</div></div>
+              <div className="text-xl sm:text-2xl">:</div>
+              <div className="text-center"><div className="text-xl sm:text-2xl leading-none">{String(timer.sec).padStart(2, "0")}</div><div className="text-[10px] text-gray-500 mt-0.5">SEC</div></div>
+            </div>
+          </div>
+        )}
+
+        {/* Video */}
+        <div className="mt-8 rounded-2xl overflow-hidden bg-gray-900 aspect-video shadow-lg">
+          {videoUrl ? (
+            <video src={videoUrl} controls playsInline className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+              No video yet — upload one in the admin panel.
+            </div>
+          )}
+        </div>
+
+        {/* Audio player */}
+        <AudioPlayer beat={beat!} />
+
+        {/* Buttons - desktop L->R: Download, Lease, Apply.  Mobile stack: Lease, Download, Apply */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Lease - mobile order 1, desktop order 2 */}
+          <button
+            onClick={() => setLeaseOpen(true)}
+            className="order-1 md:order-2 group relative rounded-2xl border-2 border-orange-400 bg-orange-50 px-6 py-5 text-left transition hover:shadow-lg hover:-translate-y-0.5"
+          >
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center">
+                <Crown className="h-6 w-6 text-orange-500" />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-base">
+                  Purchase Lease —{" "}
+                  {showDiscount ? (
+                    <>
+                      <span className="text-orange-600">{price(beat!.discount_price_cents)}</span>{" "}
+                      <span className="text-gray-400 line-through text-sm">{price(beat!.price_cents)}</span>
+                    </>
+                  ) : (
+                    <span className="text-orange-600">{price(beat!.price_cents)}</span>
+                  )}
+                </div>
+              </div>
+              <div className="text-orange-500">→</div>
+            </div>
+          </button>
+
+          {/* Download - mobile order 2, desktop order 1 */}
+          <button
+            onClick={() => setDownloadOpen(true)}
+            className="order-2 md:order-1 group rounded-2xl border border-gray-200 bg-white px-6 py-5 text-left transition hover:shadow-md hover:border-purple-200"
+          >
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                <Download className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="flex-1 font-semibold text-sm">Download Tagged Beat</div>
+              <div className="text-purple-600">→</div>
+            </div>
+          </button>
+
+          {/* Apply - always order 3 */}
+          <a
+            href={beat!.application_url || "#"}
+            target={beat!.application_url ? "_blank" : undefined}
+            rel="noreferrer"
+            className="order-3 group rounded-2xl border border-gray-200 bg-white px-6 py-5 text-left transition hover:shadow-md hover:border-purple-200"
+          >
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                <User className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="flex-1 font-semibold text-sm leading-tight">Apply to Work<br />Direct With Me</div>
+              <div className="text-purple-600">→</div>
+            </div>
+          </a>
+        </div>
+
+        <p className="mt-4 text-center text-xs text-gray-400">
+          New customers only. Limit one discounted lease per customer.
+        </p>
+
+        {beat!.seo_description && (
+          <section className="mt-16 border-t border-gray-100 pt-8">
+            <p className="text-sm text-gray-500 leading-relaxed max-w-3xl mx-auto">{beat!.seo_description}</p>
+          </section>
+        )}
+      </main>
+
+      {helpOpen && <NeedHelpModal global={global} onClose={() => setHelpOpen(false)} />}
+      {downloadOpen && (
+        <DownloadModal
+          beatId={beat!.id}
+          onClose={() => setDownloadOpen(false)}
+        />
+      )}
+      {leaseOpen && (
+        <LeaseModal
+          beatId={beat!.id}
+          fullPriceCents={beat!.price_cents}
+          discountPriceCents={beat!.discount_price_cents}
+          checkoutUrl={beat!.checkout_url}
+          showDiscount={showDiscount}
+          onClose={() => setLeaseOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function AudioPlayer({ beat }: { beat: NonNullable<ReturnType<typeof Route.useLoaderData>["beat"]> }) {
+  const src = beat.audio_url_tagged || beat.audio_url;
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [playingId, setPlayingId] = useState<string>("");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [modalBeat, setModalBeat] = useState<ClaimableBeatLite | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [pos, setPos] = useState(0);
+  const [dur, setDur] = useState(0);
+  const [volume, setVolume] = useState(1);
 
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    const onEnd = () => setIsPlaying(false);
+    const onTime = () => setPos(a.currentTime);
+    const onDur = () => setDur(a.duration || 0);
+    const onEnd = () => setPlaying(false);
+    a.addEventListener("timeupdate", onTime);
+    a.addEventListener("loadedmetadata", onDur);
     a.addEventListener("ended", onEnd);
-    return () => a.removeEventListener("ended", onEnd);
+    return () => {
+      a.removeEventListener("timeupdate", onTime);
+      a.removeEventListener("loadedmetadata", onDur);
+      a.removeEventListener("ended", onEnd);
+    };
   }, []);
 
-  function togglePlay(beat: SeoBeat) {
+  const toggle = () => {
     const a = audioRef.current;
-    if (!a) return;
-    const src = beat.audio_url_tagged || beat.audio_url || "";
-    if (!src) return;
-    if (playingId === beat.id && isPlaying) {
-      a.pause();
-      setIsPlaying(false);
-      return;
-    }
-    if (playingId !== beat.id) {
-      a.src = src;
-      a.load();
-      setPlayingId(beat.id);
-    }
-    setIsPlaying(true);
-    setTimeout(() => a.play().catch(() => setIsPlaying(false)), 0);
-  }
+    if (!a || !src) return;
+    if (playing) { a.pause(); setPlaying(false); }
+    else { a.play(); setPlaying(true); }
+  };
+
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
 
   return (
-    <div className="min-h-screen bg-[#02060a] text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.16),transparent_36%),linear-gradient(180deg,rgba(2,6,10,0.2),#02060a_72%)]" />
-      <div className="relative min-h-screen">
-        <header className="border-b border-white/10">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
-            <Link to="/" aria-label="MYBEATCATALOG home">
-              <KrazyLogo className="text-2xl" />
-            </Link>
-            <Link
-              to="/beat-claim"
-              className="hidden items-center gap-2 text-sm font-semibold uppercase tracking-wide text-white md:flex"
-            >
-              <Waves className="h-5 w-5 text-primary" /> Browse All Beats
-            </Link>
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-5xl px-4 py-8 pb-16 sm:px-5">
-          <article>
-            <header className="text-center">
-              <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary">
-                {page.target_keyword}
-              </Badge>
-              <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl md:text-5xl">{page.h1}</h1>
-              <p className="mx-auto mt-4 max-w-2xl text-sm text-white/65 sm:text-base">{page.intro}</p>
-            </header>
-
-            <section className="mt-8" aria-labelledby="beats-heading">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 id="beats-heading" className="text-xl font-black uppercase tracking-tight">
-                  Available Beats
-                </h2>
-                <span className="text-xs text-white/45">{beats.length} ready</span>
-              </div>
-
-              {beats.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-12 text-center text-sm text-white/55">
-                  <Sparkles className="mx-auto mb-3 h-6 w-6 text-primary" />
-                  No beats are tagged for this page yet. Check back soon, or
-                  <Link to="/beat-claim" className="ml-1 text-primary underline">
-                    browse the full catalog
-                  </Link>
-                  .
-                </div>
-              ) : (
-                <ul className="grid gap-3">
-                  {beats.map((beat) => {
-                    const active = playingId === beat.id && isPlaying;
-                    return (
-                      <li
-                        key={beat.id}
-                        className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/[0.025] p-4 transition hover:border-primary/40 sm:flex-row sm:items-center"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => togglePlay(beat)}
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/25 text-white transition hover:border-primary hover:text-primary"
-                          aria-label={(active ? "Pause " : "Play ") + beat.title}
-                        >
-                          {active ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}
-                        </button>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="truncate text-base font-bold">{beat.title}</p>
-                            {beat.is_featured ? (
-                              <Badge className="bg-primary/20 text-primary">Featured</Badge>
-                            ) : null}
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/55">
-                            {beat.bpm ? <span>{beat.bpm} BPM</span> : null}
-                            {beat.duration_seconds ? <span>{formatDuration(beat.duration_seconds)}</span> : null}
-                            {beat.tag_slugs.slice(0, 4).map((t) => (
-                              <span
-                                key={t}
-                                className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/55"
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="hero"
-                          className="sm:w-auto"
-                          onClick={() =>
-                            setModalBeat({
-                              id: beat.id,
-                              title: beat.title,
-                              genre: beat.genre,
-                              mood: beat.mood,
-                              duration_seconds: beat.duration_seconds,
-                            })
-                          }
-                        >
-                          Select This Beat
-                        </Button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-
-            <div className="mt-12 space-y-8">
-              {page.sections.map((s, i) => (
-                <section key={i}>
-                  <h2 className="text-xl font-black uppercase tracking-tight sm:text-2xl">{s.heading}</h2>
-                  <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/70 sm:text-base">
-                    {s.body}
-                  </p>
-                </section>
-              ))}
-            </div>
-
-            {related.length > 0 ? (
-              <section className="mt-12 rounded-2xl border border-white/10 bg-white/[0.025] p-6">
-                <h2 className="text-lg font-black uppercase tracking-tight">Related beat styles</h2>
-                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {related.map((r) => (
-                    <li key={r.slug}>
-                      <Link
-                        to="/beats/$slug"
-                        params={{ slug: r.slug }}
-                        className="block rounded-lg border border-white/10 bg-white/[0.02] px-4 py-3 text-sm font-semibold transition hover:border-primary/40 hover:text-primary"
-                      >
-                        {r.h1}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            <div className="mt-10 text-center">
-              <Link
-                to="/beat-claim"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
-              >
-                Browse the full catalog →
-              </Link>
-            </div>
-          </article>
-        </main>
+    <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 flex items-center gap-4 shadow-sm">
+      <div className="h-14 w-14 rounded-lg overflow-hidden bg-purple-100 flex-shrink-0">
+        {beat.cover_url ? (
+          <img src={beat.cover_url} alt={beat.title} className="w-full h-full object-cover" />
+        ) : null}
       </div>
-
-      <audio ref={audioRef} preload="metadata" />
-      <BeatClaimModal
-        beat={modalBeat}
-        open={!!modalBeat}
-        onClose={() => setModalBeat(null)}
-        source={`seo:${page.slug}`}
+      <div className="flex-shrink-0 min-w-0">
+        <div className="font-bold text-sm truncate">{beat.title}</div>
+        <div className="text-xs text-gray-500 truncate">Prod. by {beat.producer_name || "KrazyJay"}</div>
+      </div>
+      <button
+        onClick={toggle}
+        className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center hover:bg-purple-200 transition flex-shrink-0"
+        aria-label={playing ? "Pause" : "Play"}
+      >
+        {playing ? <Pause className="h-4 w-4 text-purple-600" /> : <Play className="h-4 w-4 text-purple-600 ml-0.5" />}
+      </button>
+      <input
+        type="range"
+        min={0}
+        max={dur || 1}
+        value={pos}
+        onChange={(e) => { if (audioRef.current) audioRef.current.currentTime = Number(e.target.value); }}
+        className="flex-1 accent-purple-500 min-w-0"
       />
+      <div className="text-xs text-gray-500 tabular-nums flex-shrink-0 hidden sm:block">
+        {fmt(pos)} / {fmt(dur)}
+      </div>
+      <button
+        onClick={() => { const v = volume > 0 ? 0 : 1; setVolume(v); if (audioRef.current) audioRef.current.volume = v; }}
+        className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+        aria-label="Volume"
+      >
+        <Volume2 className="h-5 w-5" />
+      </button>
+      {src && <audio ref={audioRef} src={src} preload="metadata" />}
+    </div>
+  );
+}
+
+function NeedHelpModal({ global, onClose }: { global: { contact_instagram: string | null; contact_email: string | null; contact_phone: string | null } | null; onClose: () => void }) {
+  const ig = global?.contact_instagram;
+  const em = global?.contact_email;
+  const ph = global?.contact_phone;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-black">Need Help?</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="mt-4 space-y-2">
+          {ig && (
+            <a href={ig.startsWith("http") ? ig : `https://instagram.com/${ig.replace(/^@/, "")}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-purple-300 transition">
+              <Instagram className="h-5 w-5 text-purple-600" /><span className="font-medium">Instagram</span>
+            </a>
+          )}
+          {em && (
+            <a href={`mailto:${em}`} className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-purple-300 transition">
+              <Mail className="h-5 w-5 text-purple-600" /><span className="font-medium">{em}</span>
+            </a>
+          )}
+          {ph && (
+            <a href={`tel:${ph}`} className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-purple-300 transition">
+              <Phone className="h-5 w-5 text-purple-600" /><span className="font-medium">{ph}</span>
+            </a>
+          )}
+          {!ig && !em && !ph && (
+            <p className="text-sm text-gray-500">Contact info not set yet.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => void }) {
+  const capture = useServerFn(captureBeatLead);
+  const [firstName, setFirstName] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await capture({ data: { beatId, firstName, email } });
+      if (r.downloadUrl) setDownloadUrl(r.downloadUrl);
+      else setError("Tagged file not available yet.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-black">Free Tagged Download</h3>
+          <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
+        </div>
+        {downloadUrl ? (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm text-gray-600">Your download is ready!</p>
+            <a href={downloadUrl} download className="block w-full rounded-xl bg-purple-600 text-white text-center px-5 py-3 font-semibold hover:bg-purple-700">
+              Download Now
+            </a>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="mt-4 space-y-3">
+            <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-purple-400" />
+            <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-purple-400" />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <button disabled={loading} className="w-full rounded-xl bg-purple-600 text-white px-5 py-3 font-semibold hover:bg-purple-700 disabled:opacity-50">
+              {loading ? "Preparing..." : "Get Free Download"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LeaseModal({ beatId, fullPriceCents, discountPriceCents, checkoutUrl, showDiscount, onClose }: {
+  beatId: string; fullPriceCents: number; discountPriceCents: number; checkoutUrl: string | null; showDiscount: boolean; onClose: () => void;
+}) {
+  const check = useServerFn(checkDiscountEligibility);
+  const record = useServerFn(recordLeaseIntent);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      let useDiscount = showDiscount;
+      if (useDiscount) {
+        const elig = await check({ data: { email } });
+        useDiscount = elig.eligible;
+      }
+      const r = await record({ data: { beatId, email, useDiscount } });
+      if (!r.ok) throw new Error(r.error || "Failed");
+      if (r.checkoutUrl) {
+        window.location.href = r.checkoutUrl;
+      } else {
+        setError("Checkout URL not configured. Please contact support.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const price = (c: number) => `$${(c / 100).toFixed(2)}`;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-black">Purchase Lease</h3>
+          <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="mt-3 text-sm text-gray-500">
+          {showDiscount ? (
+            <>First-time price: <span className="font-bold text-orange-600">{price(discountPriceCents)}</span> (regular {price(fullPriceCents)})</>
+          ) : (
+            <>Price: <span className="font-bold">{price(fullPriceCents)}</span></>
+          )}
+        </div>
+        <form onSubmit={submit} className="mt-4 space-y-3">
+          <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email for order confirmation" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-400" />
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <button disabled={loading || !checkoutUrl} className="w-full rounded-xl bg-orange-500 text-white px-5 py-3 font-semibold hover:bg-orange-600 disabled:opacity-50">
+            {loading ? "Processing..." : "Continue to Checkout"}
+          </button>
+          {!checkoutUrl && <p className="text-xs text-gray-400 text-center">Checkout URL not configured for this beat.</p>}
+          <p className="text-[11px] text-gray-400 text-center">New customers only. Limit one discounted lease per customer.</p>
+        </form>
+      </div>
     </div>
   );
 }
