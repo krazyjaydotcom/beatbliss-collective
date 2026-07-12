@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Check, Crown, Headphones, Lock } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-producer.jpg";
@@ -65,56 +65,31 @@ export function Hero({ onApplyForAccess }: HeroProps) {
   const customMediaUrl = media.hero_media_url?.trim();
   const filterCss = heroFilterToCss(media.hero_image_filter);
 
-
   return (
     <section className="relative overflow-hidden pt-32 pb-12 lg:min-h-[calc(100vh-0px)] lg:flex lg:items-center">
       <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-radial-red)" }} />
       <div className="container mx-auto grid items-center gap-10 px-6 lg:grid-cols-2">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-bold tracking-wider text-primary">
-            <Crown className="h-3.5 w-3.5" />
-            PRIVATE MEMBERSHIP ACCESS
-          </div>
-          <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight md:text-6xl lg:text-7xl">
-            12 BEATS / MONTH.
-            <br />
-            <span className="text-primary">$49.99/MO.</span>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
+            MYBEATCATALOG <span className="text-primary">by KRAZYJAYDOTCOM</span>
+          </p>
+          <h1 className="mt-4 text-4xl font-black leading-[0.95] tracking-tight md:text-6xl lg:text-7xl">
+            Find Your Next Record in 60 Seconds.
           </h1>
-          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-amber-300">
-            ⚡ Limited time offer
+          <p className="mt-4 max-w-xl text-base text-muted-foreground md:text-lg">
+            Private membership access. Apply below or log in if you're already a member.
           </p>
-          <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary md:text-base">
-            <Headphones className="h-4 w-4" /> Your beat is playing below — and there's a whole catalog more.
-          </p>
-          <p className="mt-3 max-w-xl text-base text-muted-foreground md:text-lg">
-            Download up to 12 beats every month, with full monetization rights and a direct line to KrazyJay. Cancel anytime.
-          </p>
-
-          <ul className="mt-6 space-y-2.5 text-sm md:text-base">
-            <li className="flex items-center gap-2.5">
-              <Check className="h-4 w-4 shrink-0 text-primary" />
-              <span>Download up to 12 beats from the catalog every month</span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <Check className="h-4 w-4 shrink-0 text-primary" />
-              <span>Full monetization rights — release on every platform</span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <Check className="h-4 w-4 shrink-0 text-primary" />
-              <span>Cancel anytime — no contracts, no surprises</span>
-            </li>
-          </ul>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {onApplyForAccess ? (
               <Button size="xl" variant="hero" type="button" onClick={onApplyForAccess}>
-                Get Full Access — $49.99/mo
+                Apply for Access
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             ) : (
               <Button size="xl" variant="hero" asChild>
-                <Link to="/checkout">
-                  Get Full Access — $49.99/mo
+                <Link to="/apply">
+                  Apply for Access
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -122,20 +97,6 @@ export function Hero({ onApplyForAccess }: HeroProps) {
             <Button size="xl" variant="heroOutline" asChild>
               <Link to="/login">Member Login</Link>
             </Button>
-          </div>
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground sm:text-sm">
-            <span className="inline-flex items-center gap-1.5">
-              <Lock className="h-3.5 w-3.5 text-primary" />
-              Application required
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
-              Cancel anytime
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
-              Approved in hours
-            </span>
           </div>
         </div>
         <div className="relative">
