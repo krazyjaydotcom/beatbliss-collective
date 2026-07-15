@@ -343,7 +343,10 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           <div><label className="text-xs font-semibold">Producer name</label><input className={inp} value={form.producer_name} onChange={(e) => setForm({ ...form, producer_name: e.target.value })} /></div>
           <div><label className="text-xs font-semibold">Price (cents)</label><input type="number" className={inp} value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: Number(e.target.value) })} /></div>
           <div><label className="text-xs font-semibold">First-time discount (cents)</label><input type="number" className={inp} value={form.discount_price_cents} onChange={(e) => setForm({ ...form, discount_price_cents: Number(e.target.value) })} /></div>
-          <div className="sm:col-span-2"><label className="text-xs font-semibold">Checkout URL (Stripe/Payhip/etc)</label><input className={inp} value={form.checkout_url} onChange={(e) => setForm({ ...form, checkout_url: e.target.value })} placeholder="https://..." /></div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold">Legacy external checkout URL <span className="text-gray-400 font-normal">(optional fallback — no longer required; normal Stripe checkout works without this)</span></label>
+            <input className={inp} value={form.checkout_url} onChange={(e) => setForm({ ...form, checkout_url: e.target.value })} placeholder="https://... (leave blank to use built-in Stripe checkout)" />
+          </div>
           <div className="sm:col-span-2"><label className="text-xs font-semibold">Application URL</label><input className={inp} value={form.application_url} onChange={(e) => setForm({ ...form, application_url: e.target.value })} placeholder="https://..." /></div>
           <div className="sm:col-span-2"><label className="text-xs font-semibold">Custom video URL (optional; overrides global)</label><input className={inp} value={form.custom_video_url} onChange={(e) => setForm({ ...form, custom_video_url: e.target.value })} /></div>
           <div className="sm:col-span-2"><label className="text-xs font-semibold">SEO title</label><input className={inp} value={form.seo_title} onChange={(e) => setForm({ ...form, seo_title: e.target.value })} /></div>
