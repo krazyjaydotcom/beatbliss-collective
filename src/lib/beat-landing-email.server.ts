@@ -169,3 +169,58 @@ export async function queueAdminSaleEmail(opts: {
   await enqueue({ to: adminEmail, subject: `[Sale] ${opts.beatTitle} — ${price}`, html, text, label: "beat_purchase_admin", message_id: messageId });
   return { queued: true };
 }
+
+// --- Exclusive/custom inquiry from beat landing page ---
+export async function queueExclusiveInquiryEmail(opts: {
+  submissionId: string;
+  name: string;
+  email: string;
+  beatTitle: string | null;
+  beatSlug: string | null;
+  answers: Record<string, string>;
+  labels: Record<string, string>;
+  overrideRecipient?: string;
+}): Promise<{ queued: boolean }> {
+  const messageId = `bl_inquiry_${opts.submissionId}`;
+  if (await alreadyQueued(messageId)) return { queued: false };
+
+  const recipient = opts.overrideRecipient || process.env.SALES_NOTIFICATION_EMAIL || "jason@krazyjay.com";
+  const safeName = escapeHtml(opts.name);
+  const safeEmail = escapeHtml(opts.email);
+  const safeTitle = opts.beatTitle ? escapeHtml(opts.beatTitle) : "(no specific beat)";
+  const beatUrl = opts.beatSlug ? `${SITE}/beats/${opts.beatSlug}` : SITE;
+
+  const rows = Object.entries(opts.answers).map(([qid, val]) => {
+    const label = escapeHtml(opts.labels[qid] || qid);
+    const safeVal = escapeHtml(val || "—").replace(/\n/g, "<br>");
+    return `<tr><td style="padding:6px 12px 6px 0;color:#71717a;vertical-align:top;white-space:nowrap"><strong>${label}</strong></td><td style="padding:6px 0;color:#111">${safeVal}</td></tr>`;
+  }).join("");
+
+  const html = `<!doctype html><html><body style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111;padding:24px;background:#f6f6f7">
+    <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;padding:24px">
+      <h2 style="margin:0 0 6px;color:#2563eb">New exclusive/custom inquiry</h2>
+      <p style="margin:0 0 16px;color:#71717a">Submitted from ${safeTitle}</p>
+      <table style="border-collapse:collapse;font-size:14px;width:100%">
+        <tr><td style="padding:6px 12px 6px 0;color:#71717a"><strong>Name</strong></td><td>${safeName}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#71717a"><strong>Email</strong></td><td><a href="mailto:${safeEmail}" style="color:#2563eb">${safeEmail}</a></td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#71717a"><strong>Beat</strong></td><td><a href="${beatUrl}" style="color:#2563eb">${beatUrl}</a></td></tr>
+        ${rows}
+      </table>
+    </div>
+  </body></html>`;
+  const textLines = [
+    `New exclusive/custom inquiry`,
+    `Name: ${opts.name}`,
+    `Email: ${opts.email}`,
+    `Beat: ${beatUrl}`,
+    ...Object.entries(opts.answers).map(([qid, val]) => `${opts.labels[qid] || qid}: ${val}`),
+  ];
+  await enqueue({
+    to: recipient,
+    subject: `[Inquiry] ${opts.name} — ${opts.beatTitle || "custom work"}`,
+    html, text: textLines.join("\n"),
+    label: "beat_exclusive_inquiry", message_id: messageId,
+    reply_to: opts.email,
+  });
+  return { queued: true };
+}
