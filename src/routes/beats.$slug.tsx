@@ -404,11 +404,11 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
   );
 }
 
-function LeaseModal({ beatId, fullPriceCents, discountPriceCents, checkoutUrl, showDiscount, onClose }: {
-  beatId: string; fullPriceCents: number; discountPriceCents: number; checkoutUrl: string | null; showDiscount: boolean; onClose: () => void;
+function LeaseModal({ beatId, slug, fullPriceCents, discountPriceCents, checkoutUrl, showDiscount, onClose }: {
+  beatId: string; slug: string; fullPriceCents: number; discountPriceCents: number; checkoutUrl: string | null; showDiscount: boolean; onClose: () => void;
 }) {
   const check = useServerFn(checkDiscountEligibility);
-  const record = useServerFn(recordLeaseIntent);
+  const createSession = useServerFn(createBeatLeaseCheckoutSession);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -423,13 +423,28 @@ function LeaseModal({ beatId, fullPriceCents, discountPriceCents, checkoutUrl, s
         const elig = await check({ data: { email } });
         useDiscount = elig.eligible;
       }
-      const r = await record({ data: { beatId, email, useDiscount } });
-      if (!r.ok) throw new Error(r.error || "Failed");
-      if (r.checkoutUrl) {
-        window.location.href = r.checkoutUrl;
-      } else {
-        setError("Checkout URL not configured. Please contact support.");
+      const origin = window.location.origin;
+      const successUrl = `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = `${origin}/beats/${slug}`;
+
+      let environment: "sandbox" | "live";
+      try { environment = getStripeEnvironment(); }
+      catch { throw new Error("Payments are not configured. Please try again later or contact support."); }
+
+      const r = await createSession({
+        data: { beatId, email, useDiscount, environment, successUrl, cancelUrl },
+      });
+      if (r.error) throw new Error(r.error);
+      if (r.url) {
+        window.location.href = r.url;
+        return;
       }
+      // Legacy fallback to per-beat external checkout URL if dynamic session unavailable.
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+        return;
+      }
+      throw new Error("Checkout is unavailable right now.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -456,13 +471,53 @@ function LeaseModal({ beatId, fullPriceCents, discountPriceCents, checkoutUrl, s
         <form onSubmit={submit} className="mt-4 space-y-3">
           <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email for order confirmation" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-400" />
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <button disabled={loading || !checkoutUrl} className="w-full rounded-xl bg-orange-500 text-white px-5 py-3 font-semibold hover:bg-orange-600 disabled:opacity-50">
+          <button disabled={loading} className="w-full rounded-xl bg-orange-500 text-white px-5 py-3 font-semibold hover:bg-orange-600 disabled:opacity-50">
             {loading ? "Processing..." : "Continue to Checkout"}
           </button>
-          {!checkoutUrl && <p className="text-xs text-gray-400 text-center">Checkout URL not configured for this beat.</p>}
           <p className="text-[11px] text-gray-400 text-center">New customers only. Limit one discounted lease per customer.</p>
         </form>
       </div>
     </div>
   );
 }
+
+function StickyBottomPlayer({ src, title, cover }: { src: string | null; title: string; cover: string | null }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    const onEnd = () => setPlaying(false);
+    a.addEventListener("ended", onEnd);
+    return () => a.removeEventListener("ended", onEnd);
+  }, []);
+  const toggle = () => {
+    const a = audioRef.current;
+    if (!a || !src) return;
+    if (playing) { a.pause(); setPlaying(false); }
+    else { a.play(); setPlaying(true); }
+  };
+  if (!src) return null;
+  return (
+    <div className="fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+      <div className="mx-auto max-w-4xl px-4 py-3 flex items-center gap-3">
+        <div className="h-10 w-10 rounded-lg overflow-hidden bg-purple-100 flex-shrink-0">
+          {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : null}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold truncate">{title}</div>
+          <div className="text-xs text-gray-500">Preview</div>
+        </div>
+        <button
+          onClick={toggle}
+          className="h-11 w-11 rounded-full bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600 flex-shrink-0"
+          aria-label={playing ? "Pause" : "Play"}
+        >
+          {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+        </button>
+        <audio ref={audioRef} src={src} preload="metadata" />
+      </div>
+    </div>
+  );
+}
+
