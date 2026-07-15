@@ -135,7 +135,7 @@ export async function queueBuyerPurchaseEmail(opts: {
   amountCents: number;
   sessionId: string;
   beatSlug: string | null;
-}): Promise<{ queued: boolean; skipped?: string }> {
+}): Promise<{ queued: boolean; skipped?: string; messageId?: string }> {
   const messageId = `bl_buyer_${opts.sessionId}`;
   if (await alreadyQueued(messageId)) return { queued: false, skipped: "already_queued" };
 
@@ -177,7 +177,7 @@ export async function queueBuyerPurchaseEmail(opts: {
 
   const text = `Thank you for your purchase!\n\nBeat: ${opts.beatTitle}\nAmount: ${price}\nPurchase ID: ${opts.sessionId}\nDate: ${date}\n\n${opts.downloadUrl ? `Download: ${opts.downloadUrl}\n\n` : ""}UNLIMITED LICENSE — full monetization rights granted. Producer credits required (Writer: Jason A. Spencer 50%, Publishing: March 26th Publishing 50%, PRO: ASCAP). No resale of the underlying beat.\n\n— MYBEATCATALOG`;
   await enqueue({ to: opts.to, subject: `Your beat is ready — ${opts.beatTitle}`, html, text, label: "beat_purchase_buyer", message_id: messageId });
-  return { queued: true };
+  return { queued: true, messageId };
 }
 
 // --- Paid purchase: admin sales notification ---
@@ -187,7 +187,7 @@ export async function queueAdminSaleEmail(opts: {
   amountCents: number;
   sessionId: string;
   beatSlug: string | null;
-}): Promise<{ queued: boolean; skipped?: string }> {
+}): Promise<{ queued: boolean; skipped?: string; messageId?: string }> {
   const messageId = `bl_admin_${opts.sessionId}`;
   if (await alreadyQueued(messageId)) return { queued: false, skipped: "already_queued" };
 
@@ -221,7 +221,7 @@ export async function queueAdminSaleEmail(opts: {
   const text = `New beat lease sale — ${price}\nBeat: ${opts.beatTitle}\nBuyer: ${opts.buyerEmail}\nAmount: ${price}\nStripe session: ${opts.sessionId}\nBeat URL: ${beatUrl}`;
 
   await enqueue({ to: adminEmail, subject: `[Sale] ${opts.beatTitle} — ${price}`, html, text, label: "beat_purchase_admin", message_id: messageId });
-  return { queued: true };
+  return { queued: true, messageId };
 }
 
 // --- Exclusive/custom inquiry from beat landing page ---
@@ -234,7 +234,7 @@ export async function queueExclusiveInquiryEmail(opts: {
   answers: Record<string, string>;
   labels: Record<string, string>;
   overrideRecipient?: string;
-}): Promise<{ queued: boolean }> {
+}): Promise<{ queued: boolean; messageId?: string }> {
   const messageId = `bl_inquiry_${opts.submissionId}`;
   if (await alreadyQueued(messageId)) return { queued: false };
 
@@ -276,5 +276,5 @@ export async function queueExclusiveInquiryEmail(opts: {
     label: "beat_exclusive_inquiry", message_id: messageId,
     reply_to: opts.email,
   });
-  return { queued: true };
+  return { queued: true, messageId };
 }
