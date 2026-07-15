@@ -6,8 +6,9 @@ import {
   getBeatLandingBySlug,
   captureBeatLead,
   checkDiscountEligibility,
-  recordLeaseIntent,
+  createBeatLeaseCheckoutSession,
 } from "@/lib/beat-landing.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
 
 const SITE = "https://mybeatcatalog.com";
 
