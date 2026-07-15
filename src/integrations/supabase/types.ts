@@ -329,6 +329,118 @@ export type Database = {
           },
         ]
       }
+      beat_landing_attachments: {
+        Row: {
+          beat_id: string
+          created_at: string
+          filename: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          beat_id: string
+          created_at?: string
+          filename: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          beat_id?: string
+          created_at?: string
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_landing_attachments_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      beat_landing_inquiries: {
+        Row: {
+          answers: Json
+          beat_id: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+        }
+        Insert: {
+          answers?: Json
+          beat_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+        }
+        Update: {
+          answers?: Json
+          beat_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_landing_inquiries_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      beat_landing_inquiry_questions: {
+        Row: {
+          active: boolean
+          created_at: string
+          field_type: string
+          id: string
+          label: string
+          placeholder: string | null
+          required: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          field_type?: string
+          id?: string
+          label: string
+          placeholder?: string | null
+          required?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          field_type?: string
+          id?: string
+          label?: string
+          placeholder?: string | null
+          required?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       beat_lead_captures: {
         Row: {
           beat_id: string | null
@@ -461,6 +573,7 @@ export type Database = {
           checkout_url: string | null
           cover_url: string | null
           created_at: string
+          custom_video_recorded_at: string | null
           custom_video_url: string | null
           discount_price_cents: number
           duration_seconds: number
@@ -492,6 +605,7 @@ export type Database = {
           checkout_url?: string | null
           cover_url?: string | null
           created_at?: string
+          custom_video_recorded_at?: string | null
           custom_video_url?: string | null
           discount_price_cents?: number
           duration_seconds: number
@@ -523,6 +637,7 @@ export type Database = {
           checkout_url?: string | null
           cover_url?: string | null
           created_at?: string
+          custom_video_recorded_at?: string | null
           custom_video_url?: string | null
           discount_price_cents?: number
           duration_seconds?: number
