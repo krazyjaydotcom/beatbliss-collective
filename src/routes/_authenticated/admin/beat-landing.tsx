@@ -270,9 +270,12 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
                     </span>
                   </td>
                   <td className="py-3">
-                    <button onClick={() => setEditing(b)} className="text-purple-600 hover:underline text-xs">Edit</button>
+                    <button onClick={() => setEditing(b)} className="text-blue-600 hover:underline text-xs">Edit</button>
                     {b.landing_slug && b.is_landing_published && (
-                      <a href={`/beats/${b.landing_slug}`} target="_blank" rel="noreferrer" className="ml-3 text-gray-500 hover:underline text-xs">View →</a>
+                      <>
+                        <a href={`/beats/${b.landing_slug}`} target="_blank" rel="noreferrer" className="ml-3 text-gray-500 hover:underline text-xs">View →</a>
+                        <CopyLinkButton url={`https://mybeatcatalog.com/beats/${b.landing_slug}`} />
+                      </>
                     )}
                   </td>
                 </tr>
