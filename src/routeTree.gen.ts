@@ -45,6 +45,7 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugOfferRouteImport } from './routes/b.$slug.offer'
 import { Route as ApiPublicDownloadBeatRouteImport } from './routes/api/public/download-beat'
+import { Route as ApiPublicBeatFreeDownloadRouteImport } from './routes/api/public/beat-free-download'
 import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat-claim'
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
 import { Route as AuthenticatedAdminTagsRouteImport } from './routes/_authenticated/admin/tags'
@@ -252,6 +253,12 @@ const ApiPublicDownloadBeatRoute = ApiPublicDownloadBeatRouteImport.update({
   path: '/api/public/download-beat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBeatFreeDownloadRoute =
+  ApiPublicBeatFreeDownloadRouteImport.update({
+    id: '/api/public/beat-free-download',
+    path: '/api/public/beat-free-download',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBeatClaimRoute = ApiPublicBeatClaimRouteImport.update({
   id: '/api/public/beat-claim',
   path: '/api/public/beat-claim',
@@ -454,6 +461,7 @@ export interface FileRoutesByFullPath {
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
+  '/api/public/beat-free-download': typeof ApiPublicBeatFreeDownloadRoute
   '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -515,6 +523,7 @@ export interface FileRoutesByTo {
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
+  '/api/public/beat-free-download': typeof ApiPublicBeatFreeDownloadRoute
   '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -579,6 +588,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
+  '/api/public/beat-free-download': typeof ApiPublicBeatFreeDownloadRoute
   '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -643,6 +653,7 @@ export interface FileRouteTypes {
     | '/admin/tags'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
+    | '/api/public/beat-free-download'
     | '/api/public/download-beat'
     | '/b/$slug/offer'
     | '/admin/'
@@ -704,6 +715,7 @@ export interface FileRouteTypes {
     | '/admin/tags'
     | '/admin/whitelist'
     | '/api/public/beat-claim'
+    | '/api/public/beat-free-download'
     | '/api/public/download-beat'
     | '/b/$slug/offer'
     | '/admin'
@@ -767,6 +779,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/tags'
     | '/_authenticated/admin/whitelist'
     | '/api/public/beat-claim'
+    | '/api/public/beat-free-download'
     | '/api/public/download-beat'
     | '/b/$slug/offer'
     | '/_authenticated/admin/'
@@ -797,6 +810,7 @@ export interface RootRouteChildren {
   OfferTokenRoute: typeof OfferTokenRoute
   TagsSlugRoute: typeof TagsSlugRoute
   ApiPublicBeatClaimRoute: typeof ApiPublicBeatClaimRoute
+  ApiPublicBeatFreeDownloadRoute: typeof ApiPublicBeatFreeDownloadRoute
   ApiPublicDownloadBeatRoute: typeof ApiPublicDownloadBeatRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -1054,6 +1068,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/download-beat'
       fullPath: '/api/public/download-beat'
       preLoaderRoute: typeof ApiPublicDownloadBeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/beat-free-download': {
+      id: '/api/public/beat-free-download'
+      path: '/api/public/beat-free-download'
+      fullPath: '/api/public/beat-free-download'
+      preLoaderRoute: typeof ApiPublicBeatFreeDownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/beat-claim': {
@@ -1369,6 +1390,7 @@ const rootRouteChildren: RootRouteChildren = {
   OfferTokenRoute: OfferTokenRoute,
   TagsSlugRoute: TagsSlugRoute,
   ApiPublicBeatClaimRoute: ApiPublicBeatClaimRoute,
+  ApiPublicBeatFreeDownloadRoute: ApiPublicBeatFreeDownloadRoute,
   ApiPublicDownloadBeatRoute: ApiPublicDownloadBeatRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
