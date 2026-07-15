@@ -228,6 +228,7 @@ function BeatLandingPage() {
       {leaseOpen && (
         <LeaseModal
           beatId={beat!.id}
+          slug={params.slug}
           fullPriceCents={beat!.price_cents}
           discountPriceCents={beat!.discount_price_cents}
           checkoutUrl={beat!.checkout_url}
@@ -235,6 +236,11 @@ function BeatLandingPage() {
           onClose={() => setLeaseOpen(false)}
         />
       )}
+      <StickyBottomPlayer
+        src={beat!.audio_url_tagged || beat!.audio_url}
+        title={beat!.title}
+        cover={beat!.cover_url}
+      />
     </div>
   );
 }
