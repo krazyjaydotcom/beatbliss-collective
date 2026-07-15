@@ -185,10 +185,11 @@ function BeatLandingPage() {
               <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">
                 <Download className="h-6 w-6 text-purple-600" />
               </div>
-              <div className="flex-1 font-semibold text-sm">Download Tagged Beat</div>
+              <div className="flex-1 font-semibold text-sm">Free MP3 Download</div>
               <div className="text-purple-600">→</div>
             </div>
           </button>
+
 
           {/* Apply - always order 3 */}
           <a
