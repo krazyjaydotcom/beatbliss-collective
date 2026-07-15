@@ -29,6 +29,7 @@ export type BeatLanding = {
   seo_title: string | null;
   seo_description: string | null;
   custom_video_url: string | null;
+  custom_video_recorded_at: string | null;
 };
 
 export type GlobalVideo = {
@@ -36,6 +37,23 @@ export type GlobalVideo = {
   contact_instagram: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+};
+
+export type BeatAttachment = {
+  id: string;
+  filename: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+  download_url: string;
+};
+
+export type InquiryQuestion = {
+  id: string;
+  label: string;
+  placeholder: string | null;
+  field_type: string;
+  required: boolean;
+  sort_order: number;
 };
 
 export const getBeatLandingBySlug = createServerFn({ method: "GET" })
