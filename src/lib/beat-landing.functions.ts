@@ -284,11 +284,15 @@ export const adminBulkUpdateLandingPrices = createServerFn({ method: "POST" })
     let query = sb.from("beats").update(patch).select("id");
     if (data.target === "published") {
       query = query.eq("is_landing_published", true);
+    } else {
+      // PostgREST requires a filter on update; match every row explicitly.
+      query = query.not("id", "is", null);
     }
     const { data: rows, error } = await query;
     if (error) return { ok: false, updated: 0, error: error.message };
     return { ok: true, updated: (rows as Array<unknown> | null)?.length ?? 0 };
   });
+
 
 
 export const adminGetGlobalVideo = createServerFn({ method: "GET" })
