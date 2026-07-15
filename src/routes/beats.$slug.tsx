@@ -238,10 +238,12 @@ function BeatLandingPage() {
         />
       )}
       <StickyBottomPlayer
-        src={beat!.audio_url_tagged || beat!.audio_url}
+        src={beat!.audio_url || beat!.audio_url_tagged}
         title={beat!.title}
         cover={beat!.cover_url}
+        producer={beat!.producer_name}
       />
+
     </div>
   );
 }
