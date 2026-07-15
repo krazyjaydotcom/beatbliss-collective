@@ -110,11 +110,22 @@ function RootShell({ children }: { children: React.ReactNode }) {
           src="https://cloud.umami.is/script.js"
           data-website-id="912d6666-c50b-4581-94bb-241b61d66ea1"
         />
+        <script
+          async
+          defer
+          src="https://app.visitortracking.com/assets/js/tracer.js"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){function init(){try{if(window.__tracerInit)return;if(typeof Tracer!=='function')return;window.__tracerInit=true;new Tracer({websiteId:"acb3a135-f2f5-4201-90a2-cc061d907b21",async:true,debug:false});}catch(e){}}var t=setInterval(function(){if(typeof Tracer==='function'){clearInterval(t);init();}},250);setTimeout(function(){clearInterval(t);},15000);})();`,
+          }}
+        />
       </head>
       <body>
         {children}
         <Scripts />
       </body>
+
     </html>
   );
 }
