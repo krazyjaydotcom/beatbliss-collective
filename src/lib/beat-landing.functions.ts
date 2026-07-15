@@ -30,7 +30,11 @@ export type BeatLanding = {
   seo_description: string | null;
   custom_video_url: string | null;
   custom_video_recorded_at: string | null;
+  bpm: number | null;
+  genre: string | null;
+  mood: string | null;
 };
+
 
 export type GlobalVideo = {
   video_url: string | null;
@@ -73,7 +77,8 @@ export const getBeatLandingBySlug = createServerFn({ method: "GET" })
     const sb = adminClient() as any;
     const [{ data: beat }, { data: global }] = await Promise.all([
       sb.from("beats")
-        .select("id,landing_slug,title,producer_name,cover_url,audio_url_tagged,audio_url,price_cents,discount_price_cents,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,is_landing_published,is_active")
+        .select("id,landing_slug,title,producer_name,cover_url,audio_url_tagged,audio_url,price_cents,discount_price_cents,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,bpm,genre,mood,is_landing_published,is_active")
+
         .eq("landing_slug", data.slug)
         .eq("is_landing_published", true)
         .eq("is_active", true)
