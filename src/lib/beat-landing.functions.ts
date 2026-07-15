@@ -188,12 +188,35 @@ export const adminListBeats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const sb = adminClient() as any;
+    // Auto-backfill: any active beat missing a landing_slug gets one derived from its title.
+    const { data: missing } = await sb.from("beats")
+      .select("id,title")
+      .is("landing_slug", null);
+    const rowsMissing = (missing ?? []) as Array<{ id: string; title: string }>;
+    if (rowsMissing.length > 0) {
+      const used = new Set<string>();
+      const { data: existingSlugs } = await sb.from("beats")
+        .select("landing_slug")
+        .not("landing_slug", "is", null);
+      for (const r of (existingSlugs ?? []) as Array<{ landing_slug: string | null }>) {
+        if (r.landing_slug) used.add(r.landing_slug);
+      }
+      for (const row of rowsMissing) {
+        const base = slugifyTitle(row.title || "beat") || "beat";
+        let candidate = base;
+        let n = 2;
+        while (used.has(candidate)) candidate = `${base}-${n++}`;
+        used.add(candidate);
+        await sb.from("beats").update({ landing_slug: candidate }).eq("id", row.id);
+      }
+    }
     const { data } = await sb.from("beats")
       .select("id,title,landing_slug,is_landing_published,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,audio_url_tagged,audio_url")
       // show all beats so admin can assign slugs
       .order("title", { ascending: true });
     return { beats: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
   });
+
 
 export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
