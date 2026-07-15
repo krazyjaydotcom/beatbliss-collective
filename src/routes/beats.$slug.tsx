@@ -248,82 +248,8 @@ function BeatLandingPage() {
   );
 }
 
-function AudioPlayer({ beat }: { beat: NonNullable<ReturnType<typeof Route.useLoaderData>["beat"]> }) {
-  const src = beat.audio_url_tagged || beat.audio_url;
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [pos, setPos] = useState(0);
-  const [dur, setDur] = useState(0);
-  const [volume, setVolume] = useState(1);
 
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    const onTime = () => setPos(a.currentTime);
-    const onDur = () => setDur(a.duration || 0);
-    const onEnd = () => setPlaying(false);
-    a.addEventListener("timeupdate", onTime);
-    a.addEventListener("loadedmetadata", onDur);
-    a.addEventListener("ended", onEnd);
-    return () => {
-      a.removeEventListener("timeupdate", onTime);
-      a.removeEventListener("loadedmetadata", onDur);
-      a.removeEventListener("ended", onEnd);
-    };
-  }, []);
 
-  const toggle = () => {
-    const a = audioRef.current;
-    if (!a || !src) return;
-    if (playing) { a.pause(); setPlaying(false); }
-    else { a.play(); setPlaying(true); }
-  };
-
-  const fmt = (s: number) => {
-    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-  };
-
-  return (
-    <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 flex items-center gap-4 shadow-sm">
-      <div className="h-14 w-14 rounded-lg overflow-hidden bg-purple-100 flex-shrink-0">
-        {beat.cover_url ? (
-          <img src={beat.cover_url} alt={beat.title} className="w-full h-full object-cover" />
-        ) : null}
-      </div>
-      <div className="flex-shrink-0 min-w-0">
-        <div className="font-bold text-sm truncate">{beat.title}</div>
-        <div className="text-xs text-gray-500 truncate">Prod. by {beat.producer_name || "KrazyJay"}</div>
-      </div>
-      <button
-        onClick={toggle}
-        className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center hover:bg-purple-200 transition flex-shrink-0"
-        aria-label={playing ? "Pause" : "Play"}
-      >
-        {playing ? <Pause className="h-4 w-4 text-purple-600" /> : <Play className="h-4 w-4 text-purple-600 ml-0.5" />}
-      </button>
-      <input
-        type="range"
-        min={0}
-        max={dur || 1}
-        value={pos}
-        onChange={(e) => { if (audioRef.current) audioRef.current.currentTime = Number(e.target.value); }}
-        className="flex-1 accent-purple-500 min-w-0"
-      />
-      <div className="text-xs text-gray-500 tabular-nums flex-shrink-0 hidden sm:block">
-        {fmt(pos)} / {fmt(dur)}
-      </div>
-      <button
-        onClick={() => { const v = volume > 0 ? 0 : 1; setVolume(v); if (audioRef.current) audioRef.current.volume = v; }}
-        className="text-gray-500 hover:text-gray-700 flex-shrink-0"
-        aria-label="Volume"
-      >
-        <Volume2 className="h-5 w-5" />
-      </button>
-      {src && <audio ref={audioRef} src={src} preload="metadata" />}
-    </div>
-  );
-}
 
 function NeedHelpModal({ global, onClose }: { global: { contact_instagram: string | null; contact_email: string | null; contact_phone: string | null } | null; onClose: () => void }) {
   const ig = global?.contact_instagram;
