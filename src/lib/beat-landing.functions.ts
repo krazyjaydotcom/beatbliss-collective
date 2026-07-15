@@ -56,6 +56,15 @@ export type InquiryQuestion = {
   sort_order: number;
 };
 
+export type EmailStatusRow = {
+  message_id: string;
+  template_name: string;
+  recipient_email: string;
+  status: string;
+  error_message: string | null;
+  created_at: string;
+};
+
 export const getBeatLandingBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: { slug: string }) =>
     z.object({ slug: z.string().min(1).max(120) }).parse(input),
@@ -645,6 +654,52 @@ export const adminDeleteAttachment = createServerFn({ method: "POST" })
 
 // ---------- Admin: send test emails ----------
 
+const EMAIL_STATUS_LABELS = [
+  "beat_free_download",
+  "beat_purchase_buyer",
+  "beat_purchase_admin",
+  "beat_exclusive_inquiry",
+  "invite_claim",
+];
+
+export const adminListEmailStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ emails: EmailStatusRow[]; stats: { total: number; sent: number; failed: number; pending: number; suppressed: number } }> => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+    const { data, error } = await sb
+      .from("email_send_log")
+      .select("message_id,template_name,recipient_email,status,error_message,created_at")
+      .in("template_name", EMAIL_STATUS_LABELS)
+      .not("message_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(250);
+    if (error) throw new Error(error.message);
+
+    const seen = new Set<string>();
+    const emails: EmailStatusRow[] = [];
+    for (const row of (data ?? []) as EmailStatusRow[]) {
+      if (!row.message_id || seen.has(row.message_id)) continue;
+      seen.add(row.message_id);
+      emails.push(row);
+      if (emails.length >= 50) break;
+    }
+
+    const stats = emails.reduce(
+      (acc, row) => {
+        acc.total += 1;
+        if (row.status === "sent") acc.sent += 1;
+        else if (row.status === "pending") acc.pending += 1;
+        else if (row.status === "suppressed") acc.suppressed += 1;
+        else if (row.status === "failed" || row.status === "dlq") acc.failed += 1;
+        return acc;
+      },
+      { total: 0, sent: 0, failed: 0, pending: 0, suppressed: 0 },
+    );
+
+    return { emails, stats };
+  });
+
 export const adminSendTestEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { to: string; kind: "free_download" | "purchase_buyer" | "admin_sale" | "exclusive_inquiry" }) =>
@@ -653,31 +708,37 @@ export const adminSendTestEmail = createServerFn({ method: "POST" })
       kind: z.enum(["free_download", "purchase_buyer", "admin_sale", "exclusive_inquiry"]),
     }).parse(input),
   )
-  .handler(async ({ data, context }): Promise<{ ok: boolean; error?: string }> => {
+  .handler(async ({ data, context }): Promise<{ ok: boolean; error?: string; messageId?: string; status?: string }> => {
     await assertAdmin(context);
     const email = await import("@/lib/beat-landing-email.server");
+    const sb = adminClient() as any;
     const to = data.to.toLowerCase();
     const stamp = Date.now();
     try {
+      let messageId: string | undefined;
       if (data.kind === "free_download") {
-        await email.queueFreeDownloadEmail({
+        const result = await email.queueFreeDownloadEmail({
           to, firstName: "Test",
           beatTitle: "Test Beat", downloadUrl: "https://mybeatcatalog.com/",
           beatSlug: `test-${stamp}`,
         });
+        messageId = result.messageId;
       } else if (data.kind === "purchase_buyer") {
-        await email.queueBuyerPurchaseEmail({
+        const result = await email.queueBuyerPurchaseEmail({
           to, beatTitle: "Test Beat",
           downloadUrl: "https://mybeatcatalog.com/", amountCents: 4999,
           sessionId: `test_buyer_${stamp}`, beatSlug: `test-${stamp}`,
         });
+        messageId = result.messageId;
       } else if (data.kind === "admin_sale") {
-        await email.queueAdminSaleEmail({
+        const result = await email.queueAdminSaleEmail({
           beatTitle: "Test Beat", buyerEmail: to,
           amountCents: 4999, sessionId: `test_admin_${stamp}`, beatSlug: `test-${stamp}`,
+          overrideRecipient: to,
         });
+        messageId = result.messageId;
       } else {
-        await email.queueExclusiveInquiryEmail({
+        const result = await email.queueExclusiveInquiryEmail({
           submissionId: `test_inq_${stamp}`,
           name: "Test Sender",
           email: to,
@@ -687,8 +748,12 @@ export const adminSendTestEmail = createServerFn({ method: "POST" })
           labels: { q1: "What kind of project?", q2: "Budget range" },
           overrideRecipient: to,
         });
+        messageId = result.messageId;
       }
-      return { ok: true };
+      const { data: latest } = messageId
+        ? await sb.from("email_send_log").select("status").eq("message_id", messageId).order("created_at", { ascending: false }).limit(1).maybeSingle()
+        : { data: null };
+      return { ok: true, messageId, status: latest?.status || "pending" };
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : "Failed" };
     }
