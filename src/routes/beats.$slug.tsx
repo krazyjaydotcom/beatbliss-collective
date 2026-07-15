@@ -490,43 +490,139 @@ function LeaseModal({ beatId, slug, fullPriceCents, discountPriceCents, checkout
   );
 }
 
-function StickyBottomPlayer({ src, title, cover }: { src: string | null; title: string; cover: string | null }) {
+function StickyBottomPlayer({ src, title, cover, producer }: { src: string | null; title: string; cover: string | null; producer?: string | null }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [pos, setPos] = useState(0);
+  const [dur, setDur] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
+
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
+    const onTime = () => setPos(a.currentTime);
+    const onDur = () => setDur(a.duration || 0);
     const onEnd = () => setPlaying(false);
+    a.addEventListener("timeupdate", onTime);
+    a.addEventListener("loadedmetadata", onDur);
     a.addEventListener("ended", onEnd);
-    return () => a.removeEventListener("ended", onEnd);
+    return () => {
+      a.removeEventListener("timeupdate", onTime);
+      a.removeEventListener("loadedmetadata", onDur);
+      a.removeEventListener("ended", onEnd);
+    };
   }, []);
+
   const toggle = () => {
     const a = audioRef.current;
     if (!a || !src) return;
     if (playing) { a.pause(); setPlaying(false); }
     else { a.play(); setPlaying(true); }
   };
+
+  const seek = (v: number) => {
+    if (audioRef.current) audioRef.current.currentTime = v;
+    setPos(v);
+  };
+
+  const setVol = (v: number) => {
+    setVolume(v);
+    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = v === 0; }
+    setMuted(v === 0);
+  };
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    if (audioRef.current) audioRef.current.muted = next;
+  };
+
+  const fmt = (s: number) => {
+    if (!isFinite(s)) return "00:00";
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
+
   if (!src) return null;
   return (
-    <div className="fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-      <div className="mx-auto max-w-4xl px-4 py-3 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg overflow-hidden bg-purple-100 flex-shrink-0">
-          {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : null}
+    <div className="fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-4xl px-3 sm:px-4 py-3">
+        <div className="flex items-center gap-3">
+          {/* Cover + title (left) */}
+          <div className="flex items-center gap-3 min-w-0 flex-1 sm:flex-none sm:w-56">
+            <div className="h-11 w-11 rounded-lg overflow-hidden bg-purple-100 flex-shrink-0">
+              {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : null}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold truncate">{title}</div>
+              <div className="text-[11px] text-gray-500 truncate">Prod. by {producer || "KrazyJay"}</div>
+            </div>
+          </div>
+
+          {/* Center: play + scrubber */}
+          <div className="flex-1 flex items-center gap-3 min-w-0">
+            <button
+              onClick={toggle}
+              className="h-11 w-11 rounded-full bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600 flex-shrink-0 shadow-md"
+              aria-label={playing ? "Pause" : "Play"}
+            >
+              {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+            </button>
+            <div className="hidden sm:flex items-center gap-2 flex-1 min-w-0">
+              <span className="text-[11px] text-gray-500 tabular-nums w-10 text-right">{fmt(pos)}</span>
+              <input
+                type="range"
+                min={0}
+                max={dur || 1}
+                step={0.1}
+                value={pos}
+                onChange={(e) => seek(Number(e.target.value))}
+                className="flex-1 accent-orange-500 min-w-0"
+                aria-label="Seek"
+              />
+              <span className="text-[11px] text-gray-500 tabular-nums w-10">{fmt(dur)}</span>
+            </div>
+          </div>
+
+          {/* Right: volume (desktop only) */}
+          <div className="hidden md:flex items-center gap-2 w-32 flex-shrink-0">
+            <button onClick={toggleMute} className="text-gray-500 hover:text-gray-700" aria-label="Mute">
+              <Volume2 className={`h-5 w-5 ${muted ? "opacity-40" : ""}`} />
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={muted ? 0 : volume}
+              onChange={(e) => setVol(Number(e.target.value))}
+              className="flex-1 accent-orange-500"
+              aria-label="Volume"
+            />
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold truncate">{title}</div>
-          <div className="text-xs text-gray-500">Preview</div>
+
+        {/* Mobile scrubber row */}
+        <div className="mt-2 flex items-center gap-2 sm:hidden">
+          <span className="text-[11px] text-gray-500 tabular-nums w-10 text-right">{fmt(pos)}</span>
+          <input
+            type="range"
+            min={0}
+            max={dur || 1}
+            step={0.1}
+            value={pos}
+            onChange={(e) => seek(Number(e.target.value))}
+            className="flex-1 accent-orange-500"
+            aria-label="Seek"
+          />
+          <span className="text-[11px] text-gray-500 tabular-nums w-10">{fmt(dur)}</span>
         </div>
-        <button
-          onClick={toggle}
-          className="h-11 w-11 rounded-full bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600 flex-shrink-0"
-          aria-label={playing ? "Pause" : "Play"}
-        >
-          {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
-        </button>
+
         <audio ref={audioRef} src={src} preload="metadata" />
       </div>
     </div>
   );
 }
+
 
