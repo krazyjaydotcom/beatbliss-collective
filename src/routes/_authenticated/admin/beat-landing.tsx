@@ -552,3 +552,297 @@ function BulkPricingCard() {
     </div>
   );
 }
+
+// ---------- Copy link button ----------
+function CopyLinkButton({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(url);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch { toast.error("Copy failed"); }
+      }}
+      className="ml-3 text-blue-600 hover:underline text-xs"
+      title={url}
+    >
+      {copied ? "Copied!" : "Copy link"}
+    </button>
+  );
+}
+
+// ---------- Email tester ----------
+function EmailTesterCard() {
+  const send = useServerFn(adminSendTestEmail);
+  const [to, setTo] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const run = async (kind: "free_download" | "purchase_buyer" | "admin_sale" | "exclusive_inquiry") => {
+    if (!to || !to.includes("@")) { toast.error("Enter a recipient email first"); return; }
+    setBusy(kind);
+    try {
+      const r = await send({ data: { to, kind } });
+      if (r.ok) toast.success(`Test email queued (${kind})`);
+      else toast.error(r.error || "Failed");
+    } finally { setBusy(null); }
+  };
+
+  const btn = "rounded-lg border border-blue-200 bg-blue-50 text-blue-700 px-3 py-2 text-xs font-semibold hover:bg-blue-100 disabled:opacity-60";
+  return (
+    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
+      <div className="mb-3">
+        <h2 className="text-xl font-bold">Test emails</h2>
+        <p className="text-sm text-gray-500 mt-1">Send a real copy of each beat-landing email to any address to verify delivery and template.</p>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+        <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="recipient@example.com" className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button disabled={busy !== null} onClick={() => run("free_download")} className={btn}>{busy === "free_download" ? "Sending…" : "Free MP3 download"}</button>
+        <button disabled={busy !== null} onClick={() => run("purchase_buyer")} className={btn}>{busy === "purchase_buyer" ? "Sending…" : "Purchase (buyer)"}</button>
+        <button disabled={busy !== null} onClick={() => run("admin_sale")} className={btn}>{busy === "admin_sale" ? "Sending…" : "Admin sale notification"}</button>
+        <button disabled={busy !== null} onClick={() => run("exclusive_inquiry")} className={btn}>{busy === "exclusive_inquiry" ? "Sending…" : "Exclusive inquiry"}</button>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Inquiry questions editor ----------
+type InquiryQ = {
+  id: string; label: string; placeholder: string | null; field_type: string;
+  required: boolean; sort_order: number; active: boolean;
+};
+function InquiryQuestionsCard() {
+  const listFn = useServerFn(adminListInquiryQuestions);
+  const upsert = useServerFn(adminUpsertInquiryQuestion);
+  const del = useServerFn(adminDeleteInquiryQuestion);
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["admin-inquiry-questions"], queryFn: () => listFn() });
+  const questions = (q.data?.questions ?? []) as InquiryQ[];
+  const [adding, setAdding] = useState(false);
+
+  return (
+    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h2 className="text-xl font-bold">Exclusive Inquiry Questions</h2>
+          <p className="text-sm text-gray-500 mt-1">These populate the popup when someone taps "Apply for Exclusive / Custom Work". Answers are emailed to jason@krazyjay.com.</p>
+        </div>
+        <button onClick={() => setAdding(true)} className="rounded-lg bg-blue-600 text-white text-sm font-semibold px-3 py-2 hover:bg-blue-700">+ New question</button>
+      </div>
+      {q.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : (
+        <ul className="divide-y divide-gray-100">
+          {questions.map((qq) => (
+            <QuestionRow
+              key={qq.id}
+              q={qq}
+              onSave={async (patch) => {
+                const r = await upsert({ data: { id: qq.id, ...patch } });
+                if (r.ok) { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["admin-inquiry-questions"] }); }
+                else toast.error(r.error || "Failed");
+              }}
+              onDelete={async () => {
+                if (!confirm(`Delete "${qq.label}"?`)) return;
+                const r = await del({ data: { id: qq.id } });
+                if (r.ok) { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["admin-inquiry-questions"] }); }
+                else toast.error(r.error || "Failed");
+              }}
+            />
+          ))}
+        </ul>
+      )}
+      {adding && (
+        <NewQuestionForm
+          onCancel={() => setAdding(false)}
+          onCreate={async (patch) => {
+            const r = await upsert({ data: patch });
+            if (r.ok) {
+              toast.success("Added");
+              qc.invalidateQueries({ queryKey: ["admin-inquiry-questions"] });
+              setAdding(false);
+            } else toast.error(r.error || "Failed");
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function QuestionRow({ q, onSave, onDelete }: { q: InquiryQ; onSave: (p: Partial<InquiryQ>) => Promise<void>; onDelete: () => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(q.label);
+  const [placeholder, setPlaceholder] = useState(q.placeholder || "");
+  const [fieldType, setFieldType] = useState(q.field_type);
+  const [required, setRequired] = useState(q.required);
+  const [sortOrder, setSortOrder] = useState(q.sort_order);
+  const [active, setActive] = useState(q.active);
+
+  if (!editing) {
+    return (
+      <li className="py-3 flex items-center gap-3">
+        <span className="text-xs text-gray-400 w-8 tabular-nums">{q.sort_order}</span>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium truncate">{q.label}{q.required && <span className="text-red-500 ml-1">*</span>}</div>
+          <div className="text-xs text-gray-500">{q.field_type}{q.active ? "" : " · disabled"}</div>
+        </div>
+        <button onClick={() => setEditing(true)} className="text-blue-600 hover:underline text-xs">Edit</button>
+        <button onClick={onDelete} className="text-red-600 hover:underline text-xs">Delete</button>
+      </li>
+    );
+  }
+  const inp = "w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm";
+  return (
+    <li className="py-3 space-y-2 bg-gray-50 rounded-lg p-3">
+      <input className={inp} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Question label" />
+      <input className={inp} value={placeholder} onChange={(e) => setPlaceholder(e.target.value)} placeholder="Placeholder (optional)" />
+      <div className="grid grid-cols-3 gap-2">
+        <select className={inp} value={fieldType} onChange={(e) => setFieldType(e.target.value)}>
+          <option value="text">Short text</option>
+          <option value="textarea">Long text</option>
+          <option value="email">Email</option>
+        </select>
+        <input type="number" className={inp} value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} placeholder="Order" />
+        <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} /> Required</label>
+      </div>
+      <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Active</label>
+      <div className="flex gap-2 justify-end">
+        <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200">Cancel</button>
+        <button
+          onClick={async () => {
+            await onSave({ label, placeholder, field_type: fieldType, required, sort_order: sortOrder, active });
+            setEditing(false);
+          }}
+          className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white font-semibold"
+        >Save</button>
+      </div>
+    </li>
+  );
+}
+
+function NewQuestionForm({ onCancel, onCreate }: { onCancel: () => void; onCreate: (p: Partial<InquiryQ>) => Promise<void> }) {
+  const [label, setLabel] = useState("");
+  const [placeholder, setPlaceholder] = useState("");
+  const [fieldType, setFieldType] = useState("text");
+  const [required, setRequired] = useState(true);
+  const [sortOrder, setSortOrder] = useState(100);
+  const inp = "w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm";
+  return (
+    <div className="mt-4 p-3 bg-gray-50 rounded-lg space-y-2">
+      <input className={inp} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Question label" />
+      <input className={inp} value={placeholder} onChange={(e) => setPlaceholder(e.target.value)} placeholder="Placeholder (optional)" />
+      <div className="grid grid-cols-3 gap-2">
+        <select className={inp} value={fieldType} onChange={(e) => setFieldType(e.target.value)}>
+          <option value="text">Short text</option>
+          <option value="textarea">Long text</option>
+          <option value="email">Email</option>
+        </select>
+        <input type="number" className={inp} value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} placeholder="Order" />
+        <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} /> Required</label>
+      </div>
+      <div className="flex gap-2 justify-end">
+        <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200">Cancel</button>
+        <button
+          onClick={async () => {
+            if (!label.trim()) { toast.error("Label required"); return; }
+            await onCreate({ label, placeholder, field_type: fieldType, required, sort_order: sortOrder, active: true });
+          }}
+          className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white font-semibold"
+        >Add</button>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Inquiry submissions viewer ----------
+function InquirySubmissionsCard() {
+  const fn = useServerFn(adminListInquirySubmissions);
+  const q = useQuery({ queryKey: ["admin-inquiry-submissions"], queryFn: () => fn() });
+  const rows = (q.data?.submissions ?? []) as Array<{ id: string; name: string; email: string; beat_id: string | null; answers: Record<string, string>; created_at: string }>;
+  return (
+    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
+      <h2 className="text-xl font-bold mb-3">Exclusive Inquiries ({rows.length})</h2>
+      <div className="max-h-96 overflow-y-auto space-y-2">
+        {rows.length === 0 ? <p className="text-sm text-gray-500">No submissions yet.</p> :
+          rows.map((r) => (
+            <details key={r.id} className="border border-gray-100 rounded-lg p-3">
+              <summary className="cursor-pointer text-sm font-semibold flex items-center gap-3">
+                <span>{r.name}</span>
+                <span className="text-gray-500 font-normal">{r.email}</span>
+                <span className="ml-auto text-xs text-gray-400">{new Date(r.created_at).toLocaleString()}</span>
+              </summary>
+              <pre className="mt-2 text-xs bg-gray-50 rounded p-2 overflow-x-auto">{JSON.stringify(r.answers, null, 2)}</pre>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+// ---------- Attachments manager (inside EditBeatModal) ----------
+function AttachmentsManager({ beatId }: { beatId: string }) {
+  const listFn = useServerFn(adminListAttachments);
+  const createFn = useServerFn(adminCreateAttachment);
+  const delFn = useServerFn(adminDeleteAttachment);
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["admin-attachments", beatId], queryFn: () => listFn({ data: { beatId } }) });
+  const rows = (q.data?.attachments ?? []) as Array<{ id: string; filename: string; mime_type: string | null; size_bytes: number | null; storage_path: string; sort_order: number }>;
+  const [uploading, setUploading] = useState(false);
+
+  const upload = async (file: File) => {
+    setUploading(true);
+    try {
+      const path = `${beatId}/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("beat-attachments").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+      });
+      if (error) throw error;
+      const r = await createFn({
+        data: {
+          beatId, storage_path: path, filename: file.name,
+          mime_type: file.type || null, size_bytes: file.size,
+          sort_order: rows.length * 10,
+        },
+      });
+      if (!r.ok) throw new Error(r.error || "Failed");
+      toast.success("Attachment uploaded");
+      qc.invalidateQueries({ queryKey: ["admin-attachments", beatId] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-xs font-semibold">Attachments (PDFs, docs, images — buyers can download from the beat page)</label>
+        <label className="cursor-pointer text-xs rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-blue-700 hover:bg-blue-100">
+          {uploading ? "Uploading…" : "+ Upload"}
+          <input type="file" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+        </label>
+      </div>
+      {rows.length === 0 ? <p className="text-xs text-gray-500">None yet.</p> :
+        <ul className="space-y-1.5">
+          {rows.map((r) => (
+            <li key={r.id} className="flex items-center gap-3 rounded-lg border border-gray-100 px-3 py-2">
+              <span className="flex-1 text-sm truncate">{r.filename}</span>
+              <span className="text-xs text-gray-400">{r.size_bytes ? `${(r.size_bytes / 1024).toFixed(1)} KB` : ""}</span>
+              <button
+                onClick={async () => {
+                  if (!confirm("Delete this attachment?")) return;
+                  await delFn({ data: { id: r.id } });
+                  qc.invalidateQueries({ queryKey: ["admin-attachments", beatId] });
+                }}
+                className="text-red-600 text-xs hover:underline"
+              >Delete</button>
+            </li>
+          ))}
+        </ul>
+      }
+    </div>
+  );
+}
