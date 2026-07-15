@@ -302,7 +302,7 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
     try {
       const r = await capture({ data: { beatId, firstName, email } });
       if (r.downloadUrl) setDownloadUrl(r.downloadUrl);
-      else setError("Tagged file not available yet.");
+      else setError("MP3 file not available yet.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
