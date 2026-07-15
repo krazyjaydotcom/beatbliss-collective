@@ -113,14 +113,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.init_tracer=function(){try{if(window.__tracerInit)return;if(typeof Tracer!=='function')return;window.__tracerInit=true;new Tracer({websiteId:"acb3a135-f2f5-4201-90a2-cc061d907b21",async:true,debug:false});}catch(e){}};`,
+            __html: `(function(){window.init_tracer=function(){try{if(window.__tracerInit)return;if(typeof Tracer!=='function')return;window.__tracerInit=true;new Tracer({websiteId:"acb3a135-f2f5-4201-90a2-cc061d907b21",async:true,debug:false});}catch(e){}};if(!document.querySelector('script[data-visitortracking-tracer]')){var s=document.createElement('script');s.src='https://app.visitortracking.com/assets/js/tracer.js';s.async=true;s.defer=true;s.setAttribute('data-visitortracking-tracer','true');document.head.appendChild(s);}})();`,
           }}
         />
-        <script
-          async
-          defer
-          src="https://app.visitortracking.com/assets/js/tracer.js"
-        />
+
       </head>
       <body>
         {children}
