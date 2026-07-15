@@ -151,7 +151,7 @@ This link works once and expires in 7 days.`;
         html,
         text,
         label: "invite_claim",
-        message_id: crypto.randomUUID(),
+        message_id: randomUUID(),
         queued_at: new Date().toISOString(),
         unsubscribe_token: unsubscribeToken,
       },
