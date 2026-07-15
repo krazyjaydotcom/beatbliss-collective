@@ -670,7 +670,7 @@ function InquiryQuestionsCard() {
   );
 }
 
-function QuestionRow({ q, onSave, onDelete }: { q: InquiryQ; onSave: (p: Partial<InquiryQ>) => Promise<void>; onDelete: () => Promise<void> }) {
+function QuestionRow({ q, onSave, onDelete }: { q: InquiryQ; onSave: (p: { label: string; placeholder?: string | null; field_type?: string; required?: boolean; sort_order?: number; active?: boolean }) => Promise<void>; onDelete: () => Promise<void> }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(q.label);
   const [placeholder, setPlaceholder] = useState(q.placeholder || "");
@@ -721,7 +721,7 @@ function QuestionRow({ q, onSave, onDelete }: { q: InquiryQ; onSave: (p: Partial
   );
 }
 
-function NewQuestionForm({ onCancel, onCreate }: { onCancel: () => void; onCreate: (p: Partial<InquiryQ>) => Promise<void> }) {
+function NewQuestionForm({ onCancel, onCreate }: { onCancel: () => void; onCreate: (p: { label: string; placeholder?: string | null; field_type?: string; required?: boolean; sort_order?: number; active?: boolean }) => Promise<void> }) {
   const [label, setLabel] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   const [fieldType, setFieldType] = useState("text");
