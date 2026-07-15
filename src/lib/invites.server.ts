@@ -1,5 +1,5 @@
 // Server-only helpers used by webhook + admin to issue invites.
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export function generateInviteToken(): string {
@@ -71,6 +71,33 @@ const TIER_LABEL: Record<string, string> = {
   label: "Label",
 };
 
+async function getUnsubscribeToken(email: string): Promise<string> {
+  const normalizedEmail = email.toLowerCase().trim();
+  const { data: existing, error: readError } = await supabaseAdmin
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+  if (readError) throw readError;
+  if (existing?.token) return existing.token;
+
+  const token = randomUUID();
+  const { data: inserted, error: insertError } = await supabaseAdmin
+    .from("email_unsubscribe_tokens")
+    .insert({ email: normalizedEmail, token })
+    .select("token")
+    .maybeSingle();
+  if (!insertError && inserted?.token) return inserted.token;
+
+  const { data: raced, error: racedError } = await supabaseAdmin
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+  if (racedError || !raced?.token) throw insertError || racedError || new Error("Failed to create unsubscribe token");
+  return raced.token;
+}
+
 async function sendInviteEmail(opts: { to: string; url: string; tier: string }) {
   const tierLabel = TIER_LABEL[opts.tier] ?? opts.tier;
   const subject = "Your MYBEATCATALOG invite - claim your account";
@@ -113,6 +140,7 @@ ${opts.url}
 This link works once and expires in 7 days.`;
 
   try {
+    const unsubscribeToken = await getUnsubscribeToken(opts.to);
     await supabaseAdmin.rpc("enqueue_email", {
       queue_name: "transactional_emails",
       payload: {
@@ -123,8 +151,9 @@ This link works once and expires in 7 days.`;
         html,
         text,
         label: "invite_claim",
-        message_id: crypto.randomUUID(),
+        message_id: randomUUID(),
         queued_at: new Date().toISOString(),
+        unsubscribe_token: unsubscribeToken,
       },
     });
   } catch (err) {

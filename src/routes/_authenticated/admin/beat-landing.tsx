@@ -20,6 +20,7 @@ import {
   adminCreateAttachment,
   adminDeleteAttachment,
   adminSendTestEmail,
+  adminListEmailStatus,
 } from "@/lib/beat-landing.functions";
 
 
@@ -576,6 +577,9 @@ function CopyLinkButton({ url }: { url: string }) {
 // ---------- Email tester ----------
 function EmailTesterCard() {
   const send = useServerFn(adminSendTestEmail);
+  const listStatus = useServerFn(adminListEmailStatus);
+  const qc = useQueryClient();
+  const statusQuery = useQuery({ queryKey: ["admin-email-status"], queryFn: () => listStatus() });
   const [to, setTo] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -584,12 +588,23 @@ function EmailTesterCard() {
     setBusy(kind);
     try {
       const r = await send({ data: { to, kind } });
-      if (r.ok) toast.success(`Test email queued (${kind})`);
+      if (r.ok) {
+        toast.success(`Test email queued (${kind})`);
+        await qc.invalidateQueries({ queryKey: ["admin-email-status"] });
+      }
       else toast.error(r.error || "Failed");
     } finally { setBusy(null); }
   };
 
   const btn = "rounded-lg border border-blue-200 bg-blue-50 text-blue-700 px-3 py-2 text-xs font-semibold hover:bg-blue-100 disabled:opacity-60";
+  const emails = statusQuery.data?.emails ?? [];
+  const stats = statusQuery.data?.stats ?? { total: 0, sent: 0, failed: 0, pending: 0, suppressed: 0 };
+  const statusClass = (status: string) => {
+    if (status === "sent") return "bg-green-50 text-green-700 border-green-200";
+    if (status === "pending") return "bg-yellow-50 text-yellow-700 border-yellow-200";
+    if (status === "suppressed") return "bg-gray-50 text-gray-700 border-gray-200";
+    return "bg-red-50 text-red-700 border-red-200";
+  };
   return (
     <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
       <div className="mb-3">
@@ -605,6 +620,67 @@ function EmailTesterCard() {
         <button disabled={busy !== null} onClick={() => run("admin_sale")} className={btn}>{busy === "admin_sale" ? "Sending…" : "Admin sale notification"}</button>
         <button disabled={busy !== null} onClick={() => run("exclusive_inquiry")} className={btn}>{busy === "exclusive_inquiry" ? "Sending…" : "Exclusive inquiry"}</button>
       </div>
+      <div className="mt-6 border-t border-gray-100 pt-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-sm font-bold">Email delivery status</h3>
+            <p className="text-xs text-gray-500 mt-1">Latest unique attempts for free downloads, purchases, inquiries, and invites.</p>
+          </div>
+          <button
+            onClick={() => statusQuery.refetch()}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            Refresh status
+          </button>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <StatPill label="Total" value={stats.total} />
+          <StatPill label="Sent" value={stats.sent} tone="green" />
+          <StatPill label="Pending" value={stats.pending} tone="yellow" />
+          <StatPill label="Failed" value={stats.failed} tone="red" />
+          <StatPill label="Suppressed" value={stats.suppressed} />
+        </div>
+        <div className="mt-4 overflow-x-auto rounded-xl border border-gray-100">
+          <table className="min-w-full text-left text-xs">
+            <thead className="bg-gray-50 text-gray-500">
+              <tr>
+                <th className="px-3 py-2 font-semibold">Type</th>
+                <th className="px-3 py-2 font-semibold">Recipient</th>
+                <th className="px-3 py-2 font-semibold">Status</th>
+                <th className="px-3 py-2 font-semibold">Time</th>
+                <th className="px-3 py-2 font-semibold">Error</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {statusQuery.isLoading ? (
+                <tr><td colSpan={5} className="px-3 py-4 text-gray-500">Loading email status…</td></tr>
+              ) : emails.length === 0 ? (
+                <tr><td colSpan={5} className="px-3 py-4 text-gray-500">No email attempts found yet.</td></tr>
+              ) : emails.slice(0, 12).map((email) => (
+                <tr key={email.message_id}>
+                  <td className="px-3 py-2 font-medium text-gray-900">{email.template_name.replace(/^beat_/, "").replace(/_/g, " ")}</td>
+                  <td className="px-3 py-2 text-gray-600">{email.recipient_email}</td>
+                  <td className="px-3 py-2">
+                    <span className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${statusClass(email.status)}`}>{email.status}</span>
+                  </td>
+                  <td className="px-3 py-2 text-gray-500">{new Date(email.created_at).toLocaleString()}</td>
+                  <td className="max-w-[260px] truncate px-3 py-2 text-red-600" title={email.error_message || ""}>{email.error_message || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatPill({ label, value, tone = "gray" }: { label: string; value: number; tone?: "gray" | "green" | "yellow" | "red" }) {
+  const toneClass = tone === "green" ? "bg-green-50 text-green-700" : tone === "yellow" ? "bg-yellow-50 text-yellow-700" : tone === "red" ? "bg-red-50 text-red-700" : "bg-gray-50 text-gray-700";
+  return (
+    <div className={`rounded-lg px-3 py-2 ${toneClass}`}>
+      <div className="text-lg font-black leading-none">{value}</div>
+      <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide">{label}</div>
     </div>
   );
 }
