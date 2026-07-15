@@ -314,7 +314,7 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-black">Free Tagged Download</h3>
+          <h3 className="text-lg font-black">Free MP3 Download</h3>
           <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
         </div>
         {downloadUrl ? (
