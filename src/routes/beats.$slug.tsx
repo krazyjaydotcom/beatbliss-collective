@@ -106,128 +106,194 @@ function BeatLandingPage() {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [leaseOpen, setLeaseOpen] = useState(false);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const videoUrl = beat!.custom_video_url || global?.video_url || null;
-  const price = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+  const price = (cents: number) => `$${(cents / 100).toFixed(2)}`.replace(/\.00$/, "");
   const showDiscount = timer.active;
   const postedAt = formatPostedAt(beat!.custom_video_recorded_at);
+  const activePrice = showDiscount ? beat!.discount_price_cents : beat!.price_cents;
+
+  const pills = [beat!.genre, beat!.mood]
+    .flatMap((v) => (v ? v.split(/[,/]|\s+&\s+/) : []))
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <header className="mx-auto max-w-5xl px-4 pt-2 sm:pt-4 flex items-center justify-between gap-4">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900">
+      {/* HEADER */}
+      <header className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 sm:pt-6 flex items-center justify-between gap-4">
         <div>
-          <div className="text-base sm:text-lg font-black tracking-wide leading-none">MYBEATCATALOG</div>
-          <div className="text-[10px] sm:text-xs text-black font-medium mt-0.5">by KRAZYJAYDOTCOM</div>
+          <div className="text-xl sm:text-2xl font-black tracking-tight leading-none">
+            <span className="text-slate-900">MYBEAT</span><span className="text-blue-600">CATALOG</span>
+          </div>
+          <div className="text-[10px] sm:text-xs text-slate-500 font-semibold tracking-wide mt-0.5">by KRAZYJAYDOTCOM</div>
         </div>
-        <button
-          onClick={() => setHelpOpen(true)}
-          className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs sm:text-sm font-medium text-blue-700 shadow-sm hover:border-blue-300 transition"
-        >
-          <HeadphonesIcon className="h-4 w-4" />
-          Need Help?
-        </button>
+        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-700">
+          <Link to="/" className="hover:text-blue-600 transition">Catalog</Link>
+          <Link to="/_authenticated/license-example" className="hover:text-blue-600 transition">Licensing Info</Link>
+          <button onClick={() => setHelpOpen(true)} className="hover:text-blue-600 transition">Contact</button>
+        </nav>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setHelpOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-blue-700 shadow-sm hover:border-blue-400 hover:shadow transition"
+          >
+            <HeadphonesIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Need Help?</span>
+          </button>
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="md:hidden inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white h-9 w-9 text-slate-700"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 pt-2 sm:pt-3 pb-[120px] sm:pb-[110px]">
-        <div className="text-center">
-          <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-tight truncate">
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 sm:pt-8 pb-[140px]">
+        {/* TITLE with waveform */}
+        <div className="relative text-center">
+          <WaveformBackdrop />
+          <h1 className="relative text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-none text-slate-900 uppercase">
             {beat!.title}
           </h1>
-          {beat!.producer_name && (
-            <div className="text-[11px] sm:text-sm text-gray-500 mt-0.5">prod. {beat!.producer_name}</div>
+          <div className="relative mt-3 text-[11px] sm:text-sm font-bold tracking-wide text-blue-600 uppercase">
+            {beat!.genre && <span>{beat!.genre}</span>}
+            {beat!.genre && beat!.bpm ? <span className="text-slate-400 mx-2">•</span> : null}
+            {beat!.bpm && <span className="text-slate-900">{beat!.bpm} BPM</span>}
+            {(beat!.genre || beat!.bpm) && beat!.producer_name ? <span className="text-slate-400 mx-2">•</span> : null}
+            {beat!.producer_name && <span>PROD. BY <span className="text-blue-600">{beat!.producer_name}</span></span>}
+          </div>
+          {pills.length > 0 && (
+            <div className="relative mt-4 flex flex-wrap items-center justify-center gap-2">
+              {pills.map((p) => (
+                <span key={p} className="inline-flex items-center rounded-full border border-blue-200 bg-white px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-700">
+                  {p}
+                </span>
+              ))}
+            </div>
           )}
         </div>
 
+        {/* DISCOUNT PILL */}
         {showDiscount && (
-          <div className="mt-2 sm:mt-3 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
-            <div className="flex items-center gap-2 min-w-0">
-              <Gift className="h-4 w-4 text-blue-600 shrink-0" />
-              <div className="text-xs sm:text-sm truncate">
-                <span className="font-bold text-blue-700">50% Off</span>{" "}
-                <span className="font-semibold">Unlimited License</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-blue-700 font-black tabular-nums text-sm sm:text-base">
-              <span>{String(timer.min).padStart(2, "0")}</span>
-              <span>:</span>
-              <span>{String(timer.sec).padStart(2, "0")}</span>
-            </div>
+          <div className="mt-4 rounded-full bg-blue-50 border border-blue-200 px-4 py-2 flex items-center justify-center gap-3 shadow-sm">
+            <Gift className="h-4 w-4 text-blue-600 shrink-0" />
+            <span className="text-xs sm:text-sm"><span className="font-bold text-blue-700">50% Off</span> Unlimited License</span>
+            <span className="text-blue-700 font-black tabular-nums text-sm">
+              {String(timer.min).padStart(2, "0")}:{String(timer.sec).padStart(2, "0")}
+            </span>
           </div>
         )}
 
-        <div className="mt-2 sm:mt-3 rounded-xl overflow-hidden bg-gray-900 aspect-video shadow-lg max-h-[42vh] sm:max-h-[46vh] mx-auto">
+        {/* VIDEO with corner badges */}
+        <div className="relative mt-4 sm:mt-6 rounded-2xl overflow-hidden bg-slate-900 aspect-video shadow-[0_20px_60px_-20px_rgba(37,99,235,0.35)] ring-1 ring-slate-200">
           {videoUrl ? (
-            <video src={videoUrl} controls playsInline className="w-full h-full object-contain bg-black" />
+            <video src={videoUrl} controls playsInline className="w-full h-full object-cover bg-black" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-              No video yet.
-            </div>
+            <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">No video yet.</div>
           )}
+          <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-blue-600 text-white px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-lg">
+            <Zap className="h-3.5 w-3.5 fill-white" /> New Beat
+          </div>
+          <div className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-slate-900 text-white px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-lg">
+            <InfinityIcon className="h-3.5 w-3.5" /> Unlimited Use
+          </div>
         </div>
 
         {postedAt && (
-          <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[11px] sm:text-xs text-gray-500">
+          <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] sm:text-xs text-slate-500">
             <CalendarClock className="h-3.5 w-3.5 text-blue-500" />
             <span>{postedAt}</span>
           </div>
         )}
 
-        <div className="mt-2 sm:mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-          <button
-            onClick={() => setLeaseOpen(true)}
-            className="order-1 md:order-2 group rounded-xl border-2 border-blue-500 bg-blue-50 px-4 py-2.5 sm:py-3 text-left transition hover:shadow-lg"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                <ShoppingBag className="h-5 w-5 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-sm">
-                  Unlimited License (MP3) —{" "}
-                  {showDiscount ? (
-                    <>
-                      <span className="text-blue-700">{price(beat!.discount_price_cents)}</span>{" "}
-                      <span className="text-gray-400 line-through text-xs">{price(beat!.price_cents)}</span>
-                    </>
-                  ) : (
-                    <span className="text-blue-700">{price(beat!.price_cents)}</span>
-                  )}
-                </div>
-              </div>
-              <div className="text-blue-600">→</div>
+        {/* LICENSE THIS BEAT — main CTA */}
+        <div className="mt-4 sm:mt-5 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-[0_20px_60px_-20px_rgba(37,99,235,0.6)] overflow-hidden">
+          <div className="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-5 sm:gap-6">
+            <div className="hidden sm:flex h-16 w-16 rounded-2xl bg-white/15 items-center justify-center shrink-0 ring-1 ring-white/20">
+              <FileText className="h-8 w-8 text-white" />
             </div>
-          </button>
+            <div className="min-w-0 text-center md:text-left">
+              <div className="text-[11px] sm:text-xs font-bold tracking-widest uppercase text-blue-100">License This Beat</div>
+              <div className="mt-1 flex items-baseline gap-3 justify-center md:justify-start">
+                <span className="text-4xl sm:text-5xl font-black tracking-tight">{price(activePrice)}</span>
+                {showDiscount && <span className="text-blue-200/80 line-through text-lg font-semibold">{price(beat!.price_cents)}</span>}
+              </div>
+              <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs sm:text-sm text-blue-50">
+                <Bullet>Unlimited MP3 License</Bullet>
+                <Bullet>Use for unlimited songs</Bullet>
+                <Bullet>Unlimited streams &amp; sales</Bullet>
+                <Bullet>Keep 100% of your royalties</Bullet>
+              </ul>
+            </div>
+            <button
+              onClick={() => setLeaseOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-black text-white px-6 py-3.5 font-bold text-sm tracking-wide uppercase shadow-lg transition w-full md:w-auto"
+            >
+              Purchase License <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
 
+        {/* SECONDARY CTAS */}
+        <div className="mt-3 sm:mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           <button
             onClick={() => setDownloadOpen(true)}
-            className="order-2 md:order-1 group rounded-xl border border-gray-200 bg-white px-4 py-2.5 sm:py-3 text-left transition hover:shadow-md hover:border-blue-200"
+            className="group rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left hover:border-blue-300 hover:shadow-md transition flex items-center gap-4"
           >
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                <Download className="h-5 w-5 text-blue-600" />
-              </div>
-              <div className="flex-1 font-semibold text-sm">Free MP3 Download</div>
-              <div className="text-blue-600">→</div>
+            <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <Download className="h-5 w-5 text-blue-600" />
             </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-sm uppercase tracking-wide">Download Free<br className="hidden sm:inline" /> Tagged MP3</div>
+              <div className="text-xs text-slate-500 mt-0.5">For evaluation purposes only</div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-blue-600 group-hover:translate-x-0.5 transition" />
           </button>
 
           <button
             onClick={() => setInquiryOpen(true)}
-            className="order-3 group rounded-xl border border-gray-200 bg-white px-4 py-2.5 sm:py-3 text-left transition hover:shadow-md hover:border-blue-200"
+            className="group rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left hover:border-blue-300 hover:shadow-md transition flex items-center gap-4"
           >
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                <Sparkles className="h-5 w-5 text-blue-600" />
-              </div>
-              <div className="flex-1 font-semibold text-sm leading-tight">Apply for Exclusive / Custom Work</div>
-              <div className="text-blue-600">→</div>
+            <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <Users className="h-5 w-5 text-blue-600" />
             </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-sm uppercase tracking-wide">Exclusive Rights /<br className="hidden sm:inline" /> Custom Work</div>
+              <div className="text-xs text-slate-500 mt-0.5">Let's work directly</div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-blue-600 group-hover:translate-x-0.5 transition" />
           </button>
         </div>
 
+        {/* TRUST ROW */}
+        <div className="mt-5 grid grid-cols-4 gap-2 sm:gap-6 text-center">
+          <TrustCell icon={<Lock className="h-4 w-4" />} label="Secure Checkout" />
+          <TrustCell icon={<Zap className="h-4 w-4" />} label="Instant Files" />
+          <TrustCell icon={<InfinityIcon className="h-4 w-4" />} label="Unlimited Releases" />
+          <TrustCell icon={<DollarSign className="h-4 w-4" />} label="Keep 100% of Royalties" />
+        </div>
+
+        {/* PAYMENT METHODS (compact, above-the-fold-safe) */}
+        <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+          {["VISA", "MC", "AMEX", "APPLE PAY", "GOOGLE PAY"].map((m) => (
+            <span key={m} className="text-[9px] sm:text-[10px] font-bold tracking-wider text-slate-500 border border-slate-200 rounded px-2 py-0.5 bg-white">{m}</span>
+          ))}
+        </div>
+
+        <div className="mt-3 text-center">
+          <Link to="/_authenticated/license-example" className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 underline underline-offset-4">
+            View full license terms
+          </Link>
+        </div>
+
         {attachments && attachments.length > 0 && (
-          <section className="mt-4">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Attachments</h2>
+          <section className="mt-6">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Attachments</h2>
             <ul className="space-y-1.5">
               {attachments.map((a: BeatAttachment) => <AttachmentRow key={a.id} attachment={a} />)}
             </ul>
@@ -235,19 +301,15 @@ function BeatLandingPage() {
         )}
 
         {beat!.seo_description && (
-          <section className="mt-8 border-t border-gray-100 pt-5">
-            <p className="text-sm text-gray-500 leading-relaxed max-w-3xl mx-auto">{beat!.seo_description}</p>
+          <section className="mt-8 border-t border-slate-100 pt-5">
+            <p className="text-sm text-slate-500 leading-relaxed max-w-3xl mx-auto text-center">{beat!.seo_description}</p>
           </section>
         )}
       </main>
 
       {helpOpen && <NeedHelpModal global={global} onClose={() => setHelpOpen(false)} />}
-      {downloadOpen && (
-        <DownloadModal
-          beatId={beat!.id}
-          onClose={() => setDownloadOpen(false)}
-        />
-      )}
+      {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} onHelp={() => { setMenuOpen(false); setHelpOpen(true); }} />}
+      {downloadOpen && <DownloadModal beatId={beat!.id} onClose={() => setDownloadOpen(false)} />}
       {leaseOpen && (
         <LeaseModal
           beatId={beat!.id}
@@ -267,10 +329,78 @@ function BeatLandingPage() {
         title={beat!.title}
         cover={beat!.cover_url}
         producer={beat!.producer_name}
+        bpm={beat!.bpm}
+        priceLabel={price(activePrice)}
+        onLicense={() => setLeaseOpen(true)}
       />
     </div>
   );
 }
+
+function Bullet({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex items-start gap-2">
+      <svg className="h-4 w-4 mt-0.5 shrink-0 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/>
+      </svg>
+      <span>{children}</span>
+    </li>
+  );
+}
+
+function TrustCell({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="h-8 w-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">{icon}</div>
+      <div className="text-[10px] sm:text-xs font-semibold text-slate-700 leading-tight">{label}</div>
+    </div>
+  );
+}
+
+function WaveformBackdrop() {
+  return (
+    <svg
+      viewBox="0 0 800 100"
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 w-full h-16 sm:h-24 opacity-40"
+      aria-hidden="true"
+    >
+      {Array.from({ length: 80 }).map((_, i) => {
+        const h = 6 + Math.abs(Math.sin(i * 0.7) * 40) + Math.abs(Math.cos(i * 0.3) * 12);
+        return (
+          <rect
+            key={i}
+            x={i * 10}
+            y={50 - h / 2}
+            width={3}
+            height={h}
+            rx={1.5}
+            className="fill-blue-400"
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+function MobileMenu({ onClose, onHelp }: { onClose: () => void; onHelp: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 md:hidden animate-fade-in" onClick={onClose}>
+      <div className="absolute top-0 right-0 h-full w-72 bg-white p-6 shadow-xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <div className="font-black">Menu</div>
+          <button onClick={onClose} className="text-slate-400"><X className="h-5 w-5" /></button>
+        </div>
+        <nav className="space-y-1 text-sm font-semibold">
+          <Link to="/" className="block rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Catalog</Link>
+          <Link to="/_authenticated/license-example" className="block rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Licensing Info</Link>
+          <button onClick={onHelp} className="block w-full text-left rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Contact</button>
+        </nav>
+      </div>
+    </div>
+  );
+}
+
 
 function AttachmentRow({ attachment }: { attachment: BeatAttachment }) {
   const size = attachment.size_bytes ? formatBytes(attachment.size_bytes) : null;
