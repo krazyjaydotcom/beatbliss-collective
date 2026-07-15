@@ -30,7 +30,11 @@ export type BeatLanding = {
   seo_description: string | null;
   custom_video_url: string | null;
   custom_video_recorded_at: string | null;
+  bpm: number | null;
+  genre: string | null;
+  mood: string | null;
 };
+
 
 export type GlobalVideo = {
   video_url: string | null;
