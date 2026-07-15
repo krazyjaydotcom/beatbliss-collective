@@ -228,7 +228,7 @@ function BeatLandingPage() {
           <section className="mt-4">
             <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Attachments</h2>
             <ul className="space-y-1.5">
-              {attachments.map((a) => <AttachmentRow key={a.id} attachment={a} />)}
+              {attachments.map((a: BeatAttachment) => <AttachmentRow key={a.id} attachment={a} />)}
             </ul>
           </section>
         )}
