@@ -699,7 +699,9 @@ function InquiryModal({ beatId, beatTitle, onClose }: { beatId: string; beatTitl
   );
 }
 
-function StickyBottomPlayer({ src, title, cover, producer }: { src: string | null; title: string; cover: string | null; producer?: string | null }) {
+function StickyBottomPlayer({ src, title, cover, producer, bpm, priceLabel, onLicense }: {
+  src: string | null; title: string; cover: string | null; producer?: string | null; bpm?: number | null; priceLabel?: string; onLicense?: () => void;
+}) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [pos, setPos] = useState(0);
@@ -754,74 +756,100 @@ function StickyBottomPlayer({ src, title, cover, producer }: { src: string | nul
   };
 
   if (!src) return null;
+  const progress = dur ? pos / dur : 0;
+
   return (
-    <div className="fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto max-w-4xl px-3 sm:px-4 py-2.5 sm:py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-3 min-w-0 flex-1 sm:flex-none sm:w-56">
-            <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg overflow-hidden bg-blue-100 flex-shrink-0">
+    <div className="fixed bottom-0 inset-x-0 z-40 bg-slate-950 text-white shadow-[0_-10px_40px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-5xl px-3 sm:px-4 py-2.5 sm:py-3">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* cover + title */}
+          <div className="flex items-center gap-3 min-w-0 w-40 sm:w-56 shrink-0">
+            <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg overflow-hidden bg-blue-900 shrink-0 ring-1 ring-white/10">
               {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : null}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold truncate">{title}</div>
-              <div className="text-[11px] text-gray-500 truncate">Prod. by {producer || "KrazyJay"}</div>
+            <div className="min-w-0">
+              <div className="text-sm font-bold truncate">{title}</div>
+              <div className="text-[10px] text-slate-400 truncate">Prod. by {producer || "KRAZYJAY"}</div>
+              {bpm ? <div className="text-[10px] text-slate-500 truncate">{bpm} BPM</div> : null}
             </div>
           </div>
 
-          <div className="flex-1 flex items-center gap-3 min-w-0">
+          {/* transport */}
+          <div className="hidden sm:flex items-center gap-1 shrink-0 text-slate-400">
+            <button onClick={() => seek(Math.max(0, pos - 10))} aria-label="Back" className="h-8 w-8 hover:text-white flex items-center justify-center">
+              <SkipBack className="h-4 w-4" />
+            </button>
             <button
               onClick={toggle}
-              className="h-11 w-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 flex-shrink-0 shadow-md"
+              className="h-11 w-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-500 shadow-lg mx-1"
               aria-label={playing ? "Pause" : "Play"}
             >
               {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
             </button>
-            <div className="hidden sm:flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-[11px] text-gray-500 tabular-nums w-10 text-right">{fmt(pos)}</span>
-              <input
-                type="range"
-                min={0}
-                max={dur || 1}
-                step={0.1}
-                value={pos}
-                onChange={(e) => seek(Number(e.target.value))}
-                className="flex-1 accent-blue-600 min-w-0"
-                aria-label="Seek"
-              />
-              <span className="text-[11px] text-gray-500 tabular-nums w-10">{fmt(dur)}</span>
-            </div>
+            <button onClick={() => seek(Math.min(dur, pos + 10))} aria-label="Forward" className="h-8 w-8 hover:text-white flex items-center justify-center">
+              <SkipForward className="h-4 w-4" />
+            </button>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 w-32 flex-shrink-0">
-            <button onClick={toggleMute} className="text-gray-500 hover:text-gray-700" aria-label="Mute">
-              <Volume2 className={`h-5 w-5 ${muted ? "opacity-40" : ""}`} />
+          {/* mobile play only */}
+          <button
+            onClick={toggle}
+            className="sm:hidden h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shrink-0"
+            aria-label={playing ? "Pause" : "Play"}
+          >
+            {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+          </button>
+
+          {/* mini waveform + time */}
+          <div className="flex-1 min-w-0 hidden sm:flex items-center gap-3">
+            <MiniWaveform progress={progress} onSeek={(p) => seek(p * (dur || 0))} />
+            <span className="text-[10px] text-slate-400 tabular-nums whitespace-nowrap">{fmt(dur)}</span>
+          </div>
+
+          {/* volume */}
+          <div className="hidden md:flex items-center gap-2 w-24 shrink-0">
+            <button onClick={toggleMute} className="text-slate-400 hover:text-white" aria-label="Mute">
+              <Volume2 className={`h-4 w-4 ${muted ? "opacity-40" : ""}`} />
             </button>
             <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
+              type="range" min={0} max={1} step={0.01}
               value={muted ? 0 : volume}
               onChange={(e) => setVol(Number(e.target.value))}
-              className="flex-1 accent-blue-600"
+              className="flex-1 accent-blue-500"
               aria-label="Volume"
             />
           </div>
+
+          {/* license CTA */}
+          {priceLabel && onLicense && (
+            <button
+              onClick={onLicense}
+              className="ml-1 sm:ml-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-3 sm:px-4 py-2 shadow-lg flex items-center gap-2 shrink-0"
+            >
+              <div className="hidden sm:block text-left leading-tight">
+                <div className="text-[9px] font-bold tracking-widest uppercase text-blue-100">License This Beat</div>
+                <div className="text-sm font-black">{priceLabel}</div>
+              </div>
+              <div className="sm:hidden text-left leading-tight">
+                <div className="text-[9px] font-bold tracking-widest uppercase text-blue-100">License</div>
+                <div className="text-sm font-black">{priceLabel}</div>
+              </div>
+              <ShoppingBag className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
+        {/* mobile progress bar */}
         <div className="mt-1.5 flex items-center gap-2 sm:hidden">
-          <span className="text-[11px] text-gray-500 tabular-nums w-10 text-right">{fmt(pos)}</span>
+          <span className="text-[10px] text-slate-400 tabular-nums w-9 text-right">{fmt(pos)}</span>
           <input
-            type="range"
-            min={0}
-            max={dur || 1}
-            step={0.1}
+            type="range" min={0} max={dur || 1} step={0.1}
             value={pos}
             onChange={(e) => seek(Number(e.target.value))}
-            className="flex-1 accent-blue-600"
+            className="flex-1 accent-blue-500"
             aria-label="Seek"
           />
-          <span className="text-[11px] text-gray-500 tabular-nums w-10">{fmt(dur)}</span>
+          <span className="text-[10px] text-slate-400 tabular-nums w-9">{fmt(dur)}</span>
         </div>
 
         <audio ref={audioRef} src={src} preload="metadata" />
@@ -829,3 +857,30 @@ function StickyBottomPlayer({ src, title, cover, producer }: { src: string | nul
     </div>
   );
 }
+
+function MiniWaveform({ progress, onSeek }: { progress: number; onSeek: (p: number) => void }) {
+  const bars = 60;
+  return (
+    <div
+      className="relative flex-1 h-8 flex items-end gap-[2px] cursor-pointer select-none"
+      onClick={(e) => {
+        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+        const p = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        onSeek(p);
+      }}
+    >
+      {Array.from({ length: bars }).map((_, i) => {
+        const h = 20 + Math.abs(Math.sin(i * 0.7) * 60) + Math.abs(Math.cos(i * 0.3) * 20);
+        const active = i / bars <= progress;
+        return (
+          <div
+            key={i}
+            style={{ height: `${Math.min(100, h)}%` }}
+            className={`w-[3px] rounded-sm ${active ? "bg-blue-400" : "bg-slate-700"}`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
