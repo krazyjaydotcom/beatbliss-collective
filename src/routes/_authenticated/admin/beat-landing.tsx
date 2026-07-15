@@ -63,12 +63,15 @@ function BeatLandingAdmin() {
         </div>
 
         <DeliveryInfoCard />
+        <EmailTesterCard />
         <BulkPricingCard />
         <GlobalVideoCard />
         <AllBeatsTable
           beats={((beatsQuery.data?.beats ?? []) as unknown) as BeatRow[]}
           loading={beatsQuery.isLoading}
         />
+        <InquiryQuestionsCard />
+        <InquirySubmissionsCard />
         <LeadsCard />
         <OrdersCard />
 
