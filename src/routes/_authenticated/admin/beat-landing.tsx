@@ -324,6 +324,7 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
     seo_title: beat.seo_title || "",
     seo_description: beat.seo_description || "",
     custom_video_url: beat.custom_video_url || "",
+    custom_video_recorded_at: beat.custom_video_recorded_at ? beat.custom_video_recorded_at.slice(0, 16) : "",
     is_landing_published: beat.is_landing_published,
     producer_name: beat.producer_name || "",
   });
@@ -340,6 +341,7 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
         seo_title: form.seo_title || null,
         seo_description: form.seo_description || null,
         custom_video_url: form.custom_video_url || null,
+        custom_video_recorded_at: form.custom_video_recorded_at ? new Date(form.custom_video_recorded_at).toISOString() : null,
         is_landing_published: form.is_landing_published,
         producer_name: form.producer_name || null,
       },
@@ -355,8 +357,8 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
 
   const inp = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm";
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
-      <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl my-8" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fade-in" onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl my-8 animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-xl font-black mb-4">Edit: {beat.title}</h3>
         <div className="grid gap-3 sm:grid-cols-2">
           <div><label className="text-xs font-semibold">URL slug</label><input className={inp} value={form.landing_slug} onChange={(e) => setForm({ ...form, landing_slug: e.target.value })} placeholder="midnight-drive" /></div>
@@ -364,21 +366,25 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           <div><label className="text-xs font-semibold">Price (cents)</label><input type="number" className={inp} value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: Number(e.target.value) })} /></div>
           <div><label className="text-xs font-semibold">First-time discount (cents)</label><input type="number" className={inp} value={form.discount_price_cents} onChange={(e) => setForm({ ...form, discount_price_cents: Number(e.target.value) })} /></div>
           <div className="sm:col-span-2">
-            <label className="text-xs font-semibold">Legacy external checkout URL <span className="text-gray-400 font-normal">(optional fallback — no longer required; normal Stripe checkout works without this)</span></label>
-            <input className={inp} value={form.checkout_url} onChange={(e) => setForm({ ...form, checkout_url: e.target.value })} placeholder="https://... (leave blank to use built-in Stripe checkout)" />
+            <label className="text-xs font-semibold">Legacy external checkout URL <span className="text-gray-400 font-normal">(optional fallback — leave blank to use built-in Stripe checkout)</span></label>
+            <input className={inp} value={form.checkout_url} onChange={(e) => setForm({ ...form, checkout_url: e.target.value })} placeholder="https://..." />
           </div>
-          <div className="sm:col-span-2"><label className="text-xs font-semibold">Application URL</label><input className={inp} value={form.application_url} onChange={(e) => setForm({ ...form, application_url: e.target.value })} placeholder="https://..." /></div>
+          <div className="sm:col-span-2"><label className="text-xs font-semibold">Application URL (legacy — inquiry popup now handles this)</label><input className={inp} value={form.application_url} onChange={(e) => setForm({ ...form, application_url: e.target.value })} placeholder="https://..." /></div>
           <div className="sm:col-span-2"><label className="text-xs font-semibold">Custom video URL (optional; overrides global)</label><input className={inp} value={form.custom_video_url} onChange={(e) => setForm({ ...form, custom_video_url: e.target.value })} /></div>
+          <div className="sm:col-span-2"><label className="text-xs font-semibold">Video posted at (shown as "Posted X ago" under the video)</label><input type="datetime-local" className={inp} value={form.custom_video_recorded_at} onChange={(e) => setForm({ ...form, custom_video_recorded_at: e.target.value })} /></div>
           <div className="sm:col-span-2"><label className="text-xs font-semibold">SEO title</label><input className={inp} value={form.seo_title} onChange={(e) => setForm({ ...form, seo_title: e.target.value })} /></div>
           <div className="sm:col-span-2"><label className="text-xs font-semibold">SEO description</label><textarea rows={3} className={inp} value={form.seo_description} onChange={(e) => setForm({ ...form, seo_description: e.target.value })} /></div>
           <div className="sm:col-span-2 flex items-center gap-2">
             <input id="pub" type="checkbox" checked={form.is_landing_published} onChange={(e) => setForm({ ...form, is_landing_published: e.target.checked })} />
             <label htmlFor="pub" className="text-sm">Published (visible at /beats/{form.landing_slug || "…"})</label>
           </div>
+          <div className="sm:col-span-2 border-t border-gray-100 pt-4 mt-2">
+            <AttachmentsManager beatId={beat.id} />
+          </div>
         </div>
         <div className="mt-6 flex gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-200">Cancel</button>
-          <button onClick={save} className="px-4 py-2 text-sm rounded-lg bg-black text-white font-semibold">Save</button>
+          <button onClick={save} className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Save</button>
         </div>
       </div>
     </div>
