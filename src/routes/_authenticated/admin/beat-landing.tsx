@@ -41,6 +41,7 @@ type BeatRow = {
   seo_title: string | null;
   seo_description: string | null;
   custom_video_url: string | null;
+  custom_video_recorded_at: string | null;
   audio_url_tagged: string | null;
   audio_url: string | null;
 };
