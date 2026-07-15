@@ -107,14 +107,14 @@ export async function queueBuyerPurchaseEmail(opts: {
 
   const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111">
   <div style="max-width:600px;margin:0 auto;padding:32px 24px;background:#fff">
-    <h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MY<span style="color:#f97316">BEAT</span>CATALOG</h1>
+    <h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MY<span style="color:#2563eb">BEAT</span>CATALOG</h1>
     <p style="color:#71717a;margin:0 0 24px">Purchase Confirmation</p>
     <h2 style="font-size:20px;margin:0 0 10px">Thank you for your purchase!</h2>
     <p style="line-height:1.6;color:#3f3f46;margin:0 0 16px">You've successfully purchased a lease for <strong>${safeTitle}</strong> (${price}).</p>
     ${safeUrl
-      ? `<p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:10px">Download Your Beat (MP3)</a></p>
+      ? `<p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:10px">Download Your Beat (MP3)</a></p>
          <p style="color:#71717a;font-size:12px;margin:0 0 8px">Or paste this link into your browser:</p>
-         <p style="color:#a1a1aa;font-size:12px;word-break:break-all;margin:0 0 8px"><a href="${safeUrl}" style="color:#f97316">${safeUrl}</a></p>`
+         <p style="color:#a1a1aa;font-size:12px;word-break:break-all;margin:0 0 8px"><a href="${safeUrl}" style="color:#2563eb">${safeUrl}</a></p>`
       : `<p style="color:#dc2626;margin:0 0 24px">Your download link will be sent shortly. If you don't receive it within 15 minutes, reply to this email.</p>`}
     ${licenseHtml}
     <hr style="border:none;border-top:1px solid #e4e4e7;margin:28px 0" />
