@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
+import { slugifyTitle } from "@/lib/slug";
+
 
 let _admin: ReturnType<typeof createClient> | null = null;
 function adminClient() {
