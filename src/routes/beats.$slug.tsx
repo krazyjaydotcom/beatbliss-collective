@@ -132,7 +132,7 @@ function BeatLandingPage() {
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-700">
           <Link to="/" className="hover:text-blue-600 transition">Catalog</Link>
-          <Link to="/_authenticated/license-example" className="hover:text-blue-600 transition">Licensing Info</Link>
+          <Link to="/license-example" className="hover:text-blue-600 transition">Licensing Info</Link>
           <button onClick={() => setHelpOpen(true)} className="hover:text-blue-600 transition">Contact</button>
         </nav>
         <div className="flex items-center gap-2">
@@ -286,7 +286,7 @@ function BeatLandingPage() {
         </div>
 
         <div className="mt-3 text-center">
-          <Link to="/_authenticated/license-example" className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 underline underline-offset-4">
+          <Link to="/license-example" className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 underline underline-offset-4">
             View full license terms
           </Link>
         </div>
@@ -393,7 +393,7 @@ function MobileMenu({ onClose, onHelp }: { onClose: () => void; onHelp: () => vo
         </div>
         <nav className="space-y-1 text-sm font-semibold">
           <Link to="/" className="block rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Catalog</Link>
-          <Link to="/_authenticated/license-example" className="block rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Licensing Info</Link>
+          <Link to="/license-example" className="block rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Licensing Info</Link>
           <button onClick={onHelp} className="block w-full text-left rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Contact</button>
         </nav>
       </div>
