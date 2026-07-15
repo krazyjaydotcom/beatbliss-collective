@@ -217,12 +217,56 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
     const clean: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
     if (typeof clean.landing_slug === "string") {
-      clean.landing_slug = clean.landing_slug.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+      const cleaned = clean.landing_slug.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+      if (cleaned) {
+        clean.landing_slug = cleaned;
+      } else {
+        // Empty slug submitted — derive from beat title so admin isn't forced to type one.
+        const { data: b } = await sb.from("beats").select("title,landing_slug").eq("id", id).maybeSingle();
+        const existing = (b as { title: string; landing_slug: string | null } | null);
+        if (existing?.landing_slug) {
+          delete clean.landing_slug; // don't overwrite existing slug with empty
+        } else if (existing?.title) {
+          clean.landing_slug = slugifyTitle(existing.title);
+        } else {
+          delete clean.landing_slug;
+        }
+      }
     }
     const { error } = await sb.from("beats").update(clean).eq("id", id);
     if (error) return { ok: false, error: error.message };
     return { ok: true };
   });
+
+export const adminBulkUpdateLandingPrices = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: {
+    price_cents: number;
+    discount_price_cents?: number | null;
+    target: "published" | "all";
+  }) =>
+    z.object({
+      price_cents: z.number().int().min(50).max(10_000_000),
+      discount_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
+      target: z.enum(["published", "all"]),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean; updated: number; error?: string }> => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+    const patch: Record<string, unknown> = { price_cents: data.price_cents };
+    if (data.discount_price_cents !== undefined && data.discount_price_cents !== null) {
+      patch.discount_price_cents = data.discount_price_cents;
+    }
+    let query = sb.from("beats").update(patch).select("id");
+    if (data.target === "published") {
+      query = query.eq("is_landing_published", true);
+    }
+    const { data: rows, error } = await query;
+    if (error) return { ok: false, updated: 0, error: error.message };
+    return { ok: true, updated: (rows as Array<unknown> | null)?.length ?? 0 };
+  });
+
 
 export const adminGetGlobalVideo = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
