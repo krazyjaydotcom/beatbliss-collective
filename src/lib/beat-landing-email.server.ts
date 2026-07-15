@@ -26,16 +26,24 @@ async function alreadyQueued(messageId: string): Promise<boolean> {
   }
 }
 
-async function enqueue(payload: Record<string, unknown>): Promise<void> {
+async function enqueue(payload: Record<string, unknown> & { message_id: string }): Promise<void> {
   try {
     await (supabaseAdmin as any).rpc("enqueue_email", {
       queue_name: "transactional_emails",
-      payload: { from: FROM, sender_domain: SENDER_DOMAIN, queued_at: new Date().toISOString(), ...payload },
+      payload: {
+        from: FROM,
+        sender_domain: SENDER_DOMAIN,
+        queued_at: new Date().toISOString(),
+        purpose: "transactional",
+        idempotency_key: payload.message_id,
+        ...payload,
+      },
     });
   } catch (err) {
     console.error("[beat-landing-email] enqueue failed", err);
   }
 }
+
 
 // --- Free MP3 download email ---
 export async function queueFreeDownloadEmail(opts: {
