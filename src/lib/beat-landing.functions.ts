@@ -252,3 +252,99 @@ export const adminListLeaseOrders = createServerFn({ method: "GET" })
       .limit(500);
     return { orders: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
   });
+
+// ---------- Dynamic Stripe checkout for beat leases (hosted, redirect mode) ----------
+// Creates a Checkout Session on the fly using price_data/product_data from the beat itself
+// so no per-beat Stripe Payment Link is required.
+export const createBeatLeaseCheckoutSession = createServerFn({ method: "POST" })
+  .inputValidator((input: {
+    beatId: string;
+    email: string;
+    useDiscount: boolean;
+    environment: StripeEnv;
+    successUrl: string;
+    cancelUrl: string;
+  }) =>
+    z.object({
+      beatId: z.string().uuid(),
+      email: z.string().trim().email().max(255),
+      useDiscount: z.boolean(),
+      environment: z.enum(["sandbox", "live"]),
+      successUrl: z.string().url().max(2048),
+      cancelUrl: z.string().url().max(2048),
+    }).parse(input),
+  )
+  .handler(async ({ data }): Promise<{ url: string | null; error: string | null }> => {
+    const sb = adminClient() as any;
+    const { data: beat } = await sb
+      .from("beats")
+      .select("id,title,landing_slug,price_cents,discount_price_cents,cover_url,producer_name")
+      .eq("id", data.beatId)
+      .maybeSingle();
+    if (!beat) return { url: null, error: "Beat not found" };
+    const b = beat as {
+      id: string; title: string; landing_slug: string | null;
+      price_cents: number; discount_price_cents: number;
+      cover_url: string | null; producer_name: string | null;
+    };
+
+    const email = data.email.toLowerCase();
+    let useDiscount = data.useDiscount;
+    if (useDiscount) {
+      const { data: existing } = await sb
+        .from("lease_orders")
+        .select("id")
+        .eq("email", email)
+        .eq("used_first_time_discount", true)
+        .limit(1);
+      if (existing && existing.length > 0) useDiscount = false;
+    }
+    const amount = useDiscount ? b.discount_price_cents : b.price_cents;
+    if (!amount || amount < 50) return { url: null, error: "Beat price is not configured." };
+
+    // Record intent (best-effort). Never block checkout on this.
+    try {
+      await sb.from("lease_orders").insert({
+        email,
+        beat_id: b.id,
+        amount_cents: amount,
+        used_first_time_discount: useDiscount,
+      });
+    } catch { /* ignore */ }
+
+    try {
+      const stripe = createStripeClient(data.environment);
+      const description = `Beat Lease — ${b.title}`;
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [{
+          price_data: {
+            currency: "usd",
+            unit_amount: amount,
+            product_data: {
+              name: description,
+              ...(b.cover_url ? { images: [b.cover_url] } : {}),
+            },
+          },
+          quantity: 1,
+        }],
+        customer_email: email,
+        success_url: data.successUrl,
+        cancel_url: data.cancelUrl,
+        payment_intent_data: { description },
+        metadata: {
+          source: "beat_landing",
+          beat_id: b.id,
+          beat_slug: b.landing_slug ?? "",
+          beat_title: b.title,
+          license_type: "lease",
+          buyer_email: email,
+          used_first_time_discount: useDiscount ? "true" : "false",
+        },
+      });
+      return { url: session.url ?? null, error: null };
+    } catch (err) {
+      return { url: null, error: getStripeErrorMessage(err) };
+    }
+  });
+
