@@ -319,11 +319,12 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
         </div>
         {downloadUrl ? (
           <div className="mt-4 space-y-3">
-            <p className="text-sm text-gray-600">Your download is ready!</p>
+            <p className="text-sm text-gray-600">Your MP3 is ready — download below. We've also emailed you the link.</p>
             <a href={downloadUrl} download className="block w-full rounded-xl bg-purple-600 text-white text-center px-5 py-3 font-semibold hover:bg-purple-700">
-              Download Now
+              Download MP3
             </a>
           </div>
+
         ) : (
           <form onSubmit={submit} className="mt-4 space-y-3">
             <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-purple-400" />
