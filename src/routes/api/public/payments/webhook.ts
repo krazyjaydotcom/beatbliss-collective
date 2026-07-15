@@ -174,6 +174,63 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
             case "checkout.session.completed": {
               const session = event.data.object as Stripe.Checkout.Session;
               await markBeatClaimPurchased(session.metadata?.beatClaimToken, session.id);
+
+              // NEW: beat-landing lease purchase delivery. Isolated from membership flow.
+              if (session.metadata?.source === "beat_landing") {
+                try {
+                  const admin = getAdmin();
+                  const beatId = session.metadata?.beat_id;
+                  const beatSlug = session.metadata?.beat_slug || null;
+                  const buyerEmail =
+                    session.customer_details?.email ||
+                    session.customer_email ||
+                    session.metadata?.buyer_email ||
+                    null;
+                  const amount = session.amount_total ?? 0;
+
+                  let beatTitle = session.metadata?.beat_title || "Your beat";
+                  let downloadUrl: string | null = null;
+                  if (beatId) {
+                    const { data: b } = await admin
+                      .from("beats")
+                      .select("title,audio_url,audio_url_tagged,landing_slug")
+                      .eq("id", beatId)
+                      .maybeSingle();
+                    if (b) {
+                      beatTitle = (b as any).title ?? beatTitle;
+                      downloadUrl = (b as any).audio_url ?? (b as any).audio_url_tagged ?? null;
+                    }
+                  }
+
+                  const { queueBuyerPurchaseEmail, queueAdminSaleEmail } = await import(
+                    "@/lib/beat-landing-email.server"
+                  );
+                  if (buyerEmail) {
+                    await queueBuyerPurchaseEmail({
+                      to: buyerEmail,
+                      beatTitle,
+                      downloadUrl,
+                      amountCents: amount,
+                      sessionId: session.id,
+                      beatSlug,
+                    });
+                  } else {
+                    console.warn("[webhook] beat_landing session missing buyer email", session.id);
+                  }
+                  await queueAdminSaleEmail({
+                    beatTitle,
+                    buyerEmail: buyerEmail || "(unknown)",
+                    amountCents: amount,
+                    sessionId: session.id,
+                    beatSlug,
+                  });
+                } catch (err) {
+                  // Never fail the webhook on email issues — Stripe would retry forever.
+                  console.error("[webhook] beat_landing delivery emails failed", err);
+                }
+                break;
+              }
+
               if (session.mode === "subscription" && session.subscription) {
                 const subId = typeof session.subscription === "string"
                   ? session.subscription
@@ -219,6 +276,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
               }
               break;
             }
+
             case "customer.subscription.created":
             case "customer.subscription.updated":
             case "customer.subscription.deleted": {
