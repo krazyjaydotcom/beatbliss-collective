@@ -187,12 +187,13 @@ export async function queueAdminSaleEmail(opts: {
   amountCents: number;
   sessionId: string;
   beatSlug: string | null;
+  overrideRecipient?: string;
 }): Promise<{ queued: boolean; skipped?: string; messageId?: string }> {
   const messageId = `bl_admin_${opts.sessionId}`;
   if (await alreadyQueued(messageId)) return { queued: false, skipped: "already_queued" };
 
   // Resolve admin email
-  let adminEmail = process.env.SALES_NOTIFICATION_EMAIL || null;
+  let adminEmail = opts.overrideRecipient || process.env.SALES_NOTIFICATION_EMAIL || null;
   if (!adminEmail) {
     try {
       const { data } = await (supabaseAdmin as any).from("global_video").select("contact_email").eq("id", 1).maybeSingle();
