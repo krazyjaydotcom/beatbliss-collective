@@ -54,6 +54,8 @@ function BeatLandingAdmin() {
           </p>
         </div>
 
+        <DeliveryInfoCard />
+        <BulkPricingCard />
         <GlobalVideoCard />
         <AllBeatsTable
           beats={((beatsQuery.data?.beats ?? []) as unknown) as BeatRow[]}
@@ -61,6 +63,7 @@ function BeatLandingAdmin() {
         />
         <LeadsCard />
         <OrdersCard />
+
       </div>
     </div>
   );
