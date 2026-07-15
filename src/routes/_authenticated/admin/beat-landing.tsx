@@ -7,11 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   adminListBeats,
   adminUpdateBeatLanding,
+  adminBulkUpdateLandingPrices,
   adminGetGlobalVideo,
   adminUpdateGlobalVideo,
   adminListLeadCaptures,
   adminListLeaseOrders,
 } from "@/lib/beat-landing.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin/beat-landing")({
   component: BeatLandingAdmin,
@@ -52,6 +54,8 @@ function BeatLandingAdmin() {
           </p>
         </div>
 
+        <DeliveryInfoCard />
+        <BulkPricingCard />
         <GlobalVideoCard />
         <AllBeatsTable
           beats={((beatsQuery.data?.beats ?? []) as unknown) as BeatRow[]}
@@ -59,6 +63,7 @@ function BeatLandingAdmin() {
         />
         <LeadsCard />
         <OrdersCard />
+
       </div>
     </div>
   );
@@ -407,6 +412,121 @@ function OrdersCard() {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function DeliveryInfoCard() {
+  return (
+    <div className="rounded-2xl bg-blue-50 border border-blue-200 p-5 text-sm text-blue-900">
+      <p className="font-semibold mb-1">How beat landing delivery works</p>
+      <p className="text-blue-800/90 leading-relaxed">
+        Paid purchases are delivered after Stripe confirms payment. The buyer automatically receives an email with the beat MP3 download link and the Unlimited License Agreement. You (admin) receive a sale notification email. Free MP3 downloads capture the lead and email them the MP3 link.
+      </p>
+    </div>
+  );
+}
+
+function BulkPricingCard() {
+  const bulk = useServerFn(adminBulkUpdateLandingPrices);
+  const qc = useQueryClient();
+  const [price, setPrice] = useState("49.99");
+  const [discount, setDiscount] = useState("");
+  const [target, setTarget] = useState<"published" | "all">("published");
+  const [saving, setSaving] = useState(false);
+
+  const apply = async () => {
+    const priceCents = Math.round(parseFloat(price) * 100);
+    if (!isFinite(priceCents) || priceCents < 50) {
+      toast.error("Enter a valid price (at least $0.50)");
+      return;
+    }
+    let discountCents: number | null = null;
+    if (discount.trim() !== "") {
+      const d = Math.round(parseFloat(discount) * 100);
+      if (!isFinite(d) || d < 0) {
+        toast.error("Invalid discount price");
+        return;
+      }
+      discountCents = d;
+    }
+    const label = target === "published" ? "published landing pages" : "all beats";
+    if (!confirm(`Apply price $${(priceCents / 100).toFixed(2)}${discountCents !== null ? ` and discount $${(discountCents / 100).toFixed(2)}` : ""} to ${label}?`)) return;
+    setSaving(true);
+    try {
+      const r = await bulk({
+        data: {
+          price_cents: priceCents,
+          discount_price_cents: discountCents,
+          target,
+        },
+      });
+      if (r.ok) {
+        toast.success(`Updated ${r.updated} beat${r.updated === 1 ? "" : "s"}`);
+        qc.invalidateQueries({ queryKey: ["admin-landing-beats"] });
+      } else {
+        toast.error(r.error || "Update failed");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
+      <div className="mb-4">
+        <h2 className="text-xl font-bold">Bulk pricing</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Set lease and optional first-time discount pricing once and apply to landing pages in bulk. Only updates <code className="text-xs">price_cents</code> and <code className="text-xs">discount_price_cents</code>. Membership pricing is not affected.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <div>
+          <label className="block text-xs font-semibold mb-1">Lease price (USD)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0.5"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold mb-1">Discount price (optional)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={discount}
+            onChange={(e) => setDiscount(e.target.value)}
+            placeholder="Leave blank to skip"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold mb-1">Apply to</label>
+          <select
+            value={target}
+            onChange={(e) => setTarget(e.target.value as "published" | "all")}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          >
+            <option value="published">Published landing pages only</option>
+            <option value="all">All beats</option>
+          </select>
+        </div>
+        <div className="flex items-end">
+          <button
+            onClick={apply}
+            disabled={saving}
+            className="w-full rounded-lg bg-black text-white px-4 py-2.5 font-semibold hover:bg-gray-800 disabled:opacity-60"
+          >
+            {saving ? "Applying..." : "Apply to beats"}
+          </button>
+        </div>
       </div>
     </div>
   );

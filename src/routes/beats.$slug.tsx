@@ -145,8 +145,8 @@ function BeatLandingPage() {
           )}
         </div>
 
-        {/* Audio player */}
-        <AudioPlayer beat={beat!} />
+        {/* Audio player removed — sticky bottom player is the single control */}
+
 
         {/* Buttons - desktop L->R: Download, Lease, Apply.  Mobile stack: Lease, Download, Apply */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -185,10 +185,11 @@ function BeatLandingPage() {
               <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">
                 <Download className="h-6 w-6 text-purple-600" />
               </div>
-              <div className="flex-1 font-semibold text-sm">Download Tagged Beat</div>
+              <div className="flex-1 font-semibold text-sm">Free MP3 Download</div>
               <div className="text-purple-600">→</div>
             </div>
           </button>
+
 
           {/* Apply - always order 3 */}
           <a
@@ -237,90 +238,18 @@ function BeatLandingPage() {
         />
       )}
       <StickyBottomPlayer
-        src={beat!.audio_url_tagged || beat!.audio_url}
+        src={beat!.audio_url || beat!.audio_url_tagged}
         title={beat!.title}
         cover={beat!.cover_url}
+        producer={beat!.producer_name}
       />
+
     </div>
   );
 }
 
-function AudioPlayer({ beat }: { beat: NonNullable<ReturnType<typeof Route.useLoaderData>["beat"]> }) {
-  const src = beat.audio_url_tagged || beat.audio_url;
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [pos, setPos] = useState(0);
-  const [dur, setDur] = useState(0);
-  const [volume, setVolume] = useState(1);
 
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    const onTime = () => setPos(a.currentTime);
-    const onDur = () => setDur(a.duration || 0);
-    const onEnd = () => setPlaying(false);
-    a.addEventListener("timeupdate", onTime);
-    a.addEventListener("loadedmetadata", onDur);
-    a.addEventListener("ended", onEnd);
-    return () => {
-      a.removeEventListener("timeupdate", onTime);
-      a.removeEventListener("loadedmetadata", onDur);
-      a.removeEventListener("ended", onEnd);
-    };
-  }, []);
 
-  const toggle = () => {
-    const a = audioRef.current;
-    if (!a || !src) return;
-    if (playing) { a.pause(); setPlaying(false); }
-    else { a.play(); setPlaying(true); }
-  };
-
-  const fmt = (s: number) => {
-    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-  };
-
-  return (
-    <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 flex items-center gap-4 shadow-sm">
-      <div className="h-14 w-14 rounded-lg overflow-hidden bg-purple-100 flex-shrink-0">
-        {beat.cover_url ? (
-          <img src={beat.cover_url} alt={beat.title} className="w-full h-full object-cover" />
-        ) : null}
-      </div>
-      <div className="flex-shrink-0 min-w-0">
-        <div className="font-bold text-sm truncate">{beat.title}</div>
-        <div className="text-xs text-gray-500 truncate">Prod. by {beat.producer_name || "KrazyJay"}</div>
-      </div>
-      <button
-        onClick={toggle}
-        className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center hover:bg-purple-200 transition flex-shrink-0"
-        aria-label={playing ? "Pause" : "Play"}
-      >
-        {playing ? <Pause className="h-4 w-4 text-purple-600" /> : <Play className="h-4 w-4 text-purple-600 ml-0.5" />}
-      </button>
-      <input
-        type="range"
-        min={0}
-        max={dur || 1}
-        value={pos}
-        onChange={(e) => { if (audioRef.current) audioRef.current.currentTime = Number(e.target.value); }}
-        className="flex-1 accent-purple-500 min-w-0"
-      />
-      <div className="text-xs text-gray-500 tabular-nums flex-shrink-0 hidden sm:block">
-        {fmt(pos)} / {fmt(dur)}
-      </div>
-      <button
-        onClick={() => { const v = volume > 0 ? 0 : 1; setVolume(v); if (audioRef.current) audioRef.current.volume = v; }}
-        className="text-gray-500 hover:text-gray-700 flex-shrink-0"
-        aria-label="Volume"
-      >
-        <Volume2 className="h-5 w-5" />
-      </button>
-      {src && <audio ref={audioRef} src={src} preload="metadata" />}
-    </div>
-  );
-}
 
 function NeedHelpModal({ global, onClose }: { global: { contact_instagram: string | null; contact_email: string | null; contact_phone: string | null } | null; onClose: () => void }) {
   const ig = global?.contact_instagram;
@@ -373,7 +302,7 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
     try {
       const r = await capture({ data: { beatId, firstName, email } });
       if (r.downloadUrl) setDownloadUrl(r.downloadUrl);
-      else setError("Tagged file not available yet.");
+      else setError("MP3 file not available yet.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -385,16 +314,17 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-black">Free Tagged Download</h3>
+          <h3 className="text-lg font-black">Free MP3 Download</h3>
           <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
         </div>
         {downloadUrl ? (
           <div className="mt-4 space-y-3">
-            <p className="text-sm text-gray-600">Your download is ready!</p>
+            <p className="text-sm text-gray-600">Your MP3 is ready — download below. We've also emailed you the link.</p>
             <a href={downloadUrl} download className="block w-full rounded-xl bg-purple-600 text-white text-center px-5 py-3 font-semibold hover:bg-purple-700">
-              Download Now
+              Download MP3
             </a>
           </div>
+
         ) : (
           <form onSubmit={submit} className="mt-4 space-y-3">
             <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-purple-400" />
@@ -487,43 +417,139 @@ function LeaseModal({ beatId, slug, fullPriceCents, discountPriceCents, checkout
   );
 }
 
-function StickyBottomPlayer({ src, title, cover }: { src: string | null; title: string; cover: string | null }) {
+function StickyBottomPlayer({ src, title, cover, producer }: { src: string | null; title: string; cover: string | null; producer?: string | null }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [pos, setPos] = useState(0);
+  const [dur, setDur] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
+
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
+    const onTime = () => setPos(a.currentTime);
+    const onDur = () => setDur(a.duration || 0);
     const onEnd = () => setPlaying(false);
+    a.addEventListener("timeupdate", onTime);
+    a.addEventListener("loadedmetadata", onDur);
     a.addEventListener("ended", onEnd);
-    return () => a.removeEventListener("ended", onEnd);
+    return () => {
+      a.removeEventListener("timeupdate", onTime);
+      a.removeEventListener("loadedmetadata", onDur);
+      a.removeEventListener("ended", onEnd);
+    };
   }, []);
+
   const toggle = () => {
     const a = audioRef.current;
     if (!a || !src) return;
     if (playing) { a.pause(); setPlaying(false); }
     else { a.play(); setPlaying(true); }
   };
+
+  const seek = (v: number) => {
+    if (audioRef.current) audioRef.current.currentTime = v;
+    setPos(v);
+  };
+
+  const setVol = (v: number) => {
+    setVolume(v);
+    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = v === 0; }
+    setMuted(v === 0);
+  };
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    if (audioRef.current) audioRef.current.muted = next;
+  };
+
+  const fmt = (s: number) => {
+    if (!isFinite(s)) return "00:00";
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
+
   if (!src) return null;
   return (
-    <div className="fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-      <div className="mx-auto max-w-4xl px-4 py-3 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg overflow-hidden bg-purple-100 flex-shrink-0">
-          {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : null}
+    <div className="fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-4xl px-3 sm:px-4 py-3">
+        <div className="flex items-center gap-3">
+          {/* Cover + title (left) */}
+          <div className="flex items-center gap-3 min-w-0 flex-1 sm:flex-none sm:w-56">
+            <div className="h-11 w-11 rounded-lg overflow-hidden bg-purple-100 flex-shrink-0">
+              {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : null}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold truncate">{title}</div>
+              <div className="text-[11px] text-gray-500 truncate">Prod. by {producer || "KrazyJay"}</div>
+            </div>
+          </div>
+
+          {/* Center: play + scrubber */}
+          <div className="flex-1 flex items-center gap-3 min-w-0">
+            <button
+              onClick={toggle}
+              className="h-11 w-11 rounded-full bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600 flex-shrink-0 shadow-md"
+              aria-label={playing ? "Pause" : "Play"}
+            >
+              {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+            </button>
+            <div className="hidden sm:flex items-center gap-2 flex-1 min-w-0">
+              <span className="text-[11px] text-gray-500 tabular-nums w-10 text-right">{fmt(pos)}</span>
+              <input
+                type="range"
+                min={0}
+                max={dur || 1}
+                step={0.1}
+                value={pos}
+                onChange={(e) => seek(Number(e.target.value))}
+                className="flex-1 accent-orange-500 min-w-0"
+                aria-label="Seek"
+              />
+              <span className="text-[11px] text-gray-500 tabular-nums w-10">{fmt(dur)}</span>
+            </div>
+          </div>
+
+          {/* Right: volume (desktop only) */}
+          <div className="hidden md:flex items-center gap-2 w-32 flex-shrink-0">
+            <button onClick={toggleMute} className="text-gray-500 hover:text-gray-700" aria-label="Mute">
+              <Volume2 className={`h-5 w-5 ${muted ? "opacity-40" : ""}`} />
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={muted ? 0 : volume}
+              onChange={(e) => setVol(Number(e.target.value))}
+              className="flex-1 accent-orange-500"
+              aria-label="Volume"
+            />
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold truncate">{title}</div>
-          <div className="text-xs text-gray-500">Preview</div>
+
+        {/* Mobile scrubber row */}
+        <div className="mt-2 flex items-center gap-2 sm:hidden">
+          <span className="text-[11px] text-gray-500 tabular-nums w-10 text-right">{fmt(pos)}</span>
+          <input
+            type="range"
+            min={0}
+            max={dur || 1}
+            step={0.1}
+            value={pos}
+            onChange={(e) => seek(Number(e.target.value))}
+            className="flex-1 accent-orange-500"
+            aria-label="Seek"
+          />
+          <span className="text-[11px] text-gray-500 tabular-nums w-10">{fmt(dur)}</span>
         </div>
-        <button
-          onClick={toggle}
-          className="h-11 w-11 rounded-full bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600 flex-shrink-0"
-          aria-label={playing ? "Pause" : "Play"}
-        >
-          {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
-        </button>
+
         <audio ref={audioRef} src={src} preload="metadata" />
       </div>
     </div>
   );
 }
+
 
