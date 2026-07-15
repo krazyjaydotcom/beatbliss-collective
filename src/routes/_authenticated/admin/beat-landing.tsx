@@ -12,6 +12,14 @@ import {
   adminUpdateGlobalVideo,
   adminListLeadCaptures,
   adminListLeaseOrders,
+  adminListInquiryQuestions,
+  adminUpsertInquiryQuestion,
+  adminDeleteInquiryQuestion,
+  adminListInquirySubmissions,
+  adminListAttachments,
+  adminCreateAttachment,
+  adminDeleteAttachment,
+  adminSendTestEmail,
 } from "@/lib/beat-landing.functions";
 
 
