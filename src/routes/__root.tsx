@@ -134,6 +134,40 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    (window as unknown as Record<string, unknown>).init_tracer = function () {
+      try {
+        const w = window as unknown as Record<string, unknown>;
+        if (w.__tracerInit) return;
+        if (typeof w.Tracer !== "function") return;
+        w.__tracerInit = true;
+        new (w.Tracer as new (config: { websiteId: string; async: boolean; debug: boolean }) => unknown)({
+          websiteId: "acb3a135-f2f5-4201-90a2-cc061d907b21",
+          async: true,
+          debug: false,
+        });
+      } catch (e) {
+        // silently ignore tracker errors
+      }
+    };
+
+    if (!document.querySelector('script[data-visitortracking-tracer]')) {
+      const script = document.createElement('script');
+      script.src = "https://app.visitortracking.com/assets/js/tracer.js";
+      script.async = true;
+      script.defer = true;
+      script.dataset.visitortrackingTracer = "true";
+      document.head.appendChild(script);
+    }
+
+    const w = window as unknown as Record<string, unknown>;
+    if (typeof w.Tracer === "function") {
+      (w.init_tracer as () => void)();
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
