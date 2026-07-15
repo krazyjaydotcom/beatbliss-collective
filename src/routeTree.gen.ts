@@ -27,6 +27,7 @@ import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BuyBeatIdRouteImport } from './routes/buy.$beatId'
 import { Route as BeatsSlugRouteImport } from './routes/beats.$slug'
+import { Route as BeatLandingSlugRouteImport } from './routes/beat-landing.$slug'
 import { Route as BSlugRouteImport } from './routes/b.$slug'
 import { Route as ArtistUsernameRouteImport } from './routes/artist.$username'
 import { Route as AuthenticatedWhitelistRouteImport } from './routes/_authenticated/whitelist'
@@ -157,6 +158,11 @@ const BuyBeatIdRoute = BuyBeatIdRouteImport.update({
 const BeatsSlugRoute = BeatsSlugRouteImport.update({
   id: '/beats/$slug',
   path: '/beats/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BeatLandingSlugRoute = BeatLandingSlugRouteImport.update({
+  id: '/beat-landing/$slug',
+  path: '/beat-landing/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BSlugRoute = BSlugRouteImport.update({
@@ -417,6 +423,7 @@ export interface FileRoutesByFullPath {
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/artist/$username': typeof ArtistUsernameRoute
   '/b/$slug': typeof BSlugRouteWithChildren
+  '/beat-landing/$slug': typeof BeatLandingSlugRoute
   '/beats/$slug': typeof BeatsSlugRoute
   '/buy/$beatId': typeof BuyBeatIdRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -477,6 +484,7 @@ export interface FileRoutesByTo {
   '/whitelist': typeof AuthenticatedWhitelistRoute
   '/artist/$username': typeof ArtistUsernameRoute
   '/b/$slug': typeof BSlugRouteWithChildren
+  '/beat-landing/$slug': typeof BeatLandingSlugRoute
   '/beats/$slug': typeof BeatsSlugRoute
   '/buy/$beatId': typeof BuyBeatIdRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -540,6 +548,7 @@ export interface FileRoutesById {
   '/_authenticated/whitelist': typeof AuthenticatedWhitelistRoute
   '/artist/$username': typeof ArtistUsernameRoute
   '/b/$slug': typeof BSlugRouteWithChildren
+  '/beat-landing/$slug': typeof BeatLandingSlugRoute
   '/beats/$slug': typeof BeatsSlugRoute
   '/buy/$beatId': typeof BuyBeatIdRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -603,6 +612,7 @@ export interface FileRouteTypes {
     | '/whitelist'
     | '/artist/$username'
     | '/b/$slug'
+    | '/beat-landing/$slug'
     | '/beats/$slug'
     | '/buy/$beatId'
     | '/checkout/return'
@@ -663,6 +673,7 @@ export interface FileRouteTypes {
     | '/whitelist'
     | '/artist/$username'
     | '/b/$slug'
+    | '/beat-landing/$slug'
     | '/beats/$slug'
     | '/buy/$beatId'
     | '/checkout/return'
@@ -725,6 +736,7 @@ export interface FileRouteTypes {
     | '/_authenticated/whitelist'
     | '/artist/$username'
     | '/b/$slug'
+    | '/beat-landing/$slug'
     | '/beats/$slug'
     | '/buy/$beatId'
     | '/checkout/return'
@@ -776,6 +788,7 @@ export interface RootRouteChildren {
   VipRoute: typeof VipRoute
   ArtistUsernameRoute: typeof ArtistUsernameRoute
   BSlugRoute: typeof BSlugRouteWithChildren
+  BeatLandingSlugRoute: typeof BeatLandingSlugRoute
   BeatsSlugRoute: typeof BeatsSlugRoute
   BuyBeatIdRoute: typeof BuyBeatIdRoute
   ClaimTokenRoute: typeof ClaimTokenRoute
@@ -915,6 +928,13 @@ declare module '@tanstack/react-router' {
       path: '/beats/$slug'
       fullPath: '/beats/$slug'
       preLoaderRoute: typeof BeatsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/beat-landing/$slug': {
+      id: '/beat-landing/$slug'
+      path: '/beat-landing/$slug'
+      fullPath: '/beat-landing/$slug'
+      preLoaderRoute: typeof BeatLandingSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/b/$slug': {
@@ -1340,6 +1360,7 @@ const rootRouteChildren: RootRouteChildren = {
   VipRoute: VipRoute,
   ArtistUsernameRoute: ArtistUsernameRoute,
   BSlugRoute: BSlugRouteWithChildren,
+  BeatLandingSlugRoute: BeatLandingSlugRoute,
   BeatsSlugRoute: BeatsSlugRoute,
   BuyBeatIdRoute: BuyBeatIdRoute,
   ClaimTokenRoute: ClaimTokenRoute,

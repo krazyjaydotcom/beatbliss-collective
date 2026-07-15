@@ -235,17 +235,25 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
             </thead>
             <tbody>
               {beats.map((b) => (
-                <tr key={b.id} className="border-b border-gray-50">
-                  <td className="py-2 font-medium">{b.title}</td>
-                  <td className="py-2 font-mono text-xs">{b.landing_slug || "—"}</td>
-                  <td className="py-2">${(b.price_cents / 100).toFixed(2)}</td>
-                  <td className="py-2">${(b.discount_price_cents / 100).toFixed(2)}</td>
-                  <td className="py-2">
+                <tr key={b.id} className="border-b border-gray-50 align-top">
+                  <td className="py-3 font-medium">
+                    <div>{b.title}</div>
+                    {b.landing_slug && b.is_landing_published && (
+                      <div className="mt-2 space-y-1">
+                        <ShareLinkRow url={`https://mybeatcatalog.com/beats/${b.landing_slug}`} label="Canonical" />
+                        <ShareLinkRow url={`https://mybeatcatalog.com/beat-landing/${b.landing_slug}`} label="Friendly" />
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-3 font-mono text-xs">{b.landing_slug || "—"}</td>
+                  <td className="py-3">${(b.price_cents / 100).toFixed(2)}</td>
+                  <td className="py-3">${(b.discount_price_cents / 100).toFixed(2)}</td>
+                  <td className="py-3">
                     <span className={`px-2 py-0.5 rounded text-xs ${b.is_landing_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                       {b.is_landing_published ? "Live" : "Draft"}
                     </span>
                   </td>
-                  <td className="py-2">
+                  <td className="py-3">
                     <button onClick={() => setEditing(b)} className="text-purple-600 hover:underline text-xs">Edit</button>
                     {b.landing_slug && b.is_landing_published && (
                       <a href={`/beats/${b.landing_slug}`} target="_blank" rel="noreferrer" className="ml-3 text-gray-500 hover:underline text-xs">View →</a>
@@ -258,6 +266,28 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
         </div>
       )}
       {editing && <EditBeatModal beat={editing} onClose={() => setEditing(null)} />}
+    </div>
+  );
+}
+
+function ShareLinkRow({ url, label }: { url: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="text-gray-400 w-16 shrink-0">{label}</span>
+      <a href={url} target="_blank" rel="noreferrer" className="font-mono text-purple-600 hover:underline truncate max-w-xs">{url}</a>
+      <button onClick={copy} className="rounded border border-gray-200 px-2 py-0.5 text-[10px] hover:bg-gray-50">
+        {copied ? "Copied!" : "Copy"}
+      </button>
     </div>
   );
 }
@@ -313,7 +343,10 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           <div><label className="text-xs font-semibold">Producer name</label><input className={inp} value={form.producer_name} onChange={(e) => setForm({ ...form, producer_name: e.target.value })} /></div>
           <div><label className="text-xs font-semibold">Price (cents)</label><input type="number" className={inp} value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: Number(e.target.value) })} /></div>
           <div><label className="text-xs font-semibold">First-time discount (cents)</label><input type="number" className={inp} value={form.discount_price_cents} onChange={(e) => setForm({ ...form, discount_price_cents: Number(e.target.value) })} /></div>
-          <div className="sm:col-span-2"><label className="text-xs font-semibold">Checkout URL (Stripe/Payhip/etc)</label><input className={inp} value={form.checkout_url} onChange={(e) => setForm({ ...form, checkout_url: e.target.value })} placeholder="https://..." /></div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold">Legacy external checkout URL <span className="text-gray-400 font-normal">(optional fallback — no longer required; normal Stripe checkout works without this)</span></label>
+            <input className={inp} value={form.checkout_url} onChange={(e) => setForm({ ...form, checkout_url: e.target.value })} placeholder="https://... (leave blank to use built-in Stripe checkout)" />
+          </div>
           <div className="sm:col-span-2"><label className="text-xs font-semibold">Application URL</label><input className={inp} value={form.application_url} onChange={(e) => setForm({ ...form, application_url: e.target.value })} placeholder="https://..." /></div>
           <div className="sm:col-span-2"><label className="text-xs font-semibold">Custom video URL (optional; overrides global)</label><input className={inp} value={form.custom_video_url} onChange={(e) => setForm({ ...form, custom_video_url: e.target.value })} /></div>
           <div className="sm:col-span-2"><label className="text-xs font-semibold">SEO title</label><input className={inp} value={form.seo_title} onChange={(e) => setForm({ ...form, seo_title: e.target.value })} /></div>
