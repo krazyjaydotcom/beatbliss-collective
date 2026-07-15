@@ -545,7 +545,7 @@ export const adminListInquiryQuestions = createServerFn({ method: "GET" })
     const { data } = await sb.from("beat_landing_inquiry_questions")
       .select("*")
       .order("sort_order", { ascending: true });
-    return { questions: (data ?? []) as Array<Record<string, unknown>> };
+    return { questions: (data ?? []) as any[] };
   });
 
 export const adminUpsertInquiryQuestion = createServerFn({ method: "POST" })
@@ -592,7 +592,7 @@ export const adminListInquirySubmissions = createServerFn({ method: "GET" })
       .select("id,beat_id,name,email,answers,created_at")
       .order("created_at", { ascending: false })
       .limit(500);
-    return { submissions: (data ?? []) as Array<Record<string, unknown>> };
+    return { submissions: (data ?? []) as any[] };
   });
 
 // ---------- Attachments (admin manage, public list via loader) ----------
@@ -607,7 +607,7 @@ export const adminListAttachments = createServerFn({ method: "GET" })
       .select("id,filename,mime_type,size_bytes,sort_order,storage_path")
       .eq("beat_id", data.beatId)
       .order("sort_order", { ascending: true });
-    return { attachments: (rows ?? []) as Array<Record<string, unknown>> };
+    return { attachments: (rows ?? []) as any[] };
   });
 
 export const adminCreateAttachment = createServerFn({ method: "POST" })
