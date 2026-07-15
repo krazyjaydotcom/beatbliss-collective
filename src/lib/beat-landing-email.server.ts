@@ -7,6 +7,12 @@ const SENDER_DOMAIN = "notify.krazyjay.com";
 const FALLBACK_ADMIN_EMAIL = "krazyjaydotcom@gmail.com";
 const SITE = "https://mybeatcatalog.com";
 
+type EmailPayload = Record<string, unknown> & {
+  message_id: string;
+  to: string;
+  label?: string;
+};
+
 function escapeHtml(s: string): string {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 }
@@ -26,9 +32,52 @@ async function alreadyQueued(messageId: string): Promise<boolean> {
   }
 }
 
-async function enqueue(payload: Record<string, unknown> & { message_id: string }): Promise<void> {
+async function getUnsubscribeToken(email: string): Promise<string> {
+  const normalizedEmail = email.toLowerCase().trim();
+  const { data: existing, error: readError } = await (supabaseAdmin as any)
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+  if (readError) throw new Error(`Failed to read unsubscribe token: ${readError.message}`);
+  if (existing?.token) return existing.token as string;
+
+  const token = crypto.randomUUID();
+  const { data: inserted, error: insertError } = await (supabaseAdmin as any)
+    .from("email_unsubscribe_tokens")
+    .insert({ email: normalizedEmail, token })
+    .select("token")
+    .maybeSingle();
+
+  if (!insertError && inserted?.token) return inserted.token as string;
+
+  const { data: raced, error: racedError } = await (supabaseAdmin as any)
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+  if (racedError || !raced?.token) {
+    throw new Error(insertError?.message || racedError?.message || "Failed to create unsubscribe token");
+  }
+  return raced.token as string;
+}
+
+async function logEmailAttempt(payload: EmailPayload, status: "pending" | "failed", errorMessage?: string): Promise<void> {
+  const { error } = await (supabaseAdmin as any).from("email_send_log").insert({
+    message_id: payload.message_id,
+    template_name: payload.label || "beat_landing_email",
+    recipient_email: payload.to,
+    status,
+    error_message: errorMessage ?? null,
+  });
+  if (error) console.error("[beat-landing-email] log failed", error);
+}
+
+async function enqueue(payload: EmailPayload): Promise<{ messageId: string }> {
+  const unsubscribeToken = await getUnsubscribeToken(payload.to);
+  await logEmailAttempt(payload, "pending");
   try {
-    await (supabaseAdmin as any).rpc("enqueue_email", {
+    const { error } = await (supabaseAdmin as any).rpc("enqueue_email", {
       queue_name: "transactional_emails",
       payload: {
         from: FROM,
@@ -36,11 +85,16 @@ async function enqueue(payload: Record<string, unknown> & { message_id: string }
         queued_at: new Date().toISOString(),
         purpose: "transactional",
         idempotency_key: payload.message_id,
+        unsubscribe_token: unsubscribeToken,
         ...payload,
       },
     });
+    if (error) throw error;
+    return { messageId: payload.message_id };
   } catch (err) {
     console.error("[beat-landing-email] enqueue failed", err);
+    await logEmailAttempt(payload, "failed", err instanceof Error ? err.message : "Failed to enqueue email");
+    throw err;
   }
 }
 
@@ -52,7 +106,7 @@ export async function queueFreeDownloadEmail(opts: {
   beatTitle: string;
   downloadUrl: string;
   beatSlug?: string | null;
-}): Promise<void> {
+}): Promise<{ messageId: string }> {
   const messageId = `bl_free_${opts.beatSlug || "unknown"}_${opts.to.toLowerCase()}_${Date.now()}`;
   const subject = `Your free MP3: ${opts.beatTitle}`;
   const safeName = escapeHtml(opts.firstName || "there");
@@ -70,7 +124,7 @@ export async function queueFreeDownloadEmail(opts: {
     <p style="color:#71717a;font-size:12px;margin:0">This is a preview/free tier download. For unlimited monetization rights, purchase the Unlimited License at <a href="${SITE}" style="color:#2563eb">mybeatcatalog.com</a>.</p>
   </div></body></html>`;
   const text = `Hey ${opts.firstName || "there"},\n\nYour free MP3 of "${opts.beatTitle}" is ready:\n${opts.downloadUrl}\n\n— MYBEATCATALOG`;
-  await enqueue({ to: opts.to, subject, html, text, label: "beat_free_download", message_id: messageId });
+  return enqueue({ to: opts.to, subject, html, text, label: "beat_free_download", message_id: messageId });
 }
 
 // --- Paid purchase: buyer email with download + license ---
