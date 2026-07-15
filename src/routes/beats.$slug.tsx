@@ -145,8 +145,8 @@ function BeatLandingPage() {
           )}
         </div>
 
-        {/* Audio player */}
-        <AudioPlayer beat={beat!} />
+        {/* Audio player removed — sticky bottom player is the single control */}
+
 
         {/* Buttons - desktop L->R: Download, Lease, Apply.  Mobile stack: Lease, Download, Apply */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
