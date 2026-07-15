@@ -60,14 +60,14 @@ export async function queueFreeDownloadEmail(opts: {
   const safeUrl = escapeHtml(opts.downloadUrl);
   const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#fff">
-    <h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MY<span style="color:#7c3aed">BEAT</span>CATALOG</h1>
+    <h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MY<span style="color:#2563eb">BEAT</span>CATALOG</h1>
     <p style="color:#71717a;margin:0 0 24px">Free MP3 Download</p>
     <h2 style="font-size:20px;margin:0 0 10px">Hey ${safeName},</h2>
     <p style="line-height:1.6;color:#3f3f46;margin:0 0 20px">Here's your free MP3 of <strong>${safeTitle}</strong>. Tap the button below to download.</p>
-    <p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;background:#7c3aed;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:10px">Download MP3</a></p>
-    <p style="color:#71717a;font-size:12px;line-height:1.6;margin:0">Or paste this link into your browser:<br><a href="${safeUrl}" style="color:#7c3aed;word-break:break-all">${safeUrl}</a></p>
+    <p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:10px">Download MP3</a></p>
+    <p style="color:#71717a;font-size:12px;line-height:1.6;margin:0">Or paste this link into your browser:<br><a href="${safeUrl}" style="color:#2563eb;word-break:break-all">${safeUrl}</a></p>
     <hr style="border:none;border-top:1px solid #e4e4e7;margin:28px 0" />
-    <p style="color:#71717a;font-size:12px;margin:0">This is a preview/free tier download. For unlimited monetization rights, purchase a lease at <a href="${SITE}" style="color:#7c3aed">mybeatcatalog.com</a>.</p>
+    <p style="color:#71717a;font-size:12px;margin:0">This is a preview/free tier download. For unlimited monetization rights, purchase the Unlimited License at <a href="${SITE}" style="color:#2563eb">mybeatcatalog.com</a>.</p>
   </div></body></html>`;
   const text = `Hey ${opts.firstName || "there"},\n\nYour free MP3 of "${opts.beatTitle}" is ready:\n${opts.downloadUrl}\n\n— MYBEATCATALOG`;
   await enqueue({ to: opts.to, subject, html, text, label: "beat_free_download", message_id: messageId });
@@ -107,14 +107,14 @@ export async function queueBuyerPurchaseEmail(opts: {
 
   const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111">
   <div style="max-width:600px;margin:0 auto;padding:32px 24px;background:#fff">
-    <h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MY<span style="color:#f97316">BEAT</span>CATALOG</h1>
+    <h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MY<span style="color:#2563eb">BEAT</span>CATALOG</h1>
     <p style="color:#71717a;margin:0 0 24px">Purchase Confirmation</p>
     <h2 style="font-size:20px;margin:0 0 10px">Thank you for your purchase!</h2>
     <p style="line-height:1.6;color:#3f3f46;margin:0 0 16px">You've successfully purchased a lease for <strong>${safeTitle}</strong> (${price}).</p>
     ${safeUrl
-      ? `<p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:10px">Download Your Beat (MP3)</a></p>
+      ? `<p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:10px">Download Your Beat (MP3)</a></p>
          <p style="color:#71717a;font-size:12px;margin:0 0 8px">Or paste this link into your browser:</p>
-         <p style="color:#a1a1aa;font-size:12px;word-break:break-all;margin:0 0 8px"><a href="${safeUrl}" style="color:#f97316">${safeUrl}</a></p>`
+         <p style="color:#a1a1aa;font-size:12px;word-break:break-all;margin:0 0 8px"><a href="${safeUrl}" style="color:#2563eb">${safeUrl}</a></p>`
       : `<p style="color:#dc2626;margin:0 0 24px">Your download link will be sent shortly. If you don't receive it within 15 minutes, reply to this email.</p>`}
     ${licenseHtml}
     <hr style="border:none;border-top:1px solid #e4e4e7;margin:28px 0" />
@@ -167,5 +167,60 @@ export async function queueAdminSaleEmail(opts: {
   const text = `New beat lease sale — ${price}\nBeat: ${opts.beatTitle}\nBuyer: ${opts.buyerEmail}\nAmount: ${price}\nStripe session: ${opts.sessionId}\nBeat URL: ${beatUrl}`;
 
   await enqueue({ to: adminEmail, subject: `[Sale] ${opts.beatTitle} — ${price}`, html, text, label: "beat_purchase_admin", message_id: messageId });
+  return { queued: true };
+}
+
+// --- Exclusive/custom inquiry from beat landing page ---
+export async function queueExclusiveInquiryEmail(opts: {
+  submissionId: string;
+  name: string;
+  email: string;
+  beatTitle: string | null;
+  beatSlug: string | null;
+  answers: Record<string, string>;
+  labels: Record<string, string>;
+  overrideRecipient?: string;
+}): Promise<{ queued: boolean }> {
+  const messageId = `bl_inquiry_${opts.submissionId}`;
+  if (await alreadyQueued(messageId)) return { queued: false };
+
+  const recipient = opts.overrideRecipient || process.env.SALES_NOTIFICATION_EMAIL || "jason@krazyjay.com";
+  const safeName = escapeHtml(opts.name);
+  const safeEmail = escapeHtml(opts.email);
+  const safeTitle = opts.beatTitle ? escapeHtml(opts.beatTitle) : "(no specific beat)";
+  const beatUrl = opts.beatSlug ? `${SITE}/beats/${opts.beatSlug}` : SITE;
+
+  const rows = Object.entries(opts.answers).map(([qid, val]) => {
+    const label = escapeHtml(opts.labels[qid] || qid);
+    const safeVal = escapeHtml(val || "—").replace(/\n/g, "<br>");
+    return `<tr><td style="padding:6px 12px 6px 0;color:#71717a;vertical-align:top;white-space:nowrap"><strong>${label}</strong></td><td style="padding:6px 0;color:#111">${safeVal}</td></tr>`;
+  }).join("");
+
+  const html = `<!doctype html><html><body style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111;padding:24px;background:#f6f6f7">
+    <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;padding:24px">
+      <h2 style="margin:0 0 6px;color:#2563eb">New exclusive/custom inquiry</h2>
+      <p style="margin:0 0 16px;color:#71717a">Submitted from ${safeTitle}</p>
+      <table style="border-collapse:collapse;font-size:14px;width:100%">
+        <tr><td style="padding:6px 12px 6px 0;color:#71717a"><strong>Name</strong></td><td>${safeName}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#71717a"><strong>Email</strong></td><td><a href="mailto:${safeEmail}" style="color:#2563eb">${safeEmail}</a></td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#71717a"><strong>Beat</strong></td><td><a href="${beatUrl}" style="color:#2563eb">${beatUrl}</a></td></tr>
+        ${rows}
+      </table>
+    </div>
+  </body></html>`;
+  const textLines = [
+    `New exclusive/custom inquiry`,
+    `Name: ${opts.name}`,
+    `Email: ${opts.email}`,
+    `Beat: ${beatUrl}`,
+    ...Object.entries(opts.answers).map(([qid, val]) => `${opts.labels[qid] || qid}: ${val}`),
+  ];
+  await enqueue({
+    to: recipient,
+    subject: `[Inquiry] ${opts.name} — ${opts.beatTitle || "custom work"}`,
+    html, text: textLines.join("\n"),
+    label: "beat_exclusive_inquiry", message_id: messageId,
+    reply_to: opts.email,
+  });
   return { queued: true };
 }

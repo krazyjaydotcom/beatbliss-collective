@@ -47,6 +47,7 @@ import { Route as BSlugOfferRouteImport } from './routes/b.$slug.offer'
 import { Route as ApiPublicDownloadBeatRouteImport } from './routes/api/public/download-beat'
 import { Route as ApiPublicBeatFreeDownloadRouteImport } from './routes/api/public/beat-free-download'
 import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat-claim'
+import { Route as ApiPublicBeatAttachmentRouteImport } from './routes/api/public/beat-attachment'
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
 import { Route as AuthenticatedAdminTagsRouteImport } from './routes/_authenticated/admin/tags'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
@@ -264,6 +265,11 @@ const ApiPublicBeatClaimRoute = ApiPublicBeatClaimRouteImport.update({
   path: '/api/public/beat-claim',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBeatAttachmentRoute = ApiPublicBeatAttachmentRouteImport.update({
+  id: '/api/public/beat-attachment',
+  path: '/api/public/beat-attachment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminWhitelistRoute =
   AuthenticatedAdminWhitelistRouteImport.update({
     id: '/whitelist',
@@ -460,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/api/public/beat-attachment': typeof ApiPublicBeatAttachmentRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/beat-free-download': typeof ApiPublicBeatFreeDownloadRoute
   '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
@@ -522,6 +529,7 @@ export interface FileRoutesByTo {
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/api/public/beat-attachment': typeof ApiPublicBeatAttachmentRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/beat-free-download': typeof ApiPublicBeatFreeDownloadRoute
   '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
@@ -587,6 +595,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
+  '/api/public/beat-attachment': typeof ApiPublicBeatAttachmentRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/beat-free-download': typeof ApiPublicBeatFreeDownloadRoute
   '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
@@ -652,6 +661,7 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/tags'
     | '/admin/whitelist'
+    | '/api/public/beat-attachment'
     | '/api/public/beat-claim'
     | '/api/public/beat-free-download'
     | '/api/public/download-beat'
@@ -714,6 +724,7 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/tags'
     | '/admin/whitelist'
+    | '/api/public/beat-attachment'
     | '/api/public/beat-claim'
     | '/api/public/beat-free-download'
     | '/api/public/download-beat'
@@ -778,6 +789,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/tags'
     | '/_authenticated/admin/whitelist'
+    | '/api/public/beat-attachment'
     | '/api/public/beat-claim'
     | '/api/public/beat-free-download'
     | '/api/public/download-beat'
@@ -809,6 +821,7 @@ export interface RootRouteChildren {
   JoinTokenRoute: typeof JoinTokenRoute
   OfferTokenRoute: typeof OfferTokenRoute
   TagsSlugRoute: typeof TagsSlugRoute
+  ApiPublicBeatAttachmentRoute: typeof ApiPublicBeatAttachmentRoute
   ApiPublicBeatClaimRoute: typeof ApiPublicBeatClaimRoute
   ApiPublicBeatFreeDownloadRoute: typeof ApiPublicBeatFreeDownloadRoute
   ApiPublicDownloadBeatRoute: typeof ApiPublicDownloadBeatRoute
@@ -1082,6 +1095,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/beat-claim'
       fullPath: '/api/public/beat-claim'
       preLoaderRoute: typeof ApiPublicBeatClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/beat-attachment': {
+      id: '/api/public/beat-attachment'
+      path: '/api/public/beat-attachment'
+      fullPath: '/api/public/beat-attachment'
+      preLoaderRoute: typeof ApiPublicBeatAttachmentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/whitelist': {
@@ -1389,6 +1409,7 @@ const rootRouteChildren: RootRouteChildren = {
   JoinTokenRoute: JoinTokenRoute,
   OfferTokenRoute: OfferTokenRoute,
   TagsSlugRoute: TagsSlugRoute,
+  ApiPublicBeatAttachmentRoute: ApiPublicBeatAttachmentRoute,
   ApiPublicBeatClaimRoute: ApiPublicBeatClaimRoute,
   ApiPublicBeatFreeDownloadRoute: ApiPublicBeatFreeDownloadRoute,
   ApiPublicDownloadBeatRoute: ApiPublicDownloadBeatRoute,
@@ -1398,13 +1419,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

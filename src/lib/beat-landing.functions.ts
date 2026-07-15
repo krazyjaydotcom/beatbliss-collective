@@ -29,6 +29,7 @@ export type BeatLanding = {
   seo_title: string | null;
   seo_description: string | null;
   custom_video_url: string | null;
+  custom_video_recorded_at: string | null;
 };
 
 export type GlobalVideo = {
@@ -38,15 +39,32 @@ export type GlobalVideo = {
   contact_phone: string | null;
 };
 
+export type BeatAttachment = {
+  id: string;
+  filename: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+  download_url: string;
+};
+
+export type InquiryQuestion = {
+  id: string;
+  label: string;
+  placeholder: string | null;
+  field_type: string;
+  required: boolean;
+  sort_order: number;
+};
+
 export const getBeatLandingBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: { slug: string }) =>
     z.object({ slug: z.string().min(1).max(120) }).parse(input),
   )
-  .handler(async ({ data }): Promise<{ beat: BeatLanding | null; global: GlobalVideo | null }> => {
+  .handler(async ({ data }): Promise<{ beat: BeatLanding | null; global: GlobalVideo | null; attachments: BeatAttachment[] }> => {
     const sb = adminClient() as any;
     const [{ data: beat }, { data: global }] = await Promise.all([
       sb.from("beats")
-        .select("id,landing_slug,title,producer_name,cover_url,audio_url_tagged,audio_url,price_cents,discount_price_cents,checkout_url,application_url,seo_title,seo_description,custom_video_url,is_landing_published,is_active")
+        .select("id,landing_slug,title,producer_name,cover_url,audio_url_tagged,audio_url,price_cents,discount_price_cents,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,is_landing_published,is_active")
         .eq("landing_slug", data.slug)
         .eq("is_landing_published", true)
         .eq("is_active", true)
@@ -56,9 +74,24 @@ export const getBeatLandingBySlug = createServerFn({ method: "GET" })
         .eq("id", 1)
         .maybeSingle(),
     ]);
+    let attachments: BeatAttachment[] = [];
+    if (beat?.id) {
+      const { data: atts } = await sb.from("beat_landing_attachments")
+        .select("id,filename,mime_type,size_bytes,sort_order")
+        .eq("beat_id", beat.id)
+        .order("sort_order", { ascending: true });
+      attachments = ((atts ?? []) as Array<{ id: string; filename: string; mime_type: string | null; size_bytes: number | null }>).map((a) => ({
+        id: a.id,
+        filename: a.filename,
+        mime_type: a.mime_type,
+        size_bytes: a.size_bytes,
+        download_url: `/api/public/beat-attachment?id=${encodeURIComponent(a.id)}`,
+      }));
+    }
     return {
       beat: (beat as BeatLanding | null) ?? null,
       global: (global as GlobalVideo | null) ?? null,
+      attachments,
     };
   });
 
@@ -211,7 +244,7 @@ export const adminListBeats = createServerFn({ method: "GET" })
       }
     }
     const { data } = await sb.from("beats")
-      .select("id,title,landing_slug,is_landing_published,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,audio_url_tagged,audio_url")
+      .select("id,title,landing_slug,is_landing_published,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,audio_url_tagged,audio_url")
       // show all beats so admin can assign slugs
       .order("title", { ascending: true });
     return { beats: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
@@ -230,6 +263,7 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
     seo_title?: string | null;
     seo_description?: string | null;
     custom_video_url?: string | null;
+    custom_video_recorded_at?: string | null;
     is_landing_published?: boolean;
     producer_name?: string | null;
   }) => input)
@@ -441,3 +475,221 @@ export const createBeatLeaseCheckoutSession = createServerFn({ method: "POST" })
     }
   });
 
+
+// ---------- Inquiry questions (public read + admin manage) ----------
+
+export const listInquiryQuestions = createServerFn({ method: "GET" })
+  .handler(async (): Promise<{ questions: InquiryQuestion[] }> => {
+    const sb = adminClient() as any;
+    const { data } = await sb.from("beat_landing_inquiry_questions")
+      .select("id,label,placeholder,field_type,required,sort_order")
+      .eq("active", true)
+      .order("sort_order", { ascending: true });
+    return { questions: (data ?? []) as InquiryQuestion[] };
+  });
+
+export const submitBeatInquiry = createServerFn({ method: "POST" })
+  .inputValidator((input: { beatId?: string | null; name: string; email: string; answers: Record<string, string> }) =>
+    z.object({
+      beatId: z.string().uuid().nullable().optional(),
+      name: z.string().trim().min(1).max(200),
+      email: z.string().trim().email().max(255),
+      answers: z.record(z.string(), z.string().max(4000)),
+    }).parse(input),
+  )
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    const sb = adminClient() as any;
+    const { data: row } = await sb.from("beat_landing_inquiries").insert({
+      beat_id: data.beatId ?? null,
+      name: data.name,
+      email: data.email.toLowerCase(),
+      answers: data.answers,
+    }).select("id").maybeSingle();
+
+    // resolve beat title if provided
+    let beatTitle: string | null = null;
+    let beatSlug: string | null = null;
+    if (data.beatId) {
+      const { data: b } = await sb.from("beats").select("title,landing_slug").eq("id", data.beatId).maybeSingle();
+      if (b) { beatTitle = b.title; beatSlug = b.landing_slug; }
+    }
+
+    // labels for the email
+    const { data: qs } = await sb.from("beat_landing_inquiry_questions")
+      .select("id,label,sort_order").order("sort_order", { ascending: true });
+    const labels: Record<string, string> = {};
+    for (const q of (qs ?? []) as Array<{ id: string; label: string }>) labels[q.id] = q.label;
+
+    try {
+      const { queueExclusiveInquiryEmail } = await import("@/lib/beat-landing-email.server");
+      await queueExclusiveInquiryEmail({
+        submissionId: (row?.id as string) ?? `${Date.now()}`,
+        name: data.name,
+        email: data.email.toLowerCase(),
+        beatTitle,
+        beatSlug,
+        answers: data.answers,
+        labels,
+      });
+    } catch (err) {
+      console.error("[submitBeatInquiry] email queue failed", err);
+    }
+
+    return { ok: true };
+  });
+
+export const adminListInquiryQuestions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+    const { data } = await sb.from("beat_landing_inquiry_questions")
+      .select("*")
+      .order("sort_order", { ascending: true });
+    return { questions: (data ?? []) as any[] };
+  });
+
+export const adminUpsertInquiryQuestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id?: string; label: string; placeholder?: string | null; field_type?: string; required?: boolean; sort_order?: number; active?: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+    const payload: Record<string, unknown> = {
+      label: data.label,
+      placeholder: data.placeholder ?? null,
+      field_type: data.field_type ?? "text",
+      required: data.required ?? true,
+      sort_order: data.sort_order ?? 0,
+      active: data.active ?? true,
+    };
+    if (data.id) {
+      const { error } = await sb.from("beat_landing_inquiry_questions").update(payload).eq("id", data.id);
+      if (error) return { ok: false, error: error.message };
+    } else {
+      const { error } = await sb.from("beat_landing_inquiry_questions").insert(payload);
+      if (error) return { ok: false, error: error.message };
+    }
+    return { ok: true };
+  });
+
+export const adminDeleteInquiryQuestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+    const { error } = await sb.from("beat_landing_inquiry_questions").delete().eq("id", data.id);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  });
+
+export const adminListInquirySubmissions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+    const { data } = await sb.from("beat_landing_inquiries")
+      .select("id,beat_id,name,email,answers,created_at")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    return { submissions: (data ?? []) as any[] };
+  });
+
+// ---------- Attachments (admin manage, public list via loader) ----------
+
+export const adminListAttachments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { beatId: string }) => z.object({ beatId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+    const { data: rows } = await sb.from("beat_landing_attachments")
+      .select("id,filename,mime_type,size_bytes,sort_order,storage_path")
+      .eq("beat_id", data.beatId)
+      .order("sort_order", { ascending: true });
+    return { attachments: (rows ?? []) as any[] };
+  });
+
+export const adminCreateAttachment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { beatId: string; storage_path: string; filename: string; mime_type?: string | null; size_bytes?: number | null; sort_order?: number }) => input)
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+    const { error } = await sb.from("beat_landing_attachments").insert({
+      beat_id: data.beatId,
+      storage_path: data.storage_path,
+      filename: data.filename,
+      mime_type: data.mime_type ?? null,
+      size_bytes: data.size_bytes ?? null,
+      sort_order: data.sort_order ?? 0,
+    });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  });
+
+export const adminDeleteAttachment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+    const { data: row } = await sb.from("beat_landing_attachments").select("storage_path").eq("id", data.id).maybeSingle();
+    if (row?.storage_path) {
+      try { await sb.storage.from("beat-attachments").remove([row.storage_path as string]); } catch { /* ignore */ }
+    }
+    await sb.from("beat_landing_attachments").delete().eq("id", data.id);
+    return { ok: true };
+  });
+
+// ---------- Admin: send test emails ----------
+
+export const adminSendTestEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { to: string; kind: "free_download" | "purchase_buyer" | "admin_sale" | "exclusive_inquiry" }) =>
+    z.object({
+      to: z.string().trim().email().max(255),
+      kind: z.enum(["free_download", "purchase_buyer", "admin_sale", "exclusive_inquiry"]),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean; error?: string }> => {
+    await assertAdmin(context);
+    const email = await import("@/lib/beat-landing-email.server");
+    const to = data.to.toLowerCase();
+    const stamp = Date.now();
+    try {
+      if (data.kind === "free_download") {
+        await email.queueFreeDownloadEmail({
+          to, firstName: "Test",
+          beatTitle: "Test Beat", downloadUrl: "https://mybeatcatalog.com/",
+          beatSlug: `test-${stamp}`,
+        });
+      } else if (data.kind === "purchase_buyer") {
+        await email.queueBuyerPurchaseEmail({
+          to, beatTitle: "Test Beat",
+          downloadUrl: "https://mybeatcatalog.com/", amountCents: 4999,
+          sessionId: `test_buyer_${stamp}`, beatSlug: `test-${stamp}`,
+        });
+      } else if (data.kind === "admin_sale") {
+        await email.queueAdminSaleEmail({
+          beatTitle: "Test Beat", buyerEmail: to,
+          amountCents: 4999, sessionId: `test_admin_${stamp}`, beatSlug: `test-${stamp}`,
+        });
+      } else {
+        await email.queueExclusiveInquiryEmail({
+          submissionId: `test_inq_${stamp}`,
+          name: "Test Sender",
+          email: to,
+          beatTitle: "Test Beat",
+          beatSlug: `test-${stamp}`,
+          answers: { q1: "Sample answer 1", q2: "Sample answer 2" },
+          labels: { q1: "What kind of project?", q2: "Budget range" },
+          overrideRecipient: to,
+        });
+      }
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    }
+  });

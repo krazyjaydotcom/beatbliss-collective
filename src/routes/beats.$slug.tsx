@@ -1,12 +1,16 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { HeadphonesIcon, Play, Pause, Volume2, Download, Crown, User, Gift, Instagram, Mail, Phone, X } from "lucide-react";
+import { HeadphonesIcon, Play, Pause, Volume2, Download, Crown, Gift, Instagram, Mail, Phone, X, ShoppingBag, FileText, Sparkles, CalendarClock } from "lucide-react";
 import {
   getBeatLandingBySlug,
   captureBeatLead,
   checkDiscountEligibility,
   createBeatLeaseCheckoutSession,
+  listInquiryQuestions,
+  submitBeatInquiry,
+  type BeatAttachment,
+  type InquiryQuestion,
 } from "@/lib/beat-landing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 
@@ -22,7 +26,7 @@ export const Route = createFileRoute("/beats/$slug")({
     const b = loaderData?.beat;
     const url = `${SITE}/beats/${params.slug}`;
     const title = b?.seo_title || (b ? `${b.title} — MYBEATCATALOG` : "Beat — MYBEATCATALOG");
-    const desc = b?.seo_description || "Preview the beat, download the tagged version free, purchase a lease, or apply to work direct.";
+    const desc = b?.seo_description || "Preview the beat, download the tagged version free, purchase the unlimited license, or apply to work direct.";
     return {
       meta: [
         { title },
@@ -77,58 +81,72 @@ function useOfferTimer(slug: string) {
   return { active, min, sec };
 }
 
+function formatPostedAt(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (!isFinite(then)) return null;
+  const diff = Date.now() - then;
+  const mins = Math.round(diff / 60000);
+  if (mins < 1) return "Posted just now";
+  if (mins < 60) return `Posted ${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `Posted ${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 7) return `Posted ${days}d ago`;
+  return `Posted ${new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
+}
+
 function BeatLandingPage() {
-  const { beat, global } = Route.useLoaderData();
+  const { beat, global, attachments } = Route.useLoaderData();
   const params = Route.useParams();
   const timer = useOfferTimer(params.slug);
 
   const [helpOpen, setHelpOpen] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [leaseOpen, setLeaseOpen] = useState(false);
+  const [inquiryOpen, setInquiryOpen] = useState(false);
 
   const videoUrl = beat!.custom_video_url || global?.video_url || null;
   const price = (cents: number) => `$${(cents / 100).toFixed(2)}`;
   const showDiscount = timer.active;
-  
+  const postedAt = formatPostedAt(beat!.custom_video_recorded_at);
 
   return (
     <div className="min-h-screen bg-white text-black">
-      {/* Header */}
-      <header className="mx-auto max-w-5xl px-4 pt-3 sm:pt-4 flex items-center justify-between gap-4">
+      <header className="mx-auto max-w-5xl px-4 pt-2 sm:pt-4 flex items-center justify-between gap-4">
         <div>
           <div className="text-base sm:text-lg font-black tracking-wide leading-none">MYBEATCATALOG</div>
-          <div className="text-[10px] sm:text-xs text-purple-600 font-medium mt-0.5">by KRAZYJAYDOTCOM</div>
+          <div className="text-[10px] sm:text-xs text-black font-medium mt-0.5">by KRAZYJAYDOTCOM</div>
         </div>
         <button
           onClick={() => setHelpOpen(true)}
-          className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium shadow-sm hover:border-gray-300 transition"
+          className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs sm:text-sm font-medium text-blue-700 shadow-sm hover:border-blue-300 transition"
         >
           <HeadphonesIcon className="h-4 w-4" />
           Need Help?
         </button>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 pt-3 sm:pt-4 pb-[140px] sm:pb-[120px]">
+      <main className="mx-auto max-w-4xl px-4 pt-2 sm:pt-3 pb-[120px] sm:pb-[110px]">
         <div className="text-center">
           <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-tight truncate">
             {beat!.title}
           </h1>
           {beat!.producer_name && (
-            <div className="text-xs sm:text-sm text-gray-500 mt-0.5">prod. {beat!.producer_name}</div>
+            <div className="text-[11px] sm:text-sm text-gray-500 mt-0.5">prod. {beat!.producer_name}</div>
           )}
         </div>
 
-        {/* Discount bar - compact */}
         {showDiscount && (
-          <div className="mt-3 rounded-xl bg-orange-50 border border-orange-100 px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
+          <div className="mt-2 sm:mt-3 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
             <div className="flex items-center gap-2 min-w-0">
-              <Gift className="h-4 w-4 text-orange-500 shrink-0" />
+              <Gift className="h-4 w-4 text-blue-600 shrink-0" />
               <div className="text-xs sm:text-sm truncate">
-                <span className="font-bold text-orange-600">50% Off</span>{" "}
-                <span className="font-semibold">First Lease</span>
+                <span className="font-bold text-blue-700">50% Off</span>{" "}
+                <span className="font-semibold">Unlimited License</span>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-orange-600 font-black tabular-nums text-sm sm:text-base">
+            <div className="flex items-center gap-1 text-blue-700 font-black tabular-nums text-sm sm:text-base">
               <span>{String(timer.min).padStart(2, "0")}</span>
               <span>:</span>
               <span>{String(timer.sec).padStart(2, "0")}</span>
@@ -136,8 +154,7 @@ function BeatLandingPage() {
           </div>
         )}
 
-        {/* Video */}
-        <div className="mt-3 rounded-xl overflow-hidden bg-gray-900 aspect-video shadow-lg max-h-[46vh] mx-auto">
+        <div className="mt-2 sm:mt-3 rounded-xl overflow-hidden bg-gray-900 aspect-video shadow-lg max-h-[42vh] sm:max-h-[46vh] mx-auto">
           {videoUrl ? (
             <video src={videoUrl} controls playsInline className="w-full h-full object-contain bg-black" />
           ) : (
@@ -147,71 +164,81 @@ function BeatLandingPage() {
           )}
         </div>
 
-        {/* Buttons */}
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
+        {postedAt && (
+          <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[11px] sm:text-xs text-gray-500">
+            <CalendarClock className="h-3.5 w-3.5 text-blue-500" />
+            <span>{postedAt}</span>
+          </div>
+        )}
+
+        <div className="mt-2 sm:mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
           <button
             onClick={() => setLeaseOpen(true)}
-            className="order-1 md:order-2 group rounded-xl border-2 border-orange-400 bg-orange-50 px-4 py-3 text-left transition hover:shadow-lg"
+            className="order-1 md:order-2 group rounded-xl border-2 border-blue-500 bg-blue-50 px-4 py-2.5 sm:py-3 text-left transition hover:shadow-lg"
           >
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                <Crown className="h-5 w-5 text-orange-500" />
+              <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                <ShoppingBag className="h-5 w-5 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-sm">
-                  Lease Beat —{" "}
+                  Unlimited License (MP3) —{" "}
                   {showDiscount ? (
                     <>
-                      <span className="text-orange-600">{price(beat!.discount_price_cents)}</span>{" "}
+                      <span className="text-blue-700">{price(beat!.discount_price_cents)}</span>{" "}
                       <span className="text-gray-400 line-through text-xs">{price(beat!.price_cents)}</span>
                     </>
                   ) : (
-                    <span className="text-orange-600">{price(beat!.price_cents)}</span>
+                    <span className="text-blue-700">{price(beat!.price_cents)}</span>
                   )}
                 </div>
               </div>
-              <div className="text-orange-500">→</div>
+              <div className="text-blue-600">→</div>
             </div>
           </button>
 
           <button
             onClick={() => setDownloadOpen(true)}
-            className="order-2 md:order-1 group rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:shadow-md hover:border-purple-200"
+            className="order-2 md:order-1 group rounded-xl border border-gray-200 bg-white px-4 py-2.5 sm:py-3 text-left transition hover:shadow-md hover:border-blue-200"
           >
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                <Download className="h-5 w-5 text-purple-600" />
+              <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                <Download className="h-5 w-5 text-blue-600" />
               </div>
               <div className="flex-1 font-semibold text-sm">Free MP3 Download</div>
-              <div className="text-purple-600">→</div>
+              <div className="text-blue-600">→</div>
             </div>
           </button>
 
-          <a
-            href={beat!.application_url || "#"}
-            target={beat!.application_url ? "_blank" : undefined}
-            rel="noreferrer"
-            className="order-3 group rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:shadow-md hover:border-purple-200"
+          <button
+            onClick={() => setInquiryOpen(true)}
+            className="order-3 group rounded-xl border border-gray-200 bg-white px-4 py-2.5 sm:py-3 text-left transition hover:shadow-md hover:border-blue-200"
           >
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                <User className="h-5 w-5 text-purple-600" />
+              <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                <Sparkles className="h-5 w-5 text-blue-600" />
               </div>
               <div className="flex-1 font-semibold text-sm leading-tight">Apply for Exclusive / Custom Work</div>
-              <div className="text-purple-600">→</div>
+              <div className="text-blue-600">→</div>
             </div>
-          </a>
+          </button>
         </div>
 
-
+        {attachments && attachments.length > 0 && (
+          <section className="mt-4">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Attachments</h2>
+            <ul className="space-y-1.5">
+              {attachments.map((a: BeatAttachment) => <AttachmentRow key={a.id} attachment={a} />)}
+            </ul>
+          </section>
+        )}
 
         {beat!.seo_description && (
-          <section className="mt-10 border-t border-gray-100 pt-6">
+          <section className="mt-8 border-t border-gray-100 pt-5">
             <p className="text-sm text-gray-500 leading-relaxed max-w-3xl mx-auto">{beat!.seo_description}</p>
           </section>
         )}
       </main>
-
 
       {helpOpen && <NeedHelpModal global={global} onClose={() => setHelpOpen(false)} />}
       {downloadOpen && (
@@ -231,53 +258,87 @@ function BeatLandingPage() {
           onClose={() => setLeaseOpen(false)}
         />
       )}
+      {inquiryOpen && (
+        <InquiryModal beatId={beat!.id} beatTitle={beat!.title} onClose={() => setInquiryOpen(false)} />
+      )}
       <StickyBottomPlayer
         src={beat!.audio_url || beat!.audio_url_tagged}
         title={beat!.title}
         cover={beat!.cover_url}
         producer={beat!.producer_name}
       />
-
     </div>
   );
 }
 
+function AttachmentRow({ attachment }: { attachment: BeatAttachment }) {
+  const size = attachment.size_bytes ? formatBytes(attachment.size_bytes) : null;
+  return (
+    <li>
+      <a
+        href={attachment.download_url}
+        className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 hover:border-blue-300 hover:bg-blue-50/50 transition"
+      >
+        <div className="h-8 w-8 rounded-md bg-blue-100 flex items-center justify-center shrink-0">
+          <FileText className="h-4 w-4 text-blue-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold truncate">{attachment.filename}</div>
+          {size && <div className="text-[11px] text-gray-500">{size}</div>}
+        </div>
+        <Download className="h-4 w-4 text-blue-600 shrink-0" />
+      </a>
+    </li>
+  );
+}
 
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
 
+function ModalShell({ children, onClose, maxWidth = "max-w-md" }: { children: React.ReactNode; onClose: () => void; maxWidth?: string }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in" onClick={onClose}>
+      <div className={`w-full ${maxWidth} rounded-2xl bg-white p-6 shadow-xl animate-scale-in`} onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function NeedHelpModal({ global, onClose }: { global: { contact_instagram: string | null; contact_email: string | null; contact_phone: string | null } | null; onClose: () => void }) {
   const ig = global?.contact_instagram;
   const em = global?.contact_email;
   const ph = global?.contact_phone;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-black">Need Help?</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
-        </div>
-        <div className="mt-4 space-y-2">
-          {ig && (
-            <a href={ig.startsWith("http") ? ig : `https://instagram.com/${ig.replace(/^@/, "")}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-purple-300 transition">
-              <Instagram className="h-5 w-5 text-purple-600" /><span className="font-medium">Instagram</span>
-            </a>
-          )}
-          {em && (
-            <a href={`mailto:${em}`} className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-purple-300 transition">
-              <Mail className="h-5 w-5 text-purple-600" /><span className="font-medium">{em}</span>
-            </a>
-          )}
-          {ph && (
-            <a href={`tel:${ph}`} className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-purple-300 transition">
-              <Phone className="h-5 w-5 text-purple-600" /><span className="font-medium">{ph}</span>
-            </a>
-          )}
-          {!ig && !em && !ph && (
-            <p className="text-sm text-gray-500">Contact info not set yet.</p>
-          )}
-        </div>
+    <ModalShell onClose={onClose} maxWidth="max-w-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-black">Need Help?</h3>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
       </div>
-    </div>
+      <div className="mt-4 space-y-2">
+        {ig && (
+          <a href={ig.startsWith("http") ? ig : `https://instagram.com/${ig.replace(/^@/, "")}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-blue-300 transition">
+            <Instagram className="h-5 w-5 text-blue-600" /><span className="font-medium">Instagram</span>
+          </a>
+        )}
+        {em && (
+          <a href={`mailto:${em}`} className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-blue-300 transition">
+            <Mail className="h-5 w-5 text-blue-600" /><span className="font-medium">{em}</span>
+          </a>
+        )}
+        {ph && (
+          <a href={`tel:${ph}`} className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-blue-300 transition">
+            <Phone className="h-5 w-5 text-blue-600" /><span className="font-medium">{ph}</span>
+          </a>
+        )}
+        {!ig && !em && !ph && (
+          <p className="text-sm text-gray-500">Contact info not set yet.</p>
+        )}
+      </div>
+    </ModalShell>
   );
 }
 
@@ -295,7 +356,6 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
     const a = document.createElement("a");
     a.href = downloadHref;
     a.rel = "noopener";
-    // Same-origin, so `download` is honored by the browser.
     a.setAttribute("download", "");
     document.body.appendChild(a);
     a.click();
@@ -313,7 +373,6 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
         return;
       }
       setDone(true);
-      // Kick off the browser download immediately.
       triggerDownload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -323,34 +382,31 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-black">Free MP3 Download</h3>
-          <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
-        </div>
-        {done ? (
-          <div className="mt-4 space-y-3">
-            <p className="text-sm text-gray-600">Your download has started — check your Downloads folder. We've also emailed you the link.</p>
-            <button onClick={triggerDownload} className="block w-full rounded-xl bg-purple-600 text-white text-center px-5 py-3 font-semibold hover:bg-purple-700">
-              Didn't start? Download again
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={submit} className="mt-4 space-y-3">
-            <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-purple-400" />
-            <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-purple-400" />
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <button disabled={loading} className="w-full rounded-xl bg-purple-600 text-white px-5 py-3 font-semibold hover:bg-purple-700 disabled:opacity-50">
-              {loading ? "Preparing..." : "Get Free Download"}
-            </button>
-          </form>
-        )}
+    <ModalShell onClose={onClose}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-black">Free MP3 Download</h3>
+        <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
       </div>
-    </div>
+      {done ? (
+        <div className="mt-4 space-y-3">
+          <p className="text-sm text-gray-600">Your download has started — check your Downloads folder. We've also emailed you the link.</p>
+          <button onClick={triggerDownload} className="block w-full rounded-xl bg-blue-600 text-white text-center px-5 py-3 font-semibold hover:bg-blue-700">
+            Didn't start? Download again
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={submit} className="mt-4 space-y-3">
+          <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-400" />
+          <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-400" />
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <button disabled={loading} className="w-full rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700 disabled:opacity-50">
+            {loading ? "Preparing..." : "Get Free Download"}
+          </button>
+        </form>
+      )}
+    </ModalShell>
   );
 }
-
 
 function LeaseModal({ beatId, slug, fullPriceCents, discountPriceCents, checkoutUrl, showDiscount, onClose }: {
   beatId: string; slug: string; fullPriceCents: number; discountPriceCents: number; checkoutUrl: string | null; showDiscount: boolean; onClose: () => void;
@@ -383,15 +439,8 @@ function LeaseModal({ beatId, slug, fullPriceCents, discountPriceCents, checkout
         data: { beatId, email, useDiscount, environment, successUrl, cancelUrl },
       });
       if (r.error) throw new Error(r.error);
-      if (r.url) {
-        window.location.href = r.url;
-        return;
-      }
-      // Legacy fallback to per-beat external checkout URL if dynamic session unavailable.
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-        return;
-      }
+      if (r.url) { window.location.href = r.url; return; }
+      if (checkoutUrl) { window.location.href = checkoutUrl; return; }
       throw new Error("Checkout is unavailable right now.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -403,29 +452,119 @@ function LeaseModal({ beatId, slug, fullPriceCents, discountPriceCents, checkout
   const price = (c: number) => `$${(c / 100).toFixed(2)}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-black">Purchase Lease</h3>
-          <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
-        </div>
-        <div className="mt-3 text-sm text-gray-500">
-          {showDiscount ? (
-            <>First-time price: <span className="font-bold text-orange-600">{price(discountPriceCents)}</span> (regular {price(fullPriceCents)})</>
-          ) : (
-            <>Price: <span className="font-bold">{price(fullPriceCents)}</span></>
-          )}
-        </div>
-        <form onSubmit={submit} className="mt-4 space-y-3">
-          <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email for order confirmation" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-orange-400" />
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <button disabled={loading} className="w-full rounded-xl bg-orange-500 text-white px-5 py-3 font-semibold hover:bg-orange-600 disabled:opacity-50">
-            {loading ? "Processing..." : "Continue to Checkout"}
-          </button>
-          <p className="text-[11px] text-gray-400 text-center">New customers only. Limit one discounted lease per customer.</p>
-        </form>
+    <ModalShell onClose={onClose}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-black">Unlimited License (MP3)</h3>
+        <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
       </div>
-    </div>
+      <div className="mt-3 text-sm text-gray-500">
+        {showDiscount ? (
+          <>First-time price: <span className="font-bold text-blue-700">{price(discountPriceCents)}</span> (regular {price(fullPriceCents)})</>
+        ) : (
+          <>Price: <span className="font-bold">{price(fullPriceCents)}</span></>
+        )}
+      </div>
+      <form onSubmit={submit} className="mt-4 space-y-3">
+        <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email for order confirmation" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-400" />
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        <button disabled={loading} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700 disabled:opacity-50">
+          <ShoppingBag className="h-5 w-5" />
+          {loading ? "Processing..." : "Continue to Checkout"}
+        </button>
+        <p className="text-[11px] text-gray-500 text-center leading-snug">
+          Purchasing unlimited rights gives you full permission to monetize the song you create with this instrumental.
+        </p>
+      </form>
+    </ModalShell>
+  );
+}
+
+function InquiryModal({ beatId, beatTitle, onClose }: { beatId: string; beatTitle: string; onClose: () => void }) {
+  const listFn = useServerFn(listInquiryQuestions);
+  const submitFn = useServerFn(submitBeatInquiry);
+  const [questions, setQuestions] = useState<InquiryQuestion[] | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    listFn().then((r) => { if (alive) setQuestions(r.questions); }).catch(() => { if (alive) setQuestions([]); });
+    return () => { alive = false; };
+  }, [listFn]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      // Required-field check
+      for (const q of questions ?? []) {
+        if (q.required && !(answers[q.id] ?? "").trim()) {
+          throw new Error(`Please fill in: ${q.label}`);
+        }
+      }
+      await submitFn({ data: { beatId, name, email, answers } });
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <ModalShell onClose={onClose} maxWidth="max-w-lg">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-black">Apply for Exclusive / Custom Work</h3>
+        <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
+      </div>
+      {done ? (
+        <div className="mt-4 space-y-3 text-sm">
+          <p className="text-gray-700">Thanks — your inquiry about <strong>{beatTitle}</strong> was sent. KrazyJay will reply directly.</p>
+          <button onClick={onClose} className="w-full rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700">Close</button>
+        </div>
+      ) : questions === null ? (
+        <p className="mt-4 text-sm text-gray-500">Loading…</p>
+      ) : (
+        <form onSubmit={submit} className="mt-4 space-y-3 max-h-[65vh] overflow-y-auto pr-1">
+          <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-400" />
+          <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-400" />
+          {questions.map((q) => (
+            <div key={q.id}>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {q.label}{q.required && <span className="text-red-500">*</span>}
+              </label>
+              {q.field_type === "textarea" ? (
+                <textarea
+                  rows={3}
+                  value={answers[q.id] ?? ""}
+                  onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
+                  placeholder={q.placeholder ?? ""}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-400"
+                />
+              ) : (
+                <input
+                  type={q.field_type === "email" ? "email" : "text"}
+                  value={answers[q.id] ?? ""}
+                  onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
+                  placeholder={q.placeholder ?? ""}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-400"
+                />
+              )}
+            </div>
+          ))}
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <button disabled={loading} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700 disabled:opacity-50">
+            <Sparkles className="h-4 w-4" />
+            {loading ? "Sending..." : "Send Inquiry"}
+          </button>
+        </form>
+      )}
+    </ModalShell>
   );
 }
 
@@ -486,11 +625,10 @@ function StickyBottomPlayer({ src, title, cover, producer }: { src: string | nul
   if (!src) return null;
   return (
     <div className="fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto max-w-4xl px-3 sm:px-4 py-3">
+      <div className="mx-auto max-w-4xl px-3 sm:px-4 py-2.5 sm:py-3">
         <div className="flex items-center gap-3">
-          {/* Cover + title (left) */}
           <div className="flex items-center gap-3 min-w-0 flex-1 sm:flex-none sm:w-56">
-            <div className="h-11 w-11 rounded-lg overflow-hidden bg-purple-100 flex-shrink-0">
+            <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg overflow-hidden bg-blue-100 flex-shrink-0">
               {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : null}
             </div>
             <div className="min-w-0 flex-1">
@@ -499,11 +637,10 @@ function StickyBottomPlayer({ src, title, cover, producer }: { src: string | nul
             </div>
           </div>
 
-          {/* Center: play + scrubber */}
           <div className="flex-1 flex items-center gap-3 min-w-0">
             <button
               onClick={toggle}
-              className="h-11 w-11 rounded-full bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600 flex-shrink-0 shadow-md"
+              className="h-11 w-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 flex-shrink-0 shadow-md"
               aria-label={playing ? "Pause" : "Play"}
             >
               {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
@@ -517,14 +654,13 @@ function StickyBottomPlayer({ src, title, cover, producer }: { src: string | nul
                 step={0.1}
                 value={pos}
                 onChange={(e) => seek(Number(e.target.value))}
-                className="flex-1 accent-orange-500 min-w-0"
+                className="flex-1 accent-blue-600 min-w-0"
                 aria-label="Seek"
               />
               <span className="text-[11px] text-gray-500 tabular-nums w-10">{fmt(dur)}</span>
             </div>
           </div>
 
-          {/* Right: volume (desktop only) */}
           <div className="hidden md:flex items-center gap-2 w-32 flex-shrink-0">
             <button onClick={toggleMute} className="text-gray-500 hover:text-gray-700" aria-label="Mute">
               <Volume2 className={`h-5 w-5 ${muted ? "opacity-40" : ""}`} />
@@ -536,14 +672,13 @@ function StickyBottomPlayer({ src, title, cover, producer }: { src: string | nul
               step={0.01}
               value={muted ? 0 : volume}
               onChange={(e) => setVol(Number(e.target.value))}
-              className="flex-1 accent-orange-500"
+              className="flex-1 accent-blue-600"
               aria-label="Volume"
             />
           </div>
         </div>
 
-        {/* Mobile scrubber row */}
-        <div className="mt-2 flex items-center gap-2 sm:hidden">
+        <div className="mt-1.5 flex items-center gap-2 sm:hidden">
           <span className="text-[11px] text-gray-500 tabular-nums w-10 text-right">{fmt(pos)}</span>
           <input
             type="range"
@@ -552,7 +687,7 @@ function StickyBottomPlayer({ src, title, cover, producer }: { src: string | nul
             step={0.1}
             value={pos}
             onChange={(e) => seek(Number(e.target.value))}
-            className="flex-1 accent-orange-500"
+            className="flex-1 accent-blue-600"
             aria-label="Seek"
           />
           <span className="text-[11px] text-gray-500 tabular-nums w-10">{fmt(dur)}</span>
@@ -563,5 +698,3 @@ function StickyBottomPlayer({ src, title, cover, producer }: { src: string | nul
     </div>
   );
 }
-
-
