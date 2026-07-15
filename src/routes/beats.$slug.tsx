@@ -89,7 +89,7 @@ function BeatLandingPage() {
   const videoUrl = beat!.custom_video_url || global?.video_url || null;
   const price = (cents: number) => `$${(cents / 100).toFixed(2)}`;
   const showDiscount = timer.active;
-  const displayPrice = showDiscount ? beat!.discount_price_cents : beat!.price_cents;
+  
 
   return (
     <div className="min-h-screen bg-white text-black">
