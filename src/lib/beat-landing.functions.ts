@@ -78,11 +78,31 @@ export const captureBeatLead = createServerFn({ method: "POST" })
       email: data.email.toLowerCase(),
     });
     const { data: beat } = await sb.from("beats")
-      .select("audio_url_tagged")
+      .select("title,landing_slug,audio_url,audio_url_tagged")
       .eq("id", data.beatId)
       .maybeSingle();
-    return { ok: true, downloadUrl: (beat as { audio_url_tagged: string | null } | null)?.audio_url_tagged ?? null };
+    const b = beat as { title: string; landing_slug: string | null; audio_url: string | null; audio_url_tagged: string | null } | null;
+    // Prefer normal MP3 (audio_url), fall back to tagged version if that's all we have.
+    const downloadUrl = b?.audio_url ?? b?.audio_url_tagged ?? null;
+
+    // Fire-and-forget email — never block the response if email queue is missing.
+    if (downloadUrl && b) {
+      try {
+        const { queueFreeDownloadEmail } = await import("@/lib/beat-landing-email.server");
+        await queueFreeDownloadEmail({
+          to: data.email.toLowerCase(),
+          firstName: data.firstName,
+          beatTitle: b.title,
+          downloadUrl,
+          beatSlug: b.landing_slug,
+        });
+      } catch (err) {
+        console.error("[captureBeatLead] failed to queue email", err);
+      }
+    }
+    return { ok: true, downloadUrl };
   });
+
 
 export const checkDiscountEligibility = createServerFn({ method: "POST" })
   .inputValidator((input: { email: string }) =>
