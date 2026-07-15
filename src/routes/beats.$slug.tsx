@@ -94,78 +94,76 @@ function BeatLandingPage() {
   return (
     <div className="min-h-screen bg-white text-black">
       {/* Header */}
-      <header className="mx-auto max-w-5xl px-4 pt-6 sm:pt-8 flex items-start justify-between gap-4">
+      <header className="mx-auto max-w-5xl px-4 pt-3 sm:pt-4 flex items-center justify-between gap-4">
         <div>
-          <div className="text-xl font-black tracking-wide">MYBEATCATALOG</div>
-          <div className="text-xs sm:text-sm text-purple-600 font-medium mt-0.5">by KRAZYJAYDOTCOM</div>
+          <div className="text-base sm:text-lg font-black tracking-wide leading-none">MYBEATCATALOG</div>
+          <div className="text-[10px] sm:text-xs text-purple-600 font-medium mt-0.5">by KRAZYJAYDOTCOM</div>
         </div>
         <button
           onClick={() => setHelpOpen(true)}
-          className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:border-gray-300 transition"
+          className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium shadow-sm hover:border-gray-300 transition"
         >
           <HeadphonesIcon className="h-4 w-4" />
           Need Help?
         </button>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 pt-10 pb-20">
-        <h1 className="text-center text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-          Find Your Next Record in 60 Seconds.
-        </h1>
-        <p className="mt-4 text-center text-sm sm:text-base text-gray-500 max-w-2xl mx-auto">
-          Preview the beat, download the tagged version free, purchase a lease, or apply to work with me directly.
-        </p>
+      <main className="mx-auto max-w-4xl px-4 pt-3 sm:pt-4 pb-[140px] sm:pb-[120px]">
+        <div className="text-center">
+          <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-tight truncate">
+            {beat!.title}
+          </h1>
+          {beat!.producer_name && (
+            <div className="text-xs sm:text-sm text-gray-500 mt-0.5">prod. {beat!.producer_name}</div>
+          )}
+        </div>
 
-        {/* Discount bar */}
+        {/* Discount bar - compact */}
         {showDiscount && (
-          <div className="mt-8 rounded-2xl bg-orange-50 border border-orange-100 px-5 py-4 flex items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <Gift className="h-6 w-6 text-orange-500" />
-              <div className="text-sm sm:text-base">
+          <div className="mt-3 rounded-xl bg-orange-50 border border-orange-100 px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-2 min-w-0">
+              <Gift className="h-4 w-4 text-orange-500 shrink-0" />
+              <div className="text-xs sm:text-sm truncate">
                 <span className="font-bold text-orange-600">50% Off</span>{" "}
-                <span className="font-semibold">Your First Lease for the Next 20 Minutes</span>
+                <span className="font-semibold">First Lease</span>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-orange-600 font-black tabular-nums">
-              <div className="text-center"><div className="text-xl sm:text-2xl leading-none">{String(timer.min).padStart(2, "0")}</div><div className="text-[10px] text-gray-500 mt-0.5">MIN</div></div>
-              <div className="text-xl sm:text-2xl">:</div>
-              <div className="text-center"><div className="text-xl sm:text-2xl leading-none">{String(timer.sec).padStart(2, "0")}</div><div className="text-[10px] text-gray-500 mt-0.5">SEC</div></div>
+            <div className="flex items-center gap-1 text-orange-600 font-black tabular-nums text-sm sm:text-base">
+              <span>{String(timer.min).padStart(2, "0")}</span>
+              <span>:</span>
+              <span>{String(timer.sec).padStart(2, "0")}</span>
             </div>
           </div>
         )}
 
         {/* Video */}
-        <div className="mt-8 rounded-2xl overflow-hidden bg-gray-900 aspect-video shadow-lg">
+        <div className="mt-3 rounded-xl overflow-hidden bg-gray-900 aspect-video shadow-lg max-h-[46vh] mx-auto">
           {videoUrl ? (
-            <video src={videoUrl} controls playsInline className="w-full h-full object-cover" />
+            <video src={videoUrl} controls playsInline className="w-full h-full object-contain bg-black" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-              No video yet — upload one in the admin panel.
+              No video yet.
             </div>
           )}
         </div>
 
-        {/* Audio player removed — sticky bottom player is the single control */}
-
-
-        {/* Buttons - desktop L->R: Download, Lease, Apply.  Mobile stack: Lease, Download, Apply */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Lease - mobile order 1, desktop order 2 */}
+        {/* Buttons */}
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
           <button
             onClick={() => setLeaseOpen(true)}
-            className="order-1 md:order-2 group relative rounded-2xl border-2 border-orange-400 bg-orange-50 px-6 py-5 text-left transition hover:shadow-lg hover:-translate-y-0.5"
+            className="order-1 md:order-2 group rounded-xl border-2 border-orange-400 bg-orange-50 px-4 py-3 text-left transition hover:shadow-lg"
           >
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-orange-100 flex items-center justify-center">
-                <Crown className="h-6 w-6 text-orange-500" />
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                <Crown className="h-5 w-5 text-orange-500" />
               </div>
-              <div className="flex-1">
-                <div className="font-bold text-base">
-                  Purchase Lease —{" "}
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-sm">
+                  Lease Beat —{" "}
                   {showDiscount ? (
                     <>
                       <span className="text-orange-600">{price(beat!.discount_price_cents)}</span>{" "}
-                      <span className="text-gray-400 line-through text-sm">{price(beat!.price_cents)}</span>
+                      <span className="text-gray-400 line-through text-xs">{price(beat!.price_cents)}</span>
                     </>
                   ) : (
                     <span className="text-orange-600">{price(beat!.price_cents)}</span>
@@ -176,48 +174,44 @@ function BeatLandingPage() {
             </div>
           </button>
 
-          {/* Download - mobile order 2, desktop order 1 */}
           <button
             onClick={() => setDownloadOpen(true)}
-            className="order-2 md:order-1 group rounded-2xl border border-gray-200 bg-white px-6 py-5 text-left transition hover:shadow-md hover:border-purple-200"
+            className="order-2 md:order-1 group rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:shadow-md hover:border-purple-200"
           >
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                <Download className="h-6 w-6 text-purple-600" />
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
+                <Download className="h-5 w-5 text-purple-600" />
               </div>
               <div className="flex-1 font-semibold text-sm">Free MP3 Download</div>
               <div className="text-purple-600">→</div>
             </div>
           </button>
 
-
-          {/* Apply - always order 3 */}
           <a
             href={beat!.application_url || "#"}
             target={beat!.application_url ? "_blank" : undefined}
             rel="noreferrer"
-            className="order-3 group rounded-2xl border border-gray-200 bg-white px-6 py-5 text-left transition hover:shadow-md hover:border-purple-200"
+            className="order-3 group rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:shadow-md hover:border-purple-200"
           >
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                <User className="h-6 w-6 text-purple-600" />
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
+                <User className="h-5 w-5 text-purple-600" />
               </div>
-              <div className="flex-1 font-semibold text-sm leading-tight">Apply to Work<br />Direct With Me</div>
+              <div className="flex-1 font-semibold text-sm leading-tight">Apply for Exclusive / Custom Work</div>
               <div className="text-purple-600">→</div>
             </div>
           </a>
         </div>
 
-        <p className="mt-4 text-center text-xs text-gray-400">
-          New customers only. Limit one discounted lease per customer.
-        </p>
+        {(displayPrice, showDiscount) && null}
 
         {beat!.seo_description && (
-          <section className="mt-16 border-t border-gray-100 pt-8">
+          <section className="mt-10 border-t border-gray-100 pt-6">
             <p className="text-sm text-gray-500 leading-relaxed max-w-3xl mx-auto">{beat!.seo_description}</p>
           </section>
         )}
       </main>
+
 
       {helpOpen && <NeedHelpModal global={global} onClose={() => setHelpOpen(false)} />}
       {downloadOpen && (
