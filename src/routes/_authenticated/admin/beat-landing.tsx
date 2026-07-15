@@ -7,11 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   adminListBeats,
   adminUpdateBeatLanding,
+  adminBulkUpdateLandingPrices,
   adminGetGlobalVideo,
   adminUpdateGlobalVideo,
   adminListLeadCaptures,
   adminListLeaseOrders,
 } from "@/lib/beat-landing.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin/beat-landing")({
   component: BeatLandingAdmin,
