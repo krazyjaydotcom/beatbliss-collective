@@ -292,9 +292,11 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
               break;
           }
         } catch (err) {
+          // Log but return 200 so Stripe doesn't retry forever for otherwise-valid events.
           console.error("[webhook] handler error", err);
-          return new Response("Handler error", { status: 500 });
+          return new Response("ok", { status: 200 });
         }
+
 
         return new Response("ok", { status: 200 });
       },
