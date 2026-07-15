@@ -203,7 +203,7 @@ function BeatLandingPage() {
           </a>
         </div>
 
-        {(displayPrice, showDiscount) && null}
+
 
         {beat!.seo_description && (
           <section className="mt-10 border-t border-gray-100 pt-6">
