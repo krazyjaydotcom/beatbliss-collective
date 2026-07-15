@@ -286,8 +286,21 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const downloadHref = `/api/public/beat-free-download?beatId=${encodeURIComponent(beatId)}`;
+
+  const triggerDownload = () => {
+    const a = document.createElement("a");
+    a.href = downloadHref;
+    a.rel = "noopener";
+    // Same-origin, so `download` is honored by the browser.
+    a.setAttribute("download", "");
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -295,8 +308,13 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
     setError(null);
     try {
       const r = await capture({ data: { beatId, firstName, email } });
-      if (r.downloadUrl) setDownloadUrl(r.downloadUrl);
-      else setError("MP3 file not available yet.");
+      if (!r.downloadUrl) {
+        setError("MP3 file not available yet.");
+        return;
+      }
+      setDone(true);
+      // Kick off the browser download immediately.
+      triggerDownload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -311,14 +329,13 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
           <h3 className="text-lg font-black">Free MP3 Download</h3>
           <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
         </div>
-        {downloadUrl ? (
+        {done ? (
           <div className="mt-4 space-y-3">
-            <p className="text-sm text-gray-600">Your MP3 is ready — download below. We've also emailed you the link.</p>
-            <a href={downloadUrl} download className="block w-full rounded-xl bg-purple-600 text-white text-center px-5 py-3 font-semibold hover:bg-purple-700">
-              Download MP3
-            </a>
+            <p className="text-sm text-gray-600">Your download has started — check your Downloads folder. We've also emailed you the link.</p>
+            <button onClick={triggerDownload} className="block w-full rounded-xl bg-purple-600 text-white text-center px-5 py-3 font-semibold hover:bg-purple-700">
+              Didn't start? Download again
+            </button>
           </div>
-
         ) : (
           <form onSubmit={submit} className="mt-4 space-y-3">
             <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-purple-400" />
@@ -333,6 +350,7 @@ function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => voi
     </div>
   );
 }
+
 
 function LeaseModal({ beatId, slug, fullPriceCents, discountPriceCents, checkoutUrl, showDiscount, onClose }: {
   beatId: string; slug: string; fullPriceCents: number; discountPriceCents: number; checkoutUrl: string | null; showDiscount: boolean; onClose: () => void;
