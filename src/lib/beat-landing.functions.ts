@@ -60,11 +60,11 @@ export const getBeatLandingBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: { slug: string }) =>
     z.object({ slug: z.string().min(1).max(120) }).parse(input),
   )
-  .handler(async ({ data }): Promise<{ beat: BeatLanding | null; global: GlobalVideo | null }> => {
+  .handler(async ({ data }): Promise<{ beat: BeatLanding | null; global: GlobalVideo | null; attachments: BeatAttachment[] }> => {
     const sb = adminClient() as any;
     const [{ data: beat }, { data: global }] = await Promise.all([
       sb.from("beats")
-        .select("id,landing_slug,title,producer_name,cover_url,audio_url_tagged,audio_url,price_cents,discount_price_cents,checkout_url,application_url,seo_title,seo_description,custom_video_url,is_landing_published,is_active")
+        .select("id,landing_slug,title,producer_name,cover_url,audio_url_tagged,audio_url,price_cents,discount_price_cents,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,is_landing_published,is_active")
         .eq("landing_slug", data.slug)
         .eq("is_landing_published", true)
         .eq("is_active", true)
@@ -74,9 +74,24 @@ export const getBeatLandingBySlug = createServerFn({ method: "GET" })
         .eq("id", 1)
         .maybeSingle(),
     ]);
+    let attachments: BeatAttachment[] = [];
+    if (beat?.id) {
+      const { data: atts } = await sb.from("beat_landing_attachments")
+        .select("id,filename,mime_type,size_bytes,sort_order")
+        .eq("beat_id", beat.id)
+        .order("sort_order", { ascending: true });
+      attachments = ((atts ?? []) as Array<{ id: string; filename: string; mime_type: string | null; size_bytes: number | null }>).map((a) => ({
+        id: a.id,
+        filename: a.filename,
+        mime_type: a.mime_type,
+        size_bytes: a.size_bytes,
+        download_url: `/api/public/beat-attachment?id=${encodeURIComponent(a.id)}`,
+      }));
+    }
     return {
       beat: (beat as BeatLanding | null) ?? null,
       global: (global as GlobalVideo | null) ?? null,
+      attachments,
     };
   });
 
