@@ -676,8 +676,8 @@ function InquiryModal({ beatId, beatTitle, onClose }: { beatId: string; beatTitl
   );
 }
 
-function StickyBottomPlayer({ src, title, cover, producer, bpm, priceLabel, onLicense }: {
-  src: string | null; title: string; cover: string | null; producer?: string | null; bpm?: number | null; priceLabel?: string; onLicense?: () => void;
+function StickyBottomPlayer({ src, title, cover, producer, bpm }: {
+  src: string | null; title: string; cover: string | null; producer?: string | null; bpm?: number | null;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
