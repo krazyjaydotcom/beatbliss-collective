@@ -567,6 +567,11 @@ function LeaseModal({ beatId, slug, fullPriceCents, discountPriceCents, checkout
   );
 }
 
+type StepDef =
+  | { kind: "name" }
+  | { kind: "email" }
+  | { kind: "question"; q: InquiryQuestion };
+
 function InquiryModal({ beatId, beatTitle, onClose }: { beatId: string; beatTitle: string; onClose: () => void }) {
   const listFn = useServerFn(listInquiryQuestions);
   const submitFn = useServerFn(submitBeatInquiry);
@@ -574,9 +579,12 @@ function InquiryModal({ beatId, beatTitle, onClose }: { beatId: string; beatTitl
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [step, setStep] = useState(0);
+  const [transition, setTransition] = useState<"in" | "out">("in");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -584,15 +592,84 @@ function InquiryModal({ beatId, beatTitle, onClose }: { beatId: string; beatTitl
     return () => { alive = false; };
   }, [listFn]);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Escape key closes
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // Focus input each step
+  useEffect(() => {
+    if (transition === "in") inputRef.current?.focus();
+  }, [step, transition]);
+
+  const steps: StepDef[] = questions
+    ? [{ kind: "name" }, { kind: "email" }, ...questions.map((q) => ({ kind: "question" as const, q }))]
+    : [];
+
+  const total = steps.length;
+  const current = steps[step];
+
+  const currentValue = (): string => {
+    if (!current) return "";
+    if (current.kind === "name") return name;
+    if (current.kind === "email") return email;
+    return answers[current.q.id] ?? "";
+  };
+
+  const currentRequired = (): boolean => {
+    if (!current) return false;
+    if (current.kind === "name" || current.kind === "email") return true;
+    return !!current.q.required;
+  };
+
+  const currentLabel = (): string => {
+    if (!current) return "";
+    if (current.kind === "name") return "What's your name?";
+    if (current.kind === "email") return "What's your email?";
+    return current.q.label;
+  };
+
+  const currentPlaceholder = (): string => {
+    if (!current) return "";
+    if (current.kind === "name") return "Your name";
+    if (current.kind === "email") return "you@example.com";
+    return current.q.placeholder ?? "";
+  };
+
+  const goto = (nextStep: number, after?: () => void) => {
+    setError(null);
+    setTransition("out");
+    setTimeout(() => {
+      setStep(nextStep);
+      setTransition("in");
+      after?.();
+    }, 180);
+  };
+
+  const advance = async () => {
+    if (!current) return;
+    const val = currentValue().trim();
+    if (currentRequired() && !val) {
+      setError("This field is required.");
+      return;
+    }
+    if (current.kind === "email" && val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+      setError("Please enter a valid email.");
+      return;
+    }
+    if (step < total - 1) {
+      goto(step + 1);
+      return;
+    }
+    // Submit
     setLoading(true);
     setError(null);
     try {
-      // Required-field check
       for (const q of questions ?? []) {
         if (q.required && !(answers[q.id] ?? "").trim()) {
-          throw new Error(`Please fill in: ${q.label}`);
+          throw new Error(`Please answer: ${q.label}`);
         }
       }
       await submitFn({ data: { beatId, name, email, answers } });
@@ -604,57 +681,126 @@ function InquiryModal({ beatId, beatTitle, onClose }: { beatId: string; beatTitl
     }
   };
 
+  const back = () => {
+    if (step === 0) return;
+    goto(step - 1);
+  };
+
+  const onSubmitForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    void advance();
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && (e.target as HTMLElement).tagName !== "TEXTAREA") {
+      e.preventDefault();
+      void advance();
+    }
+  };
+
+  const setCurrentValue = (v: string) => {
+    if (!current) return;
+    if (current.kind === "name") setName(v);
+    else if (current.kind === "email") setEmail(v);
+    else setAnswers({ ...answers, [current.q.id]: v });
+  };
+
+  const isLast = step === total - 1;
+  const isTextarea = current?.kind === "question" && current.q.field_type === "textarea";
+  const inputType = current?.kind === "email"
+    ? "email"
+    : current?.kind === "question" && current.q.field_type === "email"
+      ? "email"
+      : "text";
+
   return (
     <ModalShell onClose={onClose} maxWidth="max-w-lg">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-black">Apply for Exclusive / Custom Work</h3>
-        <button onClick={onClose} className="text-gray-400"><X className="h-5 w-5" /></button>
+        <h3 className="text-lg font-black">Exclusive / Custom Work</h3>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close"><X className="h-5 w-5" /></button>
       </div>
+
       {done ? (
-        <div className="mt-4 space-y-3 text-sm">
+        <div className="mt-4 space-y-3 text-sm animate-fade-in">
           <p className="text-gray-700">Thanks — your inquiry about <strong>{beatTitle}</strong> was sent. KrazyJay will reply directly.</p>
           <button onClick={onClose} className="w-full rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700">Close</button>
         </div>
       ) : questions === null ? (
         <p className="mt-4 text-sm text-gray-500">Loading…</p>
+      ) : total === 0 ? (
+        <p className="mt-4 text-sm text-gray-500">No inquiry form is set up yet.</p>
       ) : (
-        <form onSubmit={submit} className="mt-4 space-y-3 max-h-[65vh] overflow-y-auto pr-1">
-          <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-400" />
-          <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-400" />
-          {questions.map((q) => (
-            <div key={q.id}>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                {q.label}{q.required && <span className="text-red-500">*</span>}
-              </label>
-              {q.field_type === "textarea" ? (
-                <textarea
-                  rows={3}
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-                  placeholder={q.placeholder ?? ""}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-400"
-                />
-              ) : (
-                <input
-                  type={q.field_type === "email" ? "email" : "text"}
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-                  placeholder={q.placeholder ?? ""}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-blue-400"
-                />
-              )}
+        <form onSubmit={onSubmitForm} onKeyDown={onKeyDown} className="mt-4">
+          {/* Progress */}
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+              <div
+                className="h-full bg-blue-600 transition-all duration-300"
+                style={{ width: `${((step + 1) / total) * 100}%` }}
+              />
             </div>
-          ))}
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <button disabled={loading} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700 disabled:opacity-50">
-            <Sparkles className="h-4 w-4" />
-            {loading ? "Sending..." : "Send Inquiry"}
-          </button>
+            <span className="text-[11px] font-semibold text-slate-500 tabular-nums">{step + 1}/{total}</span>
+          </div>
+
+          <div
+            key={step}
+            className={`transition-opacity duration-200 ${transition === "in" ? "opacity-100" : "opacity-0"}`}
+          >
+            <label className="block text-sm font-bold text-slate-800 mb-2">
+              {currentLabel()}{currentRequired() && <span className="text-red-500"> *</span>}
+            </label>
+            {isTextarea ? (
+              <textarea
+                ref={(el) => { inputRef.current = el; }}
+                rows={4}
+                value={currentValue()}
+                onChange={(e) => setCurrentValue(e.target.value)}
+                placeholder={currentPlaceholder()}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-400"
+              />
+            ) : (
+              <input
+                ref={(el) => { inputRef.current = el; }}
+                type={inputType}
+                value={currentValue()}
+                onChange={(e) => setCurrentValue(e.target.value)}
+                placeholder={currentPlaceholder()}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-400"
+              />
+            )}
+            {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+          </div>
+
+          <div className="mt-5 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={back}
+              disabled={step === 0 || loading}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" /> Back
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-2.5 text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isLast ? (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  {loading ? "Sending..." : "Send Inquiry"}
+                </>
+              ) : (
+                <>Continue <ArrowRight className="h-4 w-4" /></>
+              )}
+            </button>
+          </div>
         </form>
       )}
     </ModalShell>
   );
 }
+
 
 function StickyBottomPlayer({ src, title, cover, producer, bpm }: {
   src: string | null; title: string; cover: string | null; producer?: string | null; bpm?: number | null;
