@@ -307,6 +307,7 @@ function BeatLandingPage() {
       {inquiryOpen && (
         <InquiryModal beatId={beat!.id} beatTitle={beat!.title} onClose={() => setInquiryOpen(false)} />
       )}
+      {licenseOpen && <LicenseTermsModal onClose={() => setLicenseOpen(false)} />}
       <StickyBottomPlayer
         src={beat!.audio_url || beat!.audio_url_tagged}
         title={beat!.title}
