@@ -24,7 +24,6 @@ import {
   adminListEmailStatus,
 } from "@/lib/beat-landing.functions";
 
-
 export const Route = createFileRoute("/_authenticated/admin/beat-landing")({
   component: BeatLandingAdmin,
 });
@@ -69,15 +68,11 @@ function BeatLandingAdmin() {
         <EmailTesterCard />
         <BulkPricingCard />
         <GlobalVideoCard />
-        <AllBeatsTable
-          beats={((beatsQuery.data?.beats ?? []) as unknown) as BeatRow[]}
-          loading={beatsQuery.isLoading}
-        />
+        <AllBeatsTable beats={(beatsQuery.data?.beats ?? []) as unknown as BeatRow[]} loading={beatsQuery.isLoading} />
         <InquiryQuestionsCard />
         <InquirySubmissionsCard />
         <LeadsCard />
         <OrdersCard />
-
       </div>
     </div>
   );
@@ -88,7 +83,15 @@ function GlobalVideoCard() {
   const updateFn = useServerFn(adminUpdateGlobalVideo);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["admin-global-video"], queryFn: () => getFn() });
-  const g = q.data?.global as { video_url: string | null; contact_instagram: string | null; contact_email: string | null; contact_phone: string | null } | null | undefined;
+  const g = q.data?.global as
+    | {
+        video_url: string | null;
+        contact_instagram: string | null;
+        contact_email: string | null;
+        contact_phone: string | null;
+      }
+    | null
+    | undefined;
 
   const [videoUrl, setVideoUrl] = useState("");
   const [ig, setIg] = useState("");
@@ -140,7 +143,9 @@ function GlobalVideoCard() {
       }
       const mr = new MediaRecorder(stream, { mimeType: "video/webm" });
       chunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data.size) chunksRef.current.push(e.data); };
+      mr.ondataavailable = (e) => {
+        if (e.data.size) chunksRef.current.push(e.data);
+      };
       mr.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "video/webm" });
         setRecordedBlob(blob);
@@ -183,44 +188,96 @@ function GlobalVideoCard() {
     <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm space-y-4">
       <div>
         <h2 className="text-xl font-bold">Global Video & Contact Info</h2>
-        <p className="text-sm text-gray-500 mt-1">Shows on every beat landing page unless a beat has its own custom video.</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Shows on every beat landing page unless a beat has its own custom video.
+        </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label className="block text-sm font-semibold mb-1">Video URL</label>
-          <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://..." className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+          <input
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="https://..."
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          />
           <div className="mt-2 flex gap-2 flex-wrap">
             <label className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:border-gray-300">
               {uploading ? "Uploading..." : "Upload File"}
-              <input type="file" accept="video/*" hidden onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0])} />
+              <input
+                type="file"
+                accept="video/*"
+                hidden
+                onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0])}
+              />
             </label>
             {!recording ? (
-              <button onClick={startRecording} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100">● Record</button>
+              <button
+                onClick={startRecording}
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100"
+              >
+                ● Record
+              </button>
             ) : (
-              <button onClick={stopRecording} className="rounded-lg border border-red-500 bg-red-500 px-3 py-2 text-sm text-white">Stop</button>
+              <button
+                onClick={stopRecording}
+                className="rounded-lg border border-red-500 bg-red-500 px-3 py-2 text-sm text-white"
+              >
+                Stop
+              </button>
             )}
             {recordedBlob && !recording && (
-              <button onClick={() => uploadFile(recordedBlob)} className="rounded-lg bg-purple-600 text-white px-3 py-2 text-sm">Upload Recording</button>
+              <button
+                onClick={() => uploadFile(recordedBlob)}
+                className="rounded-lg bg-purple-600 text-white px-3 py-2 text-sm"
+              >
+                Upload Recording
+              </button>
             )}
           </div>
-          <video ref={previewVideoRef} controls className="mt-3 w-full aspect-video rounded-lg bg-gray-900" src={!recording && !recordedBlob ? videoUrl : undefined} />
+          <video
+            ref={previewVideoRef}
+            controls
+            className="mt-3 w-full aspect-video rounded-lg bg-gray-900"
+            src={!recording && !recordedBlob ? videoUrl : undefined}
+          />
         </div>
 
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-semibold mb-1">Instagram (handle or URL)</label>
-            <input value={ig} onChange={(e) => setIg(e.target.value)} placeholder="@krazyjaydotcom" className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+            <input
+              value={ig}
+              onChange={(e) => setIg(e.target.value)}
+              placeholder="@krazyjaydotcom"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            />
           </div>
           <div>
             <label className="block text-sm font-semibold mb-1">Email</label>
-            <input value={em} onChange={(e) => setEm(e.target.value)} placeholder="hello@..." className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+            <input
+              value={em}
+              onChange={(e) => setEm(e.target.value)}
+              placeholder="hello@..."
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            />
           </div>
           <div>
             <label className="block text-sm font-semibold mb-1">Phone</label>
-            <input value={ph} onChange={(e) => setPh(e.target.value)} placeholder="+1..." className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+            <input
+              value={ph}
+              onChange={(e) => setPh(e.target.value)}
+              placeholder="+1..."
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            />
           </div>
-          <button onClick={save} className="w-full rounded-lg bg-black text-white px-4 py-2.5 font-semibold hover:bg-gray-800">Save</button>
+          <button
+            onClick={save}
+            className="w-full rounded-lg bg-black text-white px-4 py-2.5 font-semibold hover:bg-gray-800"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
@@ -241,7 +298,8 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
   const toggleOne = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -271,7 +329,9 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
       } else {
         toast.error(res.error || "Bulk update failed");
       }
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -279,9 +339,14 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <div>
           <h2 className="text-xl font-bold">Landing Page Beats</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Select beats and enable their public landing pages in one click. Missing slugs are auto-generated from the title.</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Select beats and enable their public landing pages in one click. Missing slugs are auto-generated from the
+            title.
+          </p>
         </div>
-        <div className="text-xs text-gray-500">{beats.length} beats · {selected.size} selected</div>
+        <div className="text-xs text-gray-500">
+          {beats.length} beats · {selected.size} selected
+        </div>
       </div>
 
       {loading ? (
@@ -337,15 +402,26 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
                   <td className="py-3 hidden md:table-cell">${(b.price_cents / 100).toFixed(2)}</td>
                   <td className="py-3 hidden md:table-cell">${(b.discount_price_cents / 100).toFixed(2)}</td>
                   <td className="py-3">
-                    <span className={`px-2 py-0.5 rounded text-xs ${b.is_landing_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs ${b.is_landing_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                    >
                       {b.is_landing_published ? "Live" : "Draft"}
                     </span>
                   </td>
                   <td className="py-3 whitespace-nowrap">
-                    <button onClick={() => setEditing(b)} className="text-blue-600 hover:underline text-xs">Edit</button>
+                    <button onClick={() => setEditing(b)} className="text-blue-600 hover:underline text-xs">
+                      Edit
+                    </button>
                     {b.landing_slug && b.is_landing_published && (
                       <>
-                        <a href={`/beats/${b.landing_slug}`} target="_blank" rel="noreferrer" className="ml-2 text-gray-500 hover:underline text-xs">View →</a>
+                        <a
+                          href={`/beats/${b.landing_slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="ml-2 text-gray-500 hover:underline text-xs"
+                        >
+                          View →
+                        </a>
                         <CopyLinkButton url={`https://mybeatcatalog.com/beats/${b.landing_slug}`} />
                       </>
                     )}
@@ -393,11 +469,20 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
   );
 }
 
+function formatBeatPromoCopy(url: string) {
+  return [
+    `💰 Download/Purchase | Untagged: ${url}`,
+    "🌐 Website: https://www.mybeatcatalog.com",
+    "📧 EMAIL: Jason@Krazyjay.com",
+    "📲 Cell: (470) 315-0280",
+    "Instagram: https://www.instagram.com/krazyjaydotcomga",
+  ].join("\n");
+}
 function ShareLinkRow({ url, label }: { url: string; label: string }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(formatBeatPromoCopy(url));
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -407,7 +492,14 @@ function ShareLinkRow({ url, label }: { url: string; label: string }) {
   return (
     <div className="flex items-center gap-2 text-xs">
       <span className="text-gray-400 w-16 shrink-0">{label}</span>
-      <a href={url} target="_blank" rel="noreferrer" className="font-mono text-purple-600 hover:underline truncate max-w-xs">{url}</a>
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="font-mono text-purple-600 hover:underline truncate max-w-xs"
+      >
+        {url}
+      </a>
       <button onClick={copy} className="rounded border border-gray-200 px-2 py-0.5 text-[10px] hover:bg-gray-50">
         {copied ? "Copied!" : "Copy"}
       </button>
@@ -444,7 +536,9 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
         seo_title: form.seo_title || null,
         seo_description: form.seo_description || null,
         custom_video_url: form.custom_video_url || null,
-        custom_video_recorded_at: form.custom_video_recorded_at ? new Date(form.custom_video_recorded_at).toISOString() : null,
+        custom_video_recorded_at: form.custom_video_recorded_at
+          ? new Date(form.custom_video_recorded_at).toISOString()
+          : null,
         is_landing_published: form.is_landing_published,
         producer_name: form.producer_name || null,
       },
@@ -460,34 +554,133 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
 
   const inp = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm";
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fade-in" onClick={onClose}>
-      <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl my-8 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl my-8 animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 className="text-xl font-black mb-4">Edit: {beat.title}</h3>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div><label className="text-xs font-semibold">URL slug</label><input className={inp} value={form.landing_slug} onChange={(e) => setForm({ ...form, landing_slug: e.target.value })} placeholder="midnight-drive" /></div>
-          <div><label className="text-xs font-semibold">Producer name</label><input className={inp} value={form.producer_name} onChange={(e) => setForm({ ...form, producer_name: e.target.value })} /></div>
-          <div><label className="text-xs font-semibold">Price (cents)</label><input type="number" className={inp} value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: Number(e.target.value) })} /></div>
-          <div><label className="text-xs font-semibold">First-time discount (cents)</label><input type="number" className={inp} value={form.discount_price_cents} onChange={(e) => setForm({ ...form, discount_price_cents: Number(e.target.value) })} /></div>
-          <div className="sm:col-span-2">
-            <label className="text-xs font-semibold">Legacy external checkout URL <span className="text-gray-400 font-normal">(optional fallback — leave blank to use built-in Stripe checkout)</span></label>
-            <input className={inp} value={form.checkout_url} onChange={(e) => setForm({ ...form, checkout_url: e.target.value })} placeholder="https://..." />
+          <div>
+            <label className="text-xs font-semibold">URL slug</label>
+            <input
+              className={inp}
+              value={form.landing_slug}
+              onChange={(e) => setForm({ ...form, landing_slug: e.target.value })}
+              placeholder="midnight-drive"
+            />
           </div>
-          <div className="sm:col-span-2"><label className="text-xs font-semibold">Application URL (legacy — inquiry popup now handles this)</label><input className={inp} value={form.application_url} onChange={(e) => setForm({ ...form, application_url: e.target.value })} placeholder="https://..." /></div>
-          <div className="sm:col-span-2"><label className="text-xs font-semibold">Custom video URL (optional; overrides global)</label><input className={inp} value={form.custom_video_url} onChange={(e) => setForm({ ...form, custom_video_url: e.target.value })} /></div>
-          <div className="sm:col-span-2"><label className="text-xs font-semibold">Video posted at (shown as "Posted X ago" under the video)</label><input type="datetime-local" className={inp} value={form.custom_video_recorded_at} onChange={(e) => setForm({ ...form, custom_video_recorded_at: e.target.value })} /></div>
-          <div className="sm:col-span-2"><label className="text-xs font-semibold">SEO title</label><input className={inp} value={form.seo_title} onChange={(e) => setForm({ ...form, seo_title: e.target.value })} /></div>
-          <div className="sm:col-span-2"><label className="text-xs font-semibold">SEO description</label><textarea rows={3} className={inp} value={form.seo_description} onChange={(e) => setForm({ ...form, seo_description: e.target.value })} /></div>
+          <div>
+            <label className="text-xs font-semibold">Producer name</label>
+            <input
+              className={inp}
+              value={form.producer_name}
+              onChange={(e) => setForm({ ...form, producer_name: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold">Price (cents)</label>
+            <input
+              type="number"
+              className={inp}
+              value={form.price_cents}
+              onChange={(e) => setForm({ ...form, price_cents: Number(e.target.value) })}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold">First-time discount (cents)</label>
+            <input
+              type="number"
+              className={inp}
+              value={form.discount_price_cents}
+              onChange={(e) => setForm({ ...form, discount_price_cents: Number(e.target.value) })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold">
+              Legacy external checkout URL{" "}
+              <span className="text-gray-400 font-normal">
+                (optional fallback — leave blank to use built-in Stripe checkout)
+              </span>
+            </label>
+            <input
+              className={inp}
+              value={form.checkout_url}
+              onChange={(e) => setForm({ ...form, checkout_url: e.target.value })}
+              placeholder="https://..."
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold">Application URL (legacy — inquiry popup now handles this)</label>
+            <input
+              className={inp}
+              value={form.application_url}
+              onChange={(e) => setForm({ ...form, application_url: e.target.value })}
+              placeholder="https://..."
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold">Custom video URL (optional; overrides global)</label>
+            <input
+              className={inp}
+              value={form.custom_video_url}
+              onChange={(e) => setForm({ ...form, custom_video_url: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold">Video posted at (shown as "Posted X ago" under the video)</label>
+            <input
+              type="datetime-local"
+              className={inp}
+              value={form.custom_video_recorded_at}
+              onChange={(e) => setForm({ ...form, custom_video_recorded_at: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold">SEO title</label>
+            <input
+              className={inp}
+              value={form.seo_title}
+              onChange={(e) => setForm({ ...form, seo_title: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold">SEO description</label>
+            <textarea
+              rows={3}
+              className={inp}
+              value={form.seo_description}
+              onChange={(e) => setForm({ ...form, seo_description: e.target.value })}
+            />
+          </div>
           <div className="sm:col-span-2 flex items-center gap-2">
-            <input id="pub" type="checkbox" checked={form.is_landing_published} onChange={(e) => setForm({ ...form, is_landing_published: e.target.checked })} />
-            <label htmlFor="pub" className="text-sm">Published (visible at /beats/{form.landing_slug || "…"})</label>
+            <input
+              id="pub"
+              type="checkbox"
+              checked={form.is_landing_published}
+              onChange={(e) => setForm({ ...form, is_landing_published: e.target.checked })}
+            />
+            <label htmlFor="pub" className="text-sm">
+              Published (visible at /beats/{form.landing_slug || "…"})
+            </label>
           </div>
           <div className="sm:col-span-2 border-t border-gray-100 pt-4 mt-2">
             <AttachmentsManager beatId={beat.id} />
           </div>
         </div>
         <div className="mt-6 flex gap-2 justify-end">
-          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-200">Cancel</button>
-          <button onClick={save} className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Save</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-200">
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
@@ -497,16 +690,32 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
 function LeadsCard() {
   const fn = useServerFn(adminListLeadCaptures);
   const q = useQuery({ queryKey: ["admin-lead-captures"], queryFn: () => fn() });
-  const leads = (q.data?.leads ?? []) as Array<{ id: string; first_name: string; email: string; created_at: string; beat_id: string | null }>;
+  const leads = (q.data?.leads ?? []) as Array<{
+    id: string;
+    first_name: string;
+    email: string;
+    created_at: string;
+    beat_id: string | null;
+  }>;
   return (
     <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
       <h2 className="text-xl font-bold mb-3">Tagged Download Leads ({leads.length})</h2>
       <div className="max-h-64 overflow-y-auto">
         <table className="w-full text-sm">
-          <thead><tr className="text-xs text-gray-500 text-left border-b border-gray-100"><th className="py-1.5">Name</th><th>Email</th><th>When</th></tr></thead>
+          <thead>
+            <tr className="text-xs text-gray-500 text-left border-b border-gray-100">
+              <th className="py-1.5">Name</th>
+              <th>Email</th>
+              <th>When</th>
+            </tr>
+          </thead>
           <tbody>
             {leads.map((l) => (
-              <tr key={l.id} className="border-b border-gray-50"><td className="py-1.5">{l.first_name}</td><td>{l.email}</td><td className="text-xs text-gray-500">{new Date(l.created_at).toLocaleString()}</td></tr>
+              <tr key={l.id} className="border-b border-gray-50">
+                <td className="py-1.5">{l.first_name}</td>
+                <td>{l.email}</td>
+                <td className="text-xs text-gray-500">{new Date(l.created_at).toLocaleString()}</td>
+              </tr>
             ))}
           </tbody>
         </table>
@@ -518,13 +727,26 @@ function LeadsCard() {
 function OrdersCard() {
   const fn = useServerFn(adminListLeaseOrders);
   const q = useQuery({ queryKey: ["admin-lease-orders"], queryFn: () => fn() });
-  const orders = (q.data?.orders ?? []) as Array<{ id: string; email: string; amount_cents: number; used_first_time_discount: boolean; created_at: string }>;
+  const orders = (q.data?.orders ?? []) as Array<{
+    id: string;
+    email: string;
+    amount_cents: number;
+    used_first_time_discount: boolean;
+    created_at: string;
+  }>;
   return (
     <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
       <h2 className="text-xl font-bold mb-3">Lease Orders ({orders.length})</h2>
       <div className="max-h-64 overflow-y-auto">
         <table className="w-full text-sm">
-          <thead><tr className="text-xs text-gray-500 text-left border-b border-gray-100"><th className="py-1.5">Email</th><th>Amount</th><th>Discount</th><th>When</th></tr></thead>
+          <thead>
+            <tr className="text-xs text-gray-500 text-left border-b border-gray-100">
+              <th className="py-1.5">Email</th>
+              <th>Amount</th>
+              <th>Discount</th>
+              <th>When</th>
+            </tr>
+          </thead>
           <tbody>
             {orders.map((o) => (
               <tr key={o.id} className="border-b border-gray-50">
@@ -546,7 +768,9 @@ function DeliveryInfoCard() {
     <div className="rounded-2xl bg-blue-50 border border-blue-200 p-5 text-sm text-blue-900">
       <p className="font-semibold mb-1">How beat landing delivery works</p>
       <p className="text-blue-800/90 leading-relaxed">
-        Paid purchases are delivered after Stripe confirms payment. The buyer automatically receives an email with the beat MP3 download link and the Unlimited License Agreement. You (admin) receive a sale notification email. Free MP3 downloads capture the lead and email them the MP3 link.
+        Paid purchases are delivered after Stripe confirms payment. The buyer automatically receives an email with the
+        beat MP3 download link and the Unlimited License Agreement. You (admin) receive a sale notification email. Free
+        MP3 downloads capture the lead and email them the MP3 link.
       </p>
     </div>
   );
@@ -576,7 +800,12 @@ function BulkPricingCard() {
       discountCents = d;
     }
     const label = target === "published" ? "published landing pages" : "all beats";
-    if (!confirm(`Apply price $${(priceCents / 100).toFixed(2)}${discountCents !== null ? ` and discount $${(discountCents / 100).toFixed(2)}` : ""} to ${label}?`)) return;
+    if (
+      !confirm(
+        `Apply price $${(priceCents / 100).toFixed(2)}${discountCents !== null ? ` and discount $${(discountCents / 100).toFixed(2)}` : ""} to ${label}?`,
+      )
+    )
+      return;
     setSaving(true);
     try {
       const r = await bulk({
@@ -604,7 +833,9 @@ function BulkPricingCard() {
       <div className="mb-4">
         <h2 className="text-xl font-bold">Bulk pricing</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Set lease and optional first-time discount pricing once and apply to landing pages in bulk. Only updates <code className="text-xs">price_cents</code> and <code className="text-xs">discount_price_cents</code>. Membership pricing is not affected.
+          Set lease and optional first-time discount pricing once and apply to landing pages in bulk. Only updates{" "}
+          <code className="text-xs">price_cents</code> and <code className="text-xs">discount_price_cents</code>.
+          Membership pricing is not affected.
         </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-4">
@@ -663,10 +894,12 @@ function CopyLinkButton({ url }: { url: string }) {
     <button
       onClick={async () => {
         try {
-          await navigator.clipboard.writeText(url);
+          await navigator.clipboard.writeText(formatBeatPromoCopy(url));
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
-        } catch { toast.error("Copy failed"); }
+        } catch {
+          toast.error("Copy failed");
+        }
       }}
       className="ml-3 text-blue-600 hover:underline text-xs"
       title={url}
@@ -686,19 +919,24 @@ function EmailTesterCard() {
   const [busy, setBusy] = useState<string | null>(null);
 
   const run = async (kind: "free_download" | "purchase_buyer" | "admin_sale" | "exclusive_inquiry") => {
-    if (!to || !to.includes("@")) { toast.error("Enter a recipient email first"); return; }
+    if (!to || !to.includes("@")) {
+      toast.error("Enter a recipient email first");
+      return;
+    }
     setBusy(kind);
     try {
       const r = await send({ data: { to, kind } });
       if (r.ok) {
         toast.success(`Test email queued (${kind})`);
         await qc.invalidateQueries({ queryKey: ["admin-email-status"] });
-      }
-      else toast.error(r.error || "Failed");
-    } finally { setBusy(null); }
+      } else toast.error(r.error || "Failed");
+    } finally {
+      setBusy(null);
+    }
   };
 
-  const btn = "rounded-lg border border-blue-200 bg-blue-50 text-blue-700 px-3 py-2 text-xs font-semibold hover:bg-blue-100 disabled:opacity-60";
+  const btn =
+    "rounded-lg border border-blue-200 bg-blue-50 text-blue-700 px-3 py-2 text-xs font-semibold hover:bg-blue-100 disabled:opacity-60";
   const emails = statusQuery.data?.emails ?? [];
   const stats = statusQuery.data?.stats ?? { total: 0, sent: 0, failed: 0, pending: 0, suppressed: 0 };
   const statusClass = (status: string) => {
@@ -711,22 +949,39 @@ function EmailTesterCard() {
     <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
       <div className="mb-3">
         <h2 className="text-xl font-bold">Test emails</h2>
-        <p className="text-sm text-gray-500 mt-1">Send a real copy of each beat-landing email to any address to verify delivery and template.</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Send a real copy of each beat-landing email to any address to verify delivery and template.
+        </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-        <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="recipient@example.com" className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+        <input
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+          placeholder="recipient@example.com"
+          className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        />
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        <button disabled={busy !== null} onClick={() => run("free_download")} className={btn}>{busy === "free_download" ? "Sending…" : "Free MP3 download"}</button>
-        <button disabled={busy !== null} onClick={() => run("purchase_buyer")} className={btn}>{busy === "purchase_buyer" ? "Sending…" : "Purchase (buyer)"}</button>
-        <button disabled={busy !== null} onClick={() => run("admin_sale")} className={btn}>{busy === "admin_sale" ? "Sending…" : "Admin sale notification"}</button>
-        <button disabled={busy !== null} onClick={() => run("exclusive_inquiry")} className={btn}>{busy === "exclusive_inquiry" ? "Sending…" : "Exclusive inquiry"}</button>
+        <button disabled={busy !== null} onClick={() => run("free_download")} className={btn}>
+          {busy === "free_download" ? "Sending…" : "Free MP3 download"}
+        </button>
+        <button disabled={busy !== null} onClick={() => run("purchase_buyer")} className={btn}>
+          {busy === "purchase_buyer" ? "Sending…" : "Purchase (buyer)"}
+        </button>
+        <button disabled={busy !== null} onClick={() => run("admin_sale")} className={btn}>
+          {busy === "admin_sale" ? "Sending…" : "Admin sale notification"}
+        </button>
+        <button disabled={busy !== null} onClick={() => run("exclusive_inquiry")} className={btn}>
+          {busy === "exclusive_inquiry" ? "Sending…" : "Exclusive inquiry"}
+        </button>
       </div>
       <div className="mt-6 border-t border-gray-100 pt-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-sm font-bold">Email delivery status</h3>
-            <p className="text-xs text-gray-500 mt-1">Latest unique attempts for free downloads, purchases, inquiries, and invites.</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Latest unique attempts for free downloads, purchases, inquiries, and invites.
+            </p>
           </div>
           <button
             onClick={() => statusQuery.refetch()}
@@ -755,20 +1010,38 @@ function EmailTesterCard() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {statusQuery.isLoading ? (
-                <tr><td colSpan={5} className="px-3 py-4 text-gray-500">Loading email status…</td></tr>
-              ) : emails.length === 0 ? (
-                <tr><td colSpan={5} className="px-3 py-4 text-gray-500">No email attempts found yet.</td></tr>
-              ) : emails.slice(0, 12).map((email) => (
-                <tr key={email.message_id}>
-                  <td className="px-3 py-2 font-medium text-gray-900">{email.template_name.replace(/^beat_/, "").replace(/_/g, " ")}</td>
-                  <td className="px-3 py-2 text-gray-600">{email.recipient_email}</td>
-                  <td className="px-3 py-2">
-                    <span className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${statusClass(email.status)}`}>{email.status}</span>
+                <tr>
+                  <td colSpan={5} className="px-3 py-4 text-gray-500">
+                    Loading email status…
                   </td>
-                  <td className="px-3 py-2 text-gray-500">{new Date(email.created_at).toLocaleString()}</td>
-                  <td className="max-w-[260px] truncate px-3 py-2 text-red-600" title={email.error_message || ""}>{email.error_message || "—"}</td>
                 </tr>
-              ))}
+              ) : emails.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-4 text-gray-500">
+                    No email attempts found yet.
+                  </td>
+                </tr>
+              ) : (
+                emails.slice(0, 12).map((email) => (
+                  <tr key={email.message_id}>
+                    <td className="px-3 py-2 font-medium text-gray-900">
+                      {email.template_name.replace(/^beat_/, "").replace(/_/g, " ")}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600">{email.recipient_email}</td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${statusClass(email.status)}`}
+                      >
+                        {email.status}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-gray-500">{new Date(email.created_at).toLocaleString()}</td>
+                    <td className="max-w-[260px] truncate px-3 py-2 text-red-600" title={email.error_message || ""}>
+                      {email.error_message || "—"}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -777,8 +1050,23 @@ function EmailTesterCard() {
   );
 }
 
-function StatPill({ label, value, tone = "gray" }: { label: string; value: number; tone?: "gray" | "green" | "yellow" | "red" }) {
-  const toneClass = tone === "green" ? "bg-green-50 text-green-700" : tone === "yellow" ? "bg-yellow-50 text-yellow-700" : tone === "red" ? "bg-red-50 text-red-700" : "bg-gray-50 text-gray-700";
+function StatPill({
+  label,
+  value,
+  tone = "gray",
+}: {
+  label: string;
+  value: number;
+  tone?: "gray" | "green" | "yellow" | "red";
+}) {
+  const toneClass =
+    tone === "green"
+      ? "bg-green-50 text-green-700"
+      : tone === "yellow"
+        ? "bg-yellow-50 text-yellow-700"
+        : tone === "red"
+          ? "bg-red-50 text-red-700"
+          : "bg-gray-50 text-gray-700";
   return (
     <div className={`rounded-lg px-3 py-2 ${toneClass}`}>
       <div className="text-lg font-black leading-none">{value}</div>
@@ -789,8 +1077,13 @@ function StatPill({ label, value, tone = "gray" }: { label: string; value: numbe
 
 // ---------- Inquiry questions editor ----------
 type InquiryQ = {
-  id: string; label: string; placeholder: string | null; field_type: string;
-  required: boolean; sort_order: number; active: boolean;
+  id: string;
+  label: string;
+  placeholder: string | null;
+  field_type: string;
+  required: boolean;
+  sort_order: number;
+  active: boolean;
 };
 function InquiryQuestionsCard() {
   const listFn = useServerFn(adminListInquiryQuestions);
@@ -806,11 +1099,21 @@ function InquiryQuestionsCard() {
       <div className="flex items-center justify-between mb-3">
         <div>
           <h2 className="text-xl font-bold">Exclusive Inquiry Questions</h2>
-          <p className="text-sm text-gray-500 mt-1">These populate the popup when someone taps "Apply for Exclusive / Custom Work". Answers are emailed to jason@krazyjay.com.</p>
+          <p className="text-sm text-gray-500 mt-1">
+            These populate the popup when someone taps "Apply for Exclusive / Custom Work". Answers are emailed to
+            jason@krazyjay.com.
+          </p>
         </div>
-        <button onClick={() => setAdding(true)} className="rounded-lg bg-blue-600 text-white text-sm font-semibold px-3 py-2 hover:bg-blue-700">+ New question</button>
+        <button
+          onClick={() => setAdding(true)}
+          className="rounded-lg bg-blue-600 text-white text-sm font-semibold px-3 py-2 hover:bg-blue-700"
+        >
+          + New question
+        </button>
       </div>
-      {q.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : (
+      {q.isLoading ? (
+        <p className="text-sm text-gray-500">Loading…</p>
+      ) : (
         <ul className="divide-y divide-gray-100">
           {questions.map((qq) => (
             <QuestionRow
@@ -818,14 +1121,18 @@ function InquiryQuestionsCard() {
               q={qq}
               onSave={async (patch) => {
                 const r = await upsert({ data: { id: qq.id, ...patch } });
-                if (r.ok) { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["admin-inquiry-questions"] }); }
-                else toast.error(r.error || "Failed");
+                if (r.ok) {
+                  toast.success("Saved");
+                  qc.invalidateQueries({ queryKey: ["admin-inquiry-questions"] });
+                } else toast.error(r.error || "Failed");
               }}
               onDelete={async () => {
                 if (!confirm(`Delete "${qq.label}"?`)) return;
                 const r = await del({ data: { id: qq.id } });
-                if (r.ok) { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["admin-inquiry-questions"] }); }
-                else toast.error(r.error || "Failed");
+                if (r.ok) {
+                  toast.success("Deleted");
+                  qc.invalidateQueries({ queryKey: ["admin-inquiry-questions"] });
+                } else toast.error(r.error || "Failed");
               }}
             />
           ))}
@@ -848,7 +1155,22 @@ function InquiryQuestionsCard() {
   );
 }
 
-function QuestionRow({ q, onSave, onDelete }: { q: InquiryQ; onSave: (p: { label: string; placeholder?: string | null; field_type?: string; required?: boolean; sort_order?: number; active?: boolean }) => Promise<void>; onDelete: () => Promise<void> }) {
+function QuestionRow({
+  q,
+  onSave,
+  onDelete,
+}: {
+  q: InquiryQ;
+  onSave: (p: {
+    label: string;
+    placeholder?: string | null;
+    field_type?: string;
+    required?: boolean;
+    sort_order?: number;
+    active?: boolean;
+  }) => Promise<void>;
+  onDelete: () => Promise<void>;
+}) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(q.label);
   const [placeholder, setPlaceholder] = useState(q.placeholder || "");
@@ -862,11 +1184,21 @@ function QuestionRow({ q, onSave, onDelete }: { q: InquiryQ; onSave: (p: { label
       <li className="py-3 flex items-center gap-3">
         <span className="text-xs text-gray-400 w-8 tabular-nums">{q.sort_order}</span>
         <div className="flex-1 min-w-0">
-          <div className="font-medium truncate">{q.label}{q.required && <span className="text-red-500 ml-1">*</span>}</div>
-          <div className="text-xs text-gray-500">{q.field_type}{q.active ? "" : " · disabled"}</div>
+          <div className="font-medium truncate">
+            {q.label}
+            {q.required && <span className="text-red-500 ml-1">*</span>}
+          </div>
+          <div className="text-xs text-gray-500">
+            {q.field_type}
+            {q.active ? "" : " · disabled"}
+          </div>
         </div>
-        <button onClick={() => setEditing(true)} className="text-blue-600 hover:underline text-xs">Edit</button>
-        <button onClick={onDelete} className="text-red-600 hover:underline text-xs">Delete</button>
+        <button onClick={() => setEditing(true)} className="text-blue-600 hover:underline text-xs">
+          Edit
+        </button>
+        <button onClick={onDelete} className="text-red-600 hover:underline text-xs">
+          Delete
+        </button>
       </li>
     );
   }
@@ -874,32 +1206,64 @@ function QuestionRow({ q, onSave, onDelete }: { q: InquiryQ; onSave: (p: { label
   return (
     <li className="py-3 space-y-2 bg-gray-50 rounded-lg p-3">
       <input className={inp} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Question label" />
-      <input className={inp} value={placeholder} onChange={(e) => setPlaceholder(e.target.value)} placeholder="Placeholder (optional)" />
+      <input
+        className={inp}
+        value={placeholder}
+        onChange={(e) => setPlaceholder(e.target.value)}
+        placeholder="Placeholder (optional)"
+      />
       <div className="grid grid-cols-3 gap-2">
         <select className={inp} value={fieldType} onChange={(e) => setFieldType(e.target.value)}>
           <option value="text">Short text</option>
           <option value="textarea">Long text</option>
           <option value="email">Email</option>
         </select>
-        <input type="number" className={inp} value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} placeholder="Order" />
-        <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} /> Required</label>
+        <input
+          type="number"
+          className={inp}
+          value={sortOrder}
+          onChange={(e) => setSortOrder(Number(e.target.value))}
+          placeholder="Order"
+        />
+        <label className="flex items-center gap-2 text-xs">
+          <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} /> Required
+        </label>
       </div>
-      <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Active</label>
+      <label className="flex items-center gap-2 text-xs">
+        <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Active
+      </label>
       <div className="flex gap-2 justify-end">
-        <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200">Cancel</button>
+        <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200">
+          Cancel
+        </button>
         <button
           onClick={async () => {
             await onSave({ label, placeholder, field_type: fieldType, required, sort_order: sortOrder, active });
             setEditing(false);
           }}
           className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white font-semibold"
-        >Save</button>
+        >
+          Save
+        </button>
       </div>
     </li>
   );
 }
 
-function NewQuestionForm({ onCancel, onCreate }: { onCancel: () => void; onCreate: (p: { label: string; placeholder?: string | null; field_type?: string; required?: boolean; sort_order?: number; active?: boolean }) => Promise<void> }) {
+function NewQuestionForm({
+  onCancel,
+  onCreate,
+}: {
+  onCancel: () => void;
+  onCreate: (p: {
+    label: string;
+    placeholder?: string | null;
+    field_type?: string;
+    required?: boolean;
+    sort_order?: number;
+    active?: boolean;
+  }) => Promise<void>;
+}) {
   const [label, setLabel] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   const [fieldType, setFieldType] = useState("text");
@@ -909,25 +1273,52 @@ function NewQuestionForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
   return (
     <div className="mt-4 p-3 bg-gray-50 rounded-lg space-y-2">
       <input className={inp} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Question label" />
-      <input className={inp} value={placeholder} onChange={(e) => setPlaceholder(e.target.value)} placeholder="Placeholder (optional)" />
+      <input
+        className={inp}
+        value={placeholder}
+        onChange={(e) => setPlaceholder(e.target.value)}
+        placeholder="Placeholder (optional)"
+      />
       <div className="grid grid-cols-3 gap-2">
         <select className={inp} value={fieldType} onChange={(e) => setFieldType(e.target.value)}>
           <option value="text">Short text</option>
           <option value="textarea">Long text</option>
           <option value="email">Email</option>
         </select>
-        <input type="number" className={inp} value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} placeholder="Order" />
-        <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} /> Required</label>
+        <input
+          type="number"
+          className={inp}
+          value={sortOrder}
+          onChange={(e) => setSortOrder(Number(e.target.value))}
+          placeholder="Order"
+        />
+        <label className="flex items-center gap-2 text-xs">
+          <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} /> Required
+        </label>
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200">Cancel</button>
+        <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200">
+          Cancel
+        </button>
         <button
           onClick={async () => {
-            if (!label.trim()) { toast.error("Label required"); return; }
-            await onCreate({ label, placeholder, field_type: fieldType, required, sort_order: sortOrder, active: true });
+            if (!label.trim()) {
+              toast.error("Label required");
+              return;
+            }
+            await onCreate({
+              label,
+              placeholder,
+              field_type: fieldType,
+              required,
+              sort_order: sortOrder,
+              active: true,
+            });
           }}
           className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white font-semibold"
-        >Add</button>
+        >
+          Add
+        </button>
       </div>
     </div>
   );
@@ -937,12 +1328,21 @@ function NewQuestionForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
 function InquirySubmissionsCard() {
   const fn = useServerFn(adminListInquirySubmissions);
   const q = useQuery({ queryKey: ["admin-inquiry-submissions"], queryFn: () => fn() });
-  const rows = (q.data?.submissions ?? []) as Array<{ id: string; name: string; email: string; beat_id: string | null; answers: Record<string, string>; created_at: string }>;
+  const rows = (q.data?.submissions ?? []) as Array<{
+    id: string;
+    name: string;
+    email: string;
+    beat_id: string | null;
+    answers: Record<string, string>;
+    created_at: string;
+  }>;
   return (
     <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
       <h2 className="text-xl font-bold mb-3">Exclusive Inquiries ({rows.length})</h2>
       <div className="max-h-96 overflow-y-auto space-y-2">
-        {rows.length === 0 ? <p className="text-sm text-gray-500">No submissions yet.</p> :
+        {rows.length === 0 ? (
+          <p className="text-sm text-gray-500">No submissions yet.</p>
+        ) : (
           rows.map((r) => (
             <details key={r.id} className="border border-gray-100 rounded-lg p-3">
               <summary className="cursor-pointer text-sm font-semibold flex items-center gap-3">
@@ -950,10 +1350,12 @@ function InquirySubmissionsCard() {
                 <span className="text-gray-500 font-normal">{r.email}</span>
                 <span className="ml-auto text-xs text-gray-400">{new Date(r.created_at).toLocaleString()}</span>
               </summary>
-              <pre className="mt-2 text-xs bg-gray-50 rounded p-2 overflow-x-auto">{JSON.stringify(r.answers, null, 2)}</pre>
+              <pre className="mt-2 text-xs bg-gray-50 rounded p-2 overflow-x-auto">
+                {JSON.stringify(r.answers, null, 2)}
+              </pre>
             </details>
           ))
-        }
+        )}
       </div>
     </div>
   );
@@ -966,7 +1368,14 @@ function AttachmentsManager({ beatId }: { beatId: string }) {
   const delFn = useServerFn(adminDeleteAttachment);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["admin-attachments", beatId], queryFn: () => listFn({ data: { beatId } }) });
-  const rows = (q.data?.attachments ?? []) as Array<{ id: string; filename: string; mime_type: string | null; size_bytes: number | null; storage_path: string; sort_order: number }>;
+  const rows = (q.data?.attachments ?? []) as Array<{
+    id: string;
+    filename: string;
+    mime_type: string | null;
+    size_bytes: number | null;
+    storage_path: string;
+    sort_order: number;
+  }>;
   const [uploading, setUploading] = useState(false);
 
   const upload = async (file: File) => {
@@ -979,8 +1388,11 @@ function AttachmentsManager({ beatId }: { beatId: string }) {
       if (error) throw error;
       const r = await createFn({
         data: {
-          beatId, storage_path: path, filename: file.name,
-          mime_type: file.type || null, size_bytes: file.size,
+          beatId,
+          storage_path: path,
+          filename: file.name,
+          mime_type: file.type || null,
+          size_bytes: file.size,
           sort_order: rows.length * 10,
         },
       });
@@ -997,18 +1409,24 @@ function AttachmentsManager({ beatId }: { beatId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-xs font-semibold">Attachments (PDFs, docs, images — buyers can download from the beat page)</label>
+        <label className="text-xs font-semibold">
+          Attachments (PDFs, docs, images — buyers can download from the beat page)
+        </label>
         <label className="cursor-pointer text-xs rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-blue-700 hover:bg-blue-100">
           {uploading ? "Uploading…" : "+ Upload"}
           <input type="file" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
         </label>
       </div>
-      {rows.length === 0 ? <p className="text-xs text-gray-500">None yet.</p> :
+      {rows.length === 0 ? (
+        <p className="text-xs text-gray-500">None yet.</p>
+      ) : (
         <ul className="space-y-1.5">
           {rows.map((r) => (
             <li key={r.id} className="flex items-center gap-3 rounded-lg border border-gray-100 px-3 py-2">
               <span className="flex-1 text-sm truncate">{r.filename}</span>
-              <span className="text-xs text-gray-400">{r.size_bytes ? `${(r.size_bytes / 1024).toFixed(1)} KB` : ""}</span>
+              <span className="text-xs text-gray-400">
+                {r.size_bytes ? `${(r.size_bytes / 1024).toFixed(1)} KB` : ""}
+              </span>
               <button
                 onClick={async () => {
                   if (!confirm("Delete this attachment?")) return;
@@ -1016,11 +1434,13 @@ function AttachmentsManager({ beatId }: { beatId: string }) {
                   qc.invalidateQueries({ queryKey: ["admin-attachments", beatId] });
                 }}
                 className="text-red-600 text-xs hover:underline"
-              >Delete</button>
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>
-      }
+      )}
     </div>
   );
 }
