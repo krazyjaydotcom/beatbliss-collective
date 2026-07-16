@@ -423,6 +423,61 @@ function ModalShell({ children, onClose, maxWidth = "max-w-md" }: { children: Re
   );
 }
 
+function LicenseTermsModal({ onClose }: { onClose: () => void }) {
+  return (
+    <ModalShell onClose={onClose} maxWidth="max-w-2xl">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-black">Unlimited Membership License</h3>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
+      </div>
+      <div className="mt-4 max-h-[70vh] overflow-y-auto pr-1 space-y-4 text-sm text-slate-700 leading-relaxed">
+        <div className="flex items-center gap-2 text-xs">
+          <FileText className="h-4 w-4 text-blue-600" />
+          <span className="font-bold tracking-wider text-blue-600 uppercase">Unlimited License</span>
+        </div>
+        <p>
+          This agreement confirms that the licensee, upon purchase of an unlimited license for the selected beat,
+          is granted unlimited, non-exclusive rights to record, release, distribute, perform, and{" "}
+          <strong>monetize</strong> music created with this beat across all streaming platforms, social media,
+          sync, live performance, and physical/digital sales. The licensee retains{" "}
+          <strong>100% of the master recording royalties</strong> for the song they create.
+        </p>
+
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <h4 className="text-xs font-bold tracking-wider text-blue-700 uppercase">Writer &amp; Publishing Credits (Required)</h4>
+          <p className="mt-2 text-sm">
+            All songs created using this beat <strong>must</strong> credit the producer as a co-writer and
+            publisher on all metadata, splits sheets, distributor uploads (DistroKid, TuneCore, etc.), and PRO
+            registrations as follows:
+          </p>
+          <ul className="mt-3 space-y-1.5 text-sm">
+            <li><strong>Writer:</strong> Jason A. Spencer (IPI #: <span className="font-mono">516703075</span>) — <strong>50% writer's share</strong></li>
+            <li><strong>Publishing:</strong> March 26th Publishing (IPI #: <span className="font-mono">1213085595</span>) — <strong>50% publisher's share</strong></li>
+            <li><strong>PRO:</strong> ASCAP</li>
+          </ul>
+          <p className="mt-3 text-xs text-slate-500">
+            Failure to register these splits accurately voids the monetization rights granted by this license.
+          </p>
+        </div>
+
+        <p>
+          The licensee may <strong>not</strong> resell, redistribute, sublicense, or claim sole ownership of the
+          original beat itself.
+        </p>
+        <p>
+          MYBEATCATALOG retains ownership of the underlying composition and production. A dated, uniquely numbered
+          copy of this agreement is issued at the time of purchase.
+        </p>
+      </div>
+      <div className="mt-5 flex justify-end">
+        <button onClick={onClose} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 font-semibold text-sm">
+          Got it
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
 function NeedHelpModal({ global, onClose }: { global: { contact_instagram: string | null; contact_email: string | null; contact_phone: string | null } | null; onClose: () => void }) {
   const ig = global?.contact_instagram;
   const em = global?.contact_email;
