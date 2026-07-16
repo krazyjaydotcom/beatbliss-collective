@@ -115,11 +115,6 @@ function BeatLandingPage() {
   const postedAt = formatPostedAt(beat!.custom_video_recorded_at);
   const activePrice = showDiscount ? beat!.discount_price_cents : beat!.price_cents;
 
-  const pills = [beat!.genre, beat!.mood]
-    .flatMap((v) => (v ? v.split(/[,/]|\s+&\s+/) : []))
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900">
