@@ -307,31 +307,6 @@ function TrustCell({ icon, label }: { icon: React.ReactNode; label: string }) {
   );
 }
 
-function WaveformBackdrop() {
-  return (
-    <svg
-      viewBox="0 0 800 100"
-      preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 w-full h-16 sm:h-24 opacity-40"
-      aria-hidden="true"
-    >
-      {Array.from({ length: 80 }).map((_, i) => {
-        const h = 6 + Math.abs(Math.sin(i * 0.7) * 40) + Math.abs(Math.cos(i * 0.3) * 12);
-        return (
-          <rect
-            key={i}
-            x={i * 10}
-            y={50 - h / 2}
-            width={3}
-            height={h}
-            rx={1.5}
-            className="fill-blue-400"
-          />
-        );
-      })}
-    </svg>
-  );
-}
 
 function MobileMenu({ onClose, onHelp, onLicense }: { onClose: () => void; onHelp: () => void; onLicense: () => void }) {
   return (
