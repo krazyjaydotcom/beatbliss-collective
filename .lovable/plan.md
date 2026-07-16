@@ -1,57 +1,39 @@
 ## Goal
 
-Make the app emails you care about actually deliver and make the admin area show whether email sending is working instead of silently saying “queued.”
+Make the beat landing page fit entirely above the fold on both desktop and mobile, and let visitors read the full license terms in a modal instead of navigating to `/license-example`.
 
-This covers:
-- Free beat download email
-- Purchase buyer email
-- Admin sale notification email
-- Exclusive/custom inquiry email
-- Admin test emails for all of the above
+## Changes (only `src/routes/beats.$slug.tsx`)
 
-## What I found
+### 1. Fit above the fold
 
-Your sender domain is verified and the live queue is healthy, but the recent messages are being rejected before delivery with:
+Reduce vertical footprint so the header, title, video, primary CTA, secondary CTAs, and payment row all fit in a single viewport at ~800px desktop height and standard mobile heights.
 
-```text
-400 missing_unsubscribe — Transactional emails must include an unsubscribe_token
-```
+- **Title block**: shrink from `text-4xl sm:text-6xl md:text-7xl` to `text-3xl sm:text-4xl md:text-5xl`; drop the pills row (genre/mood already appear in the meta line under the title); reduce top padding.
+- **Video**: switch from `aspect-video` (16:9) to a shorter `aspect-[21/9]` on desktop and `aspect-video` capped by `max-h-[38vh]` on mobile so the frame never dominates.
+- **License CTA card**: tighten padding (`p-4 sm:p-5`), shrink price to `text-3xl sm:text-4xl`, collapse the 4-item bullet list into a single compact line of comma-separated benefits ("Unlimited MP3 · Unlimited songs · Streams & sales · Keep 100% royalties").
+- **Secondary CTAs**: convert from stacked cards to a two-column compact row on mobile as well (smaller icon circle `h-9 w-9`, single-line labels, `py-2.5`).
+- **Trust row + payment methods**: merge into one line — 4 tiny trust chips + payment badges on the same flex-wrap row; remove the standalone "View full license terms" text link (replaced by button on the CTA card, see #2).
+- **Posted-at + discount pill**: keep, but as inline text next to the title meta line instead of separate stacked rows.
+- **Main container**: reduce `pb-[140px]` (space for sticky player) to `pb-[96px]` and shrink the sticky player's own height (smaller padding, hide the mini-waveform on mobile) so the fold gains ~40px back.
+- **Attachments and SEO description** stay below the fold (intentional — they're supplemental).
 
-Those messages retried 5 times and then became permanently failed, so they will not arrive unless the action is triggered again after the fix.
+### 2. License terms in a modal
 
-## Plan
+- Add a new `LicenseTermsModal` component inside the same file. Content mirrors the copy currently on `/_authenticated/license-example` (intro paragraph, Writer & Publishing Credits box with Jason A. Spencer / March 26th Publishing / ASCAP, resale restrictions). No fetch needed — copy is static.
+- Add state `licenseOpen` in `BeatLandingPage`.
+- Replace both existing links to `/license-example`:
+  - The desktop nav "Licensing Info" link → button that opens the modal.
+  - The "View full license terms" underline link → a small "View License Terms" text button placed inside the blue License CTA card (under the benefits line), opening the modal.
+- Keep the standalone `/license-example` route file untouched (still reachable from `/account` etc.).
 
-1. **Fix the shared email enqueue helper**
-   - Update the shared beat email queue helper so every outbound app email includes a valid unsubscribe token.
-   - Reuse or create the token from the existing email unsubscribe table.
-   - Keep the existing sender domain, from address, queue, templates, purchase logic, download logic, webhook logic, and inquiry routing intact.
+## Verification
 
-2. **Make test emails truthfully report status**
-   - Update the admin test email function so it confirms the message was inserted into the email queue/log instead of only returning “ok” after calling the helper.
-   - If queueing fails, return the real error to the admin UI.
-
-3. **Add an admin validation view**
-   - Add a compact “Email delivery status” panel in the existing admin beat landing email-test area.
-   - Show recent email attempts with: type, recipient, latest status, timestamp, and error message if failed.
-   - Show simple counts for recent sent / failed / pending messages so you can validate if the system is working without waiting blindly.
-   - Deduplicate by message id so the same email retry doesn’t appear as several separate emails.
-
-4. **Retest path**
-   - After implementation, use the admin tester to send a fresh test email.
-   - Check the email log status afterward; successful new messages should go `pending` then `sent`, not `failed` or `dlq`.
-
-## Files expected to change
-
-- `src/lib/beat-landing-email.server.ts` — fix shared queue payloads for all beat-related emails.
-- `src/lib/beat-landing.functions.ts` — return useful status for test emails and expose recent email status to admin.
-- `src/routes/_authenticated/admin/beat-landing.tsx` — display the validation/status panel.
+- Build passes (`bun run build:dev`).
+- Manually resize preview to 1280×800 desktop and 390×844 mobile; confirm the purchase button, secondary CTAs, and payment row are visible without scrolling.
+- Click "View License Terms" → modal opens with the full agreement text; Escape / backdrop closes it.
 
 ## Not changing
 
-- Beat landing layout
-- Checkout/payment behavior
-- Webhook delivery logic
-- Pricing logic
-- Member/signup/subscription behavior
-- Database schema
-- Homepage content
+- Sticky bottom player logic, checkout flow, download flow, inquiry flow.
+- Email system, server functions, database, other routes.
+- The `/license-example` route itself.
