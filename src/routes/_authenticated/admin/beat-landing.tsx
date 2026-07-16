@@ -229,12 +229,61 @@ function GlobalVideoCard() {
 
 function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean }) {
   const [editing, setEditing] = useState<BeatRow | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+  const bulkFn = useServerFn(adminBulkEnableLandingSlugs);
+  const qc = useQueryClient();
+
+  const allVisibleIds = beats.map((b) => b.id);
+  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selected.has(id));
+  const someSelected = selected.size > 0;
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleAllVisible = () => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) allVisibleIds.forEach((id) => next.delete(id));
+      else allVisibleIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+  const clear = () => setSelected(new Set());
+
+  const runBulk = async (enable: boolean) => {
+    if (selected.size === 0) return;
+    setBusy(true);
+    try {
+      const res = await bulkFn({ data: { ids: Array.from(selected), enable } });
+      if (res.ok) {
+        toast.success(
+          enable
+            ? `Enabled ${res.updated} landing page${res.updated === 1 ? "" : "s"}${res.slugsAssigned ? ` · ${res.slugsAssigned} new slug${res.slugsAssigned === 1 ? "" : "s"} generated` : ""}`
+            : `Disabled ${res.updated} landing page${res.updated === 1 ? "" : "s"}`,
+        );
+        clear();
+        qc.invalidateQueries({ queryKey: ["admin-landing-beats"] });
+      } else {
+        toast.error(res.error || "Bulk update failed");
+      }
+    } finally { setBusy(false); }
+  };
+
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Landing Page Beats</h2>
-        <p className="text-xs text-gray-500">Only beats with a slug appear here. Add slugs in /admin/beats first.</p>
+    <div className="rounded-2xl bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 className="text-xl font-bold">Landing Page Beats</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Select beats and enable their public landing pages in one click. Missing slugs are auto-generated from the title.</p>
+        </div>
+        <div className="text-xs text-gray-500">{beats.length} beats · {selected.size} selected</div>
       </div>
+
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : beats.length === 0 ? (
@@ -244,39 +293,59 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                <th className="py-2 pr-2 w-8">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    aria-label="Select all visible"
+                    onChange={toggleAllVisible}
+                    className="h-4 w-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
+                  />
+                </th>
                 <th className="py-2">Title</th>
-                <th className="py-2">Slug</th>
-                <th className="py-2">Price</th>
-                <th className="py-2">Discount</th>
+                <th className="py-2 hidden sm:table-cell">Slug</th>
+                <th className="py-2 hidden md:table-cell">Price</th>
+                <th className="py-2 hidden md:table-cell">Discount</th>
                 <th className="py-2">Live</th>
                 <th className="py-2"></th>
               </tr>
             </thead>
             <tbody>
               {beats.map((b) => (
-                <tr key={b.id} className="border-b border-gray-50 align-top">
+                <tr
+                  key={b.id}
+                  className={`border-b border-gray-50 align-top ${selected.has(b.id) ? "bg-blue-50/50" : ""}`}
+                >
+                  <td className="py-3 pr-2">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(b.id)}
+                      onChange={() => toggleOne(b.id)}
+                      aria-label={`Select ${b.title}`}
+                      className="h-4 w-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
+                    />
+                  </td>
                   <td className="py-3 font-medium">
                     <div>{b.title}</div>
                     {b.landing_slug && b.is_landing_published && (
                       <div className="mt-2 space-y-1">
                         <ShareLinkRow url={`https://mybeatcatalog.com/beats/${b.landing_slug}`} label="Canonical" />
-                        <ShareLinkRow url={`https://mybeatcatalog.com/beat-landing/${b.landing_slug}`} label="Friendly" />
                       </div>
                     )}
                   </td>
-                  <td className="py-3 font-mono text-xs">{b.landing_slug || "—"}</td>
-                  <td className="py-3">${(b.price_cents / 100).toFixed(2)}</td>
-                  <td className="py-3">${(b.discount_price_cents / 100).toFixed(2)}</td>
+                  <td className="py-3 font-mono text-xs hidden sm:table-cell">{b.landing_slug || "—"}</td>
+                  <td className="py-3 hidden md:table-cell">${(b.price_cents / 100).toFixed(2)}</td>
+                  <td className="py-3 hidden md:table-cell">${(b.discount_price_cents / 100).toFixed(2)}</td>
                   <td className="py-3">
                     <span className={`px-2 py-0.5 rounded text-xs ${b.is_landing_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                       {b.is_landing_published ? "Live" : "Draft"}
                     </span>
                   </td>
-                  <td className="py-3">
+                  <td className="py-3 whitespace-nowrap">
                     <button onClick={() => setEditing(b)} className="text-blue-600 hover:underline text-xs">Edit</button>
                     {b.landing_slug && b.is_landing_published && (
                       <>
-                        <a href={`/beats/${b.landing_slug}`} target="_blank" rel="noreferrer" className="ml-3 text-gray-500 hover:underline text-xs">View →</a>
+                        <a href={`/beats/${b.landing_slug}`} target="_blank" rel="noreferrer" className="ml-2 text-gray-500 hover:underline text-xs">View →</a>
                         <CopyLinkButton url={`https://mybeatcatalog.com/beats/${b.landing_slug}`} />
                       </>
                     )}
@@ -287,7 +356,39 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
           </table>
         </div>
       )}
+
       {editing && <EditBeatModal beat={editing} onClose={() => setEditing(null)} />}
+
+      {/* Sticky bulk action bar */}
+      {someSelected && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100vw-2rem)] max-w-2xl">
+          <div className="rounded-2xl bg-slate-900 text-white shadow-2xl border border-slate-700 p-3 flex flex-wrap items-center gap-2">
+            <div className="flex-1 min-w-0 text-sm">
+              <strong>{selected.size}</strong> selected
+            </div>
+            <button
+              onClick={() => runBulk(true)}
+              disabled={busy}
+              className="rounded-lg bg-emerald-500 hover:bg-emerald-400 px-3 py-2 text-xs font-semibold disabled:opacity-60"
+            >
+              {busy ? "Working…" : "Enable landing slugs"}
+            </button>
+            <button
+              onClick={() => runBulk(false)}
+              disabled={busy}
+              className="rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 px-3 py-2 text-xs font-semibold disabled:opacity-60"
+            >
+              Disable
+            </button>
+            <button
+              onClick={clear}
+              className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
