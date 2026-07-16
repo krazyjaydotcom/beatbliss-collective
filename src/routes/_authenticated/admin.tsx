@@ -204,7 +204,7 @@ function AdminLayout() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-[#030915]/95 backdrop-blur">
         <div className="grid grid-cols-5">
           {MOBILE_NAV.map((item) => {
-            const active = item.exact ? path === item.to : path.startsWith(item.to);
+            const active = "exact" in item && item.exact ? path === item.to : path.startsWith(item.to);
             const Icon = item.icon;
             return (
               <Link
