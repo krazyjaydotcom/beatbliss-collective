@@ -799,23 +799,6 @@ function StickyBottomPlayer({ src, title, cover, producer, bpm, priceLabel, onLi
             />
           </div>
 
-          {/* license CTA */}
-          {priceLabel && onLicense && (
-            <button
-              onClick={onLicense}
-              className="ml-1 sm:ml-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-3 sm:px-4 py-2 shadow-lg flex items-center gap-2 shrink-0"
-            >
-              <div className="hidden sm:block text-left leading-tight">
-                <div className="text-[9px] font-bold tracking-widest uppercase text-blue-100">License This Beat</div>
-                <div className="text-sm font-black">{priceLabel}</div>
-              </div>
-              <div className="sm:hidden text-left leading-tight">
-                <div className="text-[9px] font-bold tracking-widest uppercase text-blue-100">License</div>
-                <div className="text-sm font-black">{priceLabel}</div>
-              </div>
-              <ShoppingBag className="h-4 w-4" />
-            </button>
-          )}
         </div>
 
         {/* mobile progress bar */}
