@@ -107,6 +107,7 @@ function BeatLandingPage() {
   const [leaseOpen, setLeaseOpen] = useState(false);
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [licenseOpen, setLicenseOpen] = useState(false);
 
   const videoUrl = beat!.custom_video_url || global?.video_url || null;
   const price = (cents: number) => `$${(cents / 100).toFixed(2)}`.replace(/\.00$/, "");
