@@ -978,3 +978,14 @@ function MiniWaveform({ progress, onSeek }: { progress: number; onSeek: (p: numb
   );
 }
 
+
+function PayBadge({ label, bg, fg, italic = false }: { label: string; bg: string; fg: string; italic?: boolean }) {
+  return (
+    <span
+      style={{ background: bg, color: fg }}
+      className={`inline-flex items-center justify-center rounded-md px-2 py-1 text-[10px] sm:text-[11px] font-black tracking-tight shadow-sm ${italic ? "italic" : ""}`}
+    >
+      {label}
+    </span>
+  );
+}
