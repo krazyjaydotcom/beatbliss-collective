@@ -367,7 +367,7 @@ function WaveformBackdrop() {
   );
 }
 
-function MobileMenu({ onClose, onHelp }: { onClose: () => void; onHelp: () => void }) {
+function MobileMenu({ onClose, onHelp, onLicense }: { onClose: () => void; onHelp: () => void; onLicense: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/40 md:hidden animate-fade-in" onClick={onClose}>
       <div className="absolute top-0 right-0 h-full w-72 bg-white p-6 shadow-xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
@@ -377,7 +377,7 @@ function MobileMenu({ onClose, onHelp }: { onClose: () => void; onHelp: () => vo
         </div>
         <nav className="space-y-1 text-sm font-semibold">
           <Link to="/" className="block rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Catalog</Link>
-          <Link to="/license-example" className="block rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Licensing Info</Link>
+          <button onClick={onLicense} className="block w-full text-left rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Licensing Info</button>
           <button onClick={onHelp} className="block w-full text-left rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Contact</button>
         </nav>
       </div>
