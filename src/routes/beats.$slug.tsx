@@ -112,7 +112,7 @@ function BeatLandingPage() {
   const videoUrl = beat!.custom_video_url || global?.video_url || null;
   const price = (cents: number) => `$${(cents / 100).toFixed(2)}`.replace(/\.00$/, "");
   const showDiscount = timer.active;
-  const postedAt = formatPostedAt(beat!.custom_video_recorded_at);
+  
   const activePrice = showDiscount ? beat!.discount_price_cents : beat!.price_cents;
 
 
