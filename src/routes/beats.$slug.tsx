@@ -291,7 +291,7 @@ function BeatLandingPage() {
 
 
       {helpOpen && <NeedHelpModal global={global} onClose={() => setHelpOpen(false)} />}
-      {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} onHelp={() => { setMenuOpen(false); setHelpOpen(true); }} />}
+      {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} onHelp={() => { setMenuOpen(false); setHelpOpen(true); }} onLicense={() => { setMenuOpen(false); setLicenseOpen(true); }} />}
       {downloadOpen && <DownloadModal beatId={beat!.id} onClose={() => setDownloadOpen(false)} />}
       {leaseOpen && (
         <LeaseModal
