@@ -8,6 +8,7 @@ import {
   adminListBeats,
   adminUpdateBeatLanding,
   adminBulkUpdateLandingPrices,
+  adminBulkEnableLandingSlugs,
   adminGetGlobalVideo,
   adminUpdateGlobalVideo,
   adminListLeadCaptures,
