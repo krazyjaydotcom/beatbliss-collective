@@ -150,11 +150,6 @@ export async function queueBuyerPurchaseEmail(opts: {
   return { queued: true, messageId };
 }
 
-  const text = `Thank you for your purchase!\n\nBeat: ${opts.beatTitle}\nAmount: ${price}\nPurchase ID: ${opts.sessionId}\nDate: ${date}\n\n${opts.downloadUrl ? `Download: ${opts.downloadUrl}\n\n` : ""}UNLIMITED LICENSE — full monetization rights granted. Producer credits required (Writer: Jason A. Spencer 50%, Publishing: March 26th Publishing 50%, PRO: ASCAP). No resale of the underlying beat.\n\n— MYBEATCATALOG`;
-  await enqueue({ to: opts.to, subject: `Your beat is ready — ${opts.beatTitle}`, html, text, label: "beat_purchase_buyer", message_id: messageId });
-  return { queued: true, messageId };
-}
-
 // --- Paid purchase: admin sales notification ---
 export async function queueAdminSaleEmail(opts: {
   beatTitle: string;
