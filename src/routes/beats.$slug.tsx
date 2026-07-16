@@ -149,32 +149,9 @@ function BeatLandingPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 sm:px-6 pt-2 sm:pt-4 pb-[96px]">
-        {/* TITLE with waveform */}
-        <div className="relative text-center">
-          <WaveformBackdrop />
-          <h1 className="relative text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-none text-slate-900 uppercase">
-            {beat!.title}
-          </h1>
-          <div className="relative mt-2 text-[10px] sm:text-xs font-bold tracking-wide text-blue-600 uppercase flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-            {beat!.genre && <span>{beat!.genre}</span>}
-            {beat!.genre && beat!.bpm ? <span className="text-slate-400">•</span> : null}
-            {beat!.bpm && <span className="text-slate-900">{beat!.bpm} BPM</span>}
-            {(beat!.genre || beat!.bpm) && beat!.producer_name ? <span className="text-slate-400">•</span> : null}
-            {beat!.producer_name && <span>PROD. BY <span className="text-blue-600">{beat!.producer_name}</span></span>}
-            {postedAt && (
-              <>
-                <span className="text-slate-400">•</span>
-                <span className="inline-flex items-center gap-1 text-slate-500 normal-case font-medium tracking-normal">
-                  <CalendarClock className="h-3 w-3 text-blue-500" />{postedAt}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
         {/* DISCOUNT PILL */}
         {showDiscount && (
-          <div className="mt-2 sm:mt-3 rounded-full bg-blue-50 border border-blue-200 px-3 py-1.5 flex items-center justify-center gap-2 shadow-sm">
+          <div className="rounded-full bg-blue-50 border border-blue-200 px-3 py-1 flex items-center justify-center gap-2 shadow-sm">
             <Gift className="h-3.5 w-3.5 text-blue-600 shrink-0" />
             <span className="text-[11px] sm:text-xs"><span className="font-bold text-blue-700">50% Off</span> Unlimited License</span>
             <span className="text-blue-700 font-black tabular-nums text-xs sm:text-sm">
@@ -183,20 +160,15 @@ function BeatLandingPage() {
           </div>
         )}
 
-        {/* VIDEO with corner badges */}
-        <div className="relative mt-3 sm:mt-4 rounded-2xl overflow-hidden bg-slate-900 aspect-video sm:aspect-[21/9] max-h-[32vh] sm:max-h-none shadow-[0_20px_60px_-20px_rgba(37,99,235,0.35)] ring-1 ring-slate-200">
+        {/* VIDEO */}
+        <div className="relative mt-2 sm:mt-4 rounded-2xl overflow-hidden bg-slate-900 aspect-video sm:aspect-[21/9] max-h-[38vh] sm:max-h-none shadow-[0_20px_60px_-20px_rgba(37,99,235,0.35)] ring-1 ring-slate-200">
           {videoUrl ? (
             <video src={videoUrl} controls playsInline className="w-full h-full object-cover bg-black" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">No video yet.</div>
           )}
-          <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-blue-600 text-white px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shadow-lg">
-            <Zap className="h-3 w-3 fill-white" /> New Beat
-          </div>
-          <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-slate-900 text-white px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shadow-lg">
-            <InfinityIcon className="h-3 w-3" /> Unlimited Use
-          </div>
         </div>
+
 
         {/* LICENSE THIS BEAT — main CTA */}
         <div className="mt-3 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-[0_20px_60px_-20px_rgba(37,99,235,0.6)] overflow-hidden">
