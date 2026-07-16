@@ -174,24 +174,19 @@ export async function queueAdminSaleEmail(opts: {
 
   const price = `$${(opts.amountCents / 100).toFixed(2)}`;
   const beatUrl = opts.beatSlug ? `${SITE}/beats/${opts.beatSlug}` : SITE;
-  const safeTitle = escapeHtml(opts.beatTitle);
-  const safeBuyer = escapeHtml(opts.buyerEmail);
-  const safeSession = escapeHtml(opts.sessionId);
-  const safeBeatUrl = escapeHtml(beatUrl);
-
-  const html = `<!doctype html><html><body style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111;padding:24px">
-    <h2 style="margin:0 0 12px">💰 New beat lease sale — ${price}</h2>
-    <table style="border-collapse:collapse;font-size:14px">
-      <tr><td style="padding:4px 12px 4px 0;color:#71717a">Beat</td><td><strong>${safeTitle}</strong></td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#71717a">Buyer</td><td>${safeBuyer}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#71717a">Amount</td><td>${price}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#71717a">Stripe session</td><td style="font-family:monospace;font-size:12px">${safeSession}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#71717a">Beat URL</td><td><a href="${safeBeatUrl}">${safeBeatUrl}</a></td></tr>
-    </table>
-  </body></html>`;
+  const { resolveTemplate } = await import("@/lib/email-templates.server");
+  const resolved = await resolveTemplate("beat_purchase_admin", {
+    beatTitle: opts.beatTitle,
+    buyerEmail: opts.buyerEmail,
+    amount: price,
+    sessionId: opts.sessionId,
+    beatUrl,
+  });
+  const subject = resolved?.subject ?? `[Sale] ${opts.beatTitle} — ${price}`;
+  const html = resolved?.html ?? `<!doctype html><html><body><p>New sale: ${escapeHtml(opts.beatTitle)} ${price}</p></body></html>`;
   const text = `New beat lease sale — ${price}\nBeat: ${opts.beatTitle}\nBuyer: ${opts.buyerEmail}\nAmount: ${price}\nStripe session: ${opts.sessionId}\nBeat URL: ${beatUrl}`;
 
-  await enqueue({ to: adminEmail, subject: `[Sale] ${opts.beatTitle} — ${price}`, html, text, label: "beat_purchase_admin", message_id: messageId });
+  await enqueue({ to: adminEmail, subject, html, text, label: "beat_purchase_admin", message_id: messageId });
   return { queued: true, messageId };
 }
 
