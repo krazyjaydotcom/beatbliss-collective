@@ -133,7 +133,7 @@ function BeatLandingPage() {
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-700">
           <Link to="/" className="hover:text-blue-600 transition">Catalog</Link>
-          <Link to="/license-example" className="hover:text-blue-600 transition">Licensing Info</Link>
+          <button onClick={() => setLicenseOpen(true)} className="hover:text-blue-600 transition">Licensing Info</button>
           <button onClick={() => setHelpOpen(true)} className="hover:text-blue-600 transition">Contact</button>
         </nav>
         <div className="flex items-center gap-2">
