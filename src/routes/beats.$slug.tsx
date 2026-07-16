@@ -154,86 +154,78 @@ function BeatLandingPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 sm:pt-8 pb-[140px]">
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 pt-2 sm:pt-4 pb-[96px]">
         {/* TITLE with waveform */}
         <div className="relative text-center">
           <WaveformBackdrop />
-          <h1 className="relative text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-none text-slate-900 uppercase">
+          <h1 className="relative text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-none text-slate-900 uppercase">
             {beat!.title}
           </h1>
-          <div className="relative mt-3 text-[11px] sm:text-sm font-bold tracking-wide text-blue-600 uppercase">
+          <div className="relative mt-2 text-[10px] sm:text-xs font-bold tracking-wide text-blue-600 uppercase flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
             {beat!.genre && <span>{beat!.genre}</span>}
-            {beat!.genre && beat!.bpm ? <span className="text-slate-400 mx-2">•</span> : null}
+            {beat!.genre && beat!.bpm ? <span className="text-slate-400">•</span> : null}
             {beat!.bpm && <span className="text-slate-900">{beat!.bpm} BPM</span>}
-            {(beat!.genre || beat!.bpm) && beat!.producer_name ? <span className="text-slate-400 mx-2">•</span> : null}
+            {(beat!.genre || beat!.bpm) && beat!.producer_name ? <span className="text-slate-400">•</span> : null}
             {beat!.producer_name && <span>PROD. BY <span className="text-blue-600">{beat!.producer_name}</span></span>}
-          </div>
-          {pills.length > 0 && (
-            <div className="relative mt-4 flex flex-wrap items-center justify-center gap-2">
-              {pills.map((p) => (
-                <span key={p} className="inline-flex items-center rounded-full border border-blue-200 bg-white px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-700">
-                  {p}
+            {postedAt && (
+              <>
+                <span className="text-slate-400">•</span>
+                <span className="inline-flex items-center gap-1 text-slate-500 normal-case font-medium tracking-normal">
+                  <CalendarClock className="h-3 w-3 text-blue-500" />{postedAt}
                 </span>
-              ))}
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* DISCOUNT PILL */}
         {showDiscount && (
-          <div className="mt-4 rounded-full bg-blue-50 border border-blue-200 px-4 py-2 flex items-center justify-center gap-3 shadow-sm">
-            <Gift className="h-4 w-4 text-blue-600 shrink-0" />
-            <span className="text-xs sm:text-sm"><span className="font-bold text-blue-700">50% Off</span> Unlimited License</span>
-            <span className="text-blue-700 font-black tabular-nums text-sm">
+          <div className="mt-2 sm:mt-3 rounded-full bg-blue-50 border border-blue-200 px-3 py-1.5 flex items-center justify-center gap-2 shadow-sm">
+            <Gift className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+            <span className="text-[11px] sm:text-xs"><span className="font-bold text-blue-700">50% Off</span> Unlimited License</span>
+            <span className="text-blue-700 font-black tabular-nums text-xs sm:text-sm">
               {String(timer.min).padStart(2, "0")}:{String(timer.sec).padStart(2, "0")}
             </span>
           </div>
         )}
 
         {/* VIDEO with corner badges */}
-        <div className="relative mt-4 sm:mt-6 rounded-2xl overflow-hidden bg-slate-900 aspect-video shadow-[0_20px_60px_-20px_rgba(37,99,235,0.35)] ring-1 ring-slate-200">
+        <div className="relative mt-3 sm:mt-4 rounded-2xl overflow-hidden bg-slate-900 aspect-video sm:aspect-[21/9] max-h-[32vh] sm:max-h-none shadow-[0_20px_60px_-20px_rgba(37,99,235,0.35)] ring-1 ring-slate-200">
           {videoUrl ? (
             <video src={videoUrl} controls playsInline className="w-full h-full object-cover bg-black" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">No video yet.</div>
           )}
-          <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-blue-600 text-white px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-lg">
-            <Zap className="h-3.5 w-3.5 fill-white" /> New Beat
+          <div className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-blue-600 text-white px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shadow-lg">
+            <Zap className="h-3 w-3 fill-white" /> New Beat
           </div>
-          <div className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-slate-900 text-white px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-lg">
-            <InfinityIcon className="h-3.5 w-3.5" /> Unlimited Use
+          <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-slate-900 text-white px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shadow-lg">
+            <InfinityIcon className="h-3 w-3" /> Unlimited Use
           </div>
         </div>
 
-        {postedAt && (
-          <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] sm:text-xs text-slate-500">
-            <CalendarClock className="h-3.5 w-3.5 text-blue-500" />
-            <span>{postedAt}</span>
-          </div>
-        )}
-
         {/* LICENSE THIS BEAT — main CTA */}
-        <div className="mt-4 sm:mt-5 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-[0_20px_60px_-20px_rgba(37,99,235,0.6)] overflow-hidden">
-          <div className="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-5 sm:gap-6">
-            <div className="hidden sm:flex h-16 w-16 rounded-2xl bg-white/15 items-center justify-center shrink-0 ring-1 ring-white/20">
-              <FileText className="h-8 w-8 text-white" />
-            </div>
+        <div className="mt-3 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-[0_20px_60px_-20px_rgba(37,99,235,0.6)] overflow-hidden">
+          <div className="p-3 sm:p-4 grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-3 sm:gap-4">
             <div className="min-w-0 text-center md:text-left">
-              <div className="text-[11px] sm:text-xs font-bold tracking-widest uppercase text-blue-100">License This Beat</div>
-              <div className="mt-1 flex items-baseline gap-3 justify-center md:justify-start">
-                <span className="text-4xl sm:text-5xl font-black tracking-tight">{price(activePrice)}</span>
-                {showDiscount && <span className="text-blue-200/80 line-through text-lg font-semibold">{price(beat!.price_cents)}</span>}
+              <div className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-blue-100">License This Beat</div>
+              <div className="mt-0.5 flex items-baseline gap-2 justify-center md:justify-start">
+                <span className="text-3xl sm:text-4xl font-black tracking-tight">{price(activePrice)}</span>
+                {showDiscount && <span className="text-blue-200/80 line-through text-base font-semibold">{price(beat!.price_cents)}</span>}
               </div>
-              <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs sm:text-sm text-blue-50">
-                <Bullet>Unlimited MP3 License</Bullet>
-                <Bullet>Use for unlimited songs</Bullet>
-                <Bullet>Unlimited streams &amp; sales</Bullet>
-                <Bullet>Keep 100% of your royalties</Bullet>
-              </ul>
+              <p className="mt-1 text-[11px] sm:text-xs text-blue-50 leading-snug">
+                Unlimited MP3 · Unlimited songs · Streams &amp; sales · Keep 100% royalties
+              </p>
+              <button
+                onClick={() => setLicenseOpen(true)}
+                className="mt-1 text-[11px] sm:text-xs font-semibold text-blue-100 hover:text-white underline underline-offset-2"
+              >
+                View License Terms
+              </button>
             </div>
             <button
               onClick={() => setLeaseOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-black text-white px-6 py-3.5 font-bold text-sm tracking-wide uppercase shadow-lg transition w-full md:w-auto"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-black text-white px-5 py-3 font-bold text-sm tracking-wide uppercase shadow-lg transition w-full md:w-auto"
             >
               Purchase License <ArrowRight className="h-4 w-4" />
             </button>
@@ -241,55 +233,44 @@ function BeatLandingPage() {
         </div>
 
         {/* SECONDARY CTAS */}
-        <div className="mt-3 sm:mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-2 sm:gap-3">
           <button
             onClick={() => setDownloadOpen(true)}
-            className="group rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left hover:border-blue-300 hover:shadow-md transition flex items-center gap-4"
+            className="group rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left hover:border-blue-300 hover:shadow-md transition flex items-center gap-2 sm:gap-3"
           >
-            <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-              <Download className="h-5 w-5 text-blue-600" />
+            <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <Download className="h-4 w-4 text-blue-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-sm uppercase tracking-wide">Download Free<br className="hidden sm:inline" /> Tagged MP3</div>
-              <div className="text-xs text-slate-500 mt-0.5">For evaluation purposes only</div>
+              <div className="font-bold text-[11px] sm:text-xs uppercase tracking-wide leading-tight">Free Tagged MP3</div>
+              <div className="text-[10px] sm:text-[11px] text-slate-500">Evaluation only</div>
             </div>
-            <ArrowRight className="h-5 w-5 text-blue-600 group-hover:translate-x-0.5 transition" />
           </button>
 
           <button
             onClick={() => setInquiryOpen(true)}
-            className="group rounded-2xl border border-slate-200 bg-white px-5 py-4 text-left hover:border-blue-300 hover:shadow-md transition flex items-center gap-4"
+            className="group rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left hover:border-blue-300 hover:shadow-md transition flex items-center gap-2 sm:gap-3"
           >
-            <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-              <Users className="h-5 w-5 text-blue-600" />
+            <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <Users className="h-4 w-4 text-blue-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-sm uppercase tracking-wide">Exclusive Rights /<br className="hidden sm:inline" /> Custom Work</div>
-              <div className="text-xs text-slate-500 mt-0.5">Let's work directly</div>
+              <div className="font-bold text-[11px] sm:text-xs uppercase tracking-wide leading-tight">Exclusive / Custom</div>
+              <div className="text-[10px] sm:text-[11px] text-slate-500">Let's work directly</div>
             </div>
-            <ArrowRight className="h-5 w-5 text-blue-600 group-hover:translate-x-0.5 transition" />
           </button>
         </div>
 
-        {/* TRUST ROW */}
-        <div className="mt-5 grid grid-cols-4 gap-2 sm:gap-6 text-center">
-          <TrustCell icon={<Lock className="h-4 w-4" />} label="Secure Checkout" />
-          <TrustCell icon={<Zap className="h-4 w-4" />} label="Instant Files" />
-          <TrustCell icon={<InfinityIcon className="h-4 w-4" />} label="Unlimited Releases" />
-          <TrustCell icon={<DollarSign className="h-4 w-4" />} label="Keep 100% of Royalties" />
-        </div>
-
-        {/* PAYMENT METHODS (compact, above-the-fold-safe) */}
-        <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
-          {["VISA", "MC", "AMEX", "APPLE PAY", "GOOGLE PAY"].map((m) => (
-            <span key={m} className="text-[9px] sm:text-[10px] font-bold tracking-wider text-slate-500 border border-slate-200 rounded px-2 py-0.5 bg-white">{m}</span>
+        {/* TRUST + PAYMENT combined row */}
+        <div className="mt-2 sm:mt-3 flex items-center justify-center gap-x-3 gap-y-1 flex-wrap text-[10px] sm:text-[11px] text-slate-600">
+          <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3 text-blue-600" />Secure</span>
+          <span className="inline-flex items-center gap-1"><Zap className="h-3 w-3 text-blue-600" />Instant</span>
+          <span className="inline-flex items-center gap-1"><InfinityIcon className="h-3 w-3 text-blue-600" />Unlimited</span>
+          <span className="inline-flex items-center gap-1"><DollarSign className="h-3 w-3 text-blue-600" />100% Royalties</span>
+          <span className="text-slate-300">|</span>
+          {["VISA", "MC", "AMEX", "APPLE", "GPAY"].map((m) => (
+            <span key={m} className="text-[9px] font-bold tracking-wider text-slate-500 border border-slate-200 rounded px-1.5 py-0.5 bg-white">{m}</span>
           ))}
-        </div>
-
-        <div className="mt-3 text-center">
-          <Link to="/license-example" className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 underline underline-offset-4">
-            View full license terms
-          </Link>
         </div>
 
         {attachments && attachments.length > 0 && (
@@ -307,6 +288,7 @@ function BeatLandingPage() {
           </section>
         )}
       </main>
+
 
       {helpOpen && <NeedHelpModal global={global} onClose={() => setHelpOpen(false)} />}
       {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} onHelp={() => { setMenuOpen(false); setHelpOpen(true); }} />}
