@@ -317,7 +317,6 @@ function MobileMenu({ onClose, onHelp, onLicense }: { onClose: () => void; onHel
           <button onClick={onClose} className="text-slate-400"><X className="h-5 w-5" /></button>
         </div>
         <nav className="space-y-1 text-sm font-semibold">
-          <Link to="/" className="block rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Catalog</Link>
           <button onClick={onLicense} className="block w-full text-left rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Licensing Info</button>
           <button onClick={onHelp} className="block w-full text-left rounded-lg px-3 py-2.5 hover:bg-blue-50 hover:text-blue-700">Contact</button>
         </nav>
