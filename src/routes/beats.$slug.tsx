@@ -280,8 +280,6 @@ function BeatLandingPage() {
         cover={beat!.cover_url}
         producer={beat!.producer_name}
         bpm={beat!.bpm}
-        priceLabel={price(activePrice)}
-        onLicense={() => setLeaseOpen(true)}
       />
     </div>
   );
