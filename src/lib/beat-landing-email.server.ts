@@ -108,21 +108,14 @@ export async function queueFreeDownloadEmail(opts: {
   beatSlug?: string | null;
 }): Promise<{ messageId: string }> {
   const messageId = `bl_free_${opts.beatSlug || "unknown"}_${opts.to.toLowerCase()}_${Date.now()}`;
-  const subject = `Your free MP3: ${opts.beatTitle}`;
-  const safeName = escapeHtml(opts.firstName || "there");
-  const safeTitle = escapeHtml(opts.beatTitle);
-  const safeUrl = escapeHtml(opts.downloadUrl);
-  const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111">
-  <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#fff">
-    <h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MY<span style="color:#2563eb">BEAT</span>CATALOG</h1>
-    <p style="color:#71717a;margin:0 0 24px">Free MP3 Download</p>
-    <h2 style="font-size:20px;margin:0 0 10px">Hey ${safeName},</h2>
-    <p style="line-height:1.6;color:#3f3f46;margin:0 0 20px">Here's your free MP3 of <strong>${safeTitle}</strong>. Tap the button below to download.</p>
-    <p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:10px">Download MP3</a></p>
-    <p style="color:#71717a;font-size:12px;line-height:1.6;margin:0">Or paste this link into your browser:<br><a href="${safeUrl}" style="color:#2563eb;word-break:break-all">${safeUrl}</a></p>
-    <hr style="border:none;border-top:1px solid #e4e4e7;margin:28px 0" />
-    <p style="color:#71717a;font-size:12px;margin:0">This is a preview/free tier download. For unlimited monetization rights, purchase the Unlimited License at <a href="${SITE}" style="color:#2563eb">mybeatcatalog.com</a>.</p>
-  </div></body></html>`;
+  const { resolveTemplate } = await import("@/lib/email-templates.server");
+  const resolved = await resolveTemplate("beat_free_download", {
+    firstName: opts.firstName || "there",
+    beatTitle: opts.beatTitle,
+    downloadUrl: opts.downloadUrl,
+  });
+  const subject = resolved?.subject ?? `Your free MP3: ${opts.beatTitle}`;
+  const html = resolved?.html ?? `<!doctype html><html><body><p>Your free MP3 of ${escapeHtml(opts.beatTitle)}: <a href="${escapeHtml(opts.downloadUrl)}">${escapeHtml(opts.downloadUrl)}</a></p></body></html>`;
   const text = `Hey ${opts.firstName || "there"},\n\nYour free MP3 of "${opts.beatTitle}" is ready:\n${opts.downloadUrl}\n\n— MYBEATCATALOG`;
   return enqueue({ to: opts.to, subject, html, text, label: "beat_free_download", message_id: messageId });
 }
