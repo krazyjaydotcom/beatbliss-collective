@@ -1,7 +1,7 @@
-import { createFileRoute, notFound, Link } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { HeadphonesIcon, Play, Pause, Volume2, Download, Gift, Instagram, Mail, Phone, X, ShoppingBag, FileText, Sparkles, CalendarClock, Zap, Infinity as InfinityIcon, Lock, DollarSign, ArrowRight, SkipBack, SkipForward, Menu, Users } from "lucide-react";
+import { HeadphonesIcon, Play, Pause, Volume2, Download, Gift, Instagram, Mail, Phone, X, ShoppingBag, FileText, Sparkles, Zap, Infinity as InfinityIcon, Lock, DollarSign, ArrowRight, SkipBack, SkipForward, Menu, Users, ChevronLeft } from "lucide-react";
 
 import {
   getBeatLandingBySlug,
