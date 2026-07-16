@@ -763,3 +763,47 @@ export const adminSendTestEmail = createServerFn({ method: "POST" })
       return { ok: false, error: err instanceof Error ? err.message : "Failed" };
     }
   });
+
+export const adminBulkEnableLandingSlugs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { ids: string[]; enable: boolean }) =>
+    z.object({
+      ids: z.array(z.string().uuid()).min(1).max(500),
+      enable: z.boolean(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: boolean; updated: number; slugsAssigned: number; error?: string }> => {
+    await assertAdmin(context);
+    const sb = adminClient() as any;
+
+    const { data: rows } = await sb.from("beats")
+      .select("id,title,landing_slug")
+      .in("id", data.ids);
+    const beats = (rows ?? []) as Array<{ id: string; title: string; landing_slug: string | null }>;
+
+    const used = new Set<string>();
+    const { data: existingSlugs } = await sb.from("beats")
+      .select("landing_slug")
+      .not("landing_slug", "is", null);
+    for (const r of (existingSlugs ?? []) as Array<{ landing_slug: string | null }>) {
+      if (r.landing_slug) used.add(r.landing_slug);
+    }
+
+    let slugsAssigned = 0;
+    let updated = 0;
+    for (const b of beats) {
+      const patch: Record<string, unknown> = { is_landing_published: data.enable };
+      if (!b.landing_slug) {
+        const base = slugifyTitle(b.title || "beat") || "beat";
+        let candidate = base;
+        let n = 2;
+        while (used.has(candidate)) candidate = `${base}-${n++}`;
+        used.add(candidate);
+        patch.landing_slug = candidate;
+        slugsAssigned++;
+      }
+      const { error } = await sb.from("beats").update(patch).eq("id", b.id);
+      if (!error) updated++;
+    }
+    return { ok: true, updated, slugsAssigned };
+  });

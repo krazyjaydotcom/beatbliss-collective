@@ -227,16 +227,24 @@ function BeatLandingPage() {
           </button>
         </div>
 
-        {/* TRUST + PAYMENT combined row */}
+        {/* TRUST BADGES */}
         <div className="mt-2 sm:mt-3 flex items-center justify-center gap-x-3 gap-y-1 flex-wrap text-[10px] sm:text-[11px] text-slate-600">
           <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3 text-blue-600" />Secure</span>
           <span className="inline-flex items-center gap-1"><Zap className="h-3 w-3 text-blue-600" />Instant</span>
           <span className="inline-flex items-center gap-1"><InfinityIcon className="h-3 w-3 text-blue-600" />Unlimited</span>
           <span className="inline-flex items-center gap-1"><DollarSign className="h-3 w-3 text-blue-600" />100% Royalties</span>
-          <span className="text-slate-300">|</span>
-          {["VISA", "MC", "AMEX", "APPLE", "GPAY"].map((m) => (
-            <span key={m} className="text-[9px] font-bold tracking-wider text-slate-500 border border-slate-200 rounded px-1.5 py-0.5 bg-white">{m}</span>
-          ))}
+        </div>
+
+        {/* PAYMENT METHODS STRIP */}
+        <div className="mt-2 sm:mt-3">
+          <div className="flex items-center justify-center flex-wrap gap-1.5 sm:gap-2 rounded-xl border border-slate-200 bg-white/70 backdrop-blur px-2.5 py-1.5 sm:py-2">
+            <PayBadge label="PayPal" bg="#003087" fg="#ffffff" italic />
+            <PayBadge label="Stripe" bg="#635bff" fg="#ffffff" />
+            <PayBadge label="Afterpay" bg="#b2fce4" fg="#000000" />
+            <PayBadge label="Zip" bg="#1a0826" fg="#aaff00" />
+            <PayBadge label="Klarna" bg="#ffa8cd" fg="#17120f" />
+            <PayBadge label="Cash App" bg="#00d54b" fg="#000000" />
+          </div>
         </div>
 
         {attachments && attachments.length > 0 && (
@@ -970,3 +978,14 @@ function MiniWaveform({ progress, onSeek }: { progress: number; onSeek: (p: numb
   );
 }
 
+
+function PayBadge({ label, bg, fg, italic = false }: { label: string; bg: string; fg: string; italic?: boolean }) {
+  return (
+    <span
+      style={{ background: bg, color: fg }}
+      className={`inline-flex items-center justify-center rounded-md px-2 py-1 text-[10px] sm:text-[11px] font-black tracking-tight shadow-sm ${italic ? "italic" : ""}`}
+    >
+      {label}
+    </span>
+  );
+}
