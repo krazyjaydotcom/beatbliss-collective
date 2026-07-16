@@ -285,26 +285,6 @@ function BeatLandingPage() {
   );
 }
 
-function Bullet({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex items-start gap-2">
-      <svg className="h-4 w-4 mt-0.5 shrink-0 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/>
-      </svg>
-      <span>{children}</span>
-    </li>
-  );
-}
-
-function TrustCell({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="h-8 w-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">{icon}</div>
-      <div className="text-[10px] sm:text-xs font-semibold text-slate-700 leading-tight">{label}</div>
-    </div>
-  );
-}
-
 
 function MobileMenu({ onClose, onHelp, onLicense }: { onClose: () => void; onHelp: () => void; onLicense: () => void }) {
   return (
