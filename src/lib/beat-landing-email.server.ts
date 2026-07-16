@@ -132,41 +132,23 @@ export async function queueBuyerPurchaseEmail(opts: {
   const messageId = `bl_buyer_${opts.sessionId}`;
   if (await alreadyQueued(messageId)) return { queued: false, skipped: "already_queued" };
 
-  const safeTitle = escapeHtml(opts.beatTitle);
-  const safeUrl = opts.downloadUrl ? escapeHtml(opts.downloadUrl) : null;
   const price = `$${(opts.amountCents / 100).toFixed(2)}`;
   const date = new Date().toISOString().slice(0, 10);
-  const safeEmail = escapeHtml(opts.to);
-  const safeSession = escapeHtml(opts.sessionId);
-
-  const licenseHtml = `
-    <h3 style="font-size:16px;font-weight:800;margin:24px 0 8px">Unlimited License Agreement</h3>
-    <div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:16px;font-size:13px;line-height:1.6;color:#3f3f46">
-      <p style="margin:0 0 8px"><strong>Licensee:</strong> ${safeEmail}<br>
-      <strong>Beat:</strong> ${safeTitle}<br>
-      <strong>Amount paid:</strong> ${price}<br>
-      <strong>Purchase ID:</strong> ${safeSession}<br>
-      <strong>Date:</strong> ${date}</p>
-      <p style="margin:8px 0"><strong>Rights granted:</strong> Unlimited, worldwide, non-exclusive rights to record, release, distribute, perform, stream, and monetize music created with this beat across all platforms (streaming, social, sync, live, physical/digital sales). Licensee retains 100% of master recording royalties.</p>
-      <p style="margin:8px 0"><strong>Producer credits (required):</strong> Writer — Jason A. Spencer (IPI 516703075) 50%; Publishing — March 26th Publishing (IPI 1213085595) 50%; PRO — ASCAP.</p>
-      <p style="margin:8px 0 0"><strong>Restrictions:</strong> Licensee may not resell, redistribute, sublicense, or claim sole ownership of the underlying beat/composition. Ownership of the beat remains with KRAZYJAYDOTCOM.</p>
-    </div>`;
-
-  const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111">
-  <div style="max-width:600px;margin:0 auto;padding:32px 24px;background:#fff">
-    <h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MY<span style="color:#2563eb">BEAT</span>CATALOG</h1>
-    <p style="color:#71717a;margin:0 0 24px">Purchase Confirmation</p>
-    <h2 style="font-size:20px;margin:0 0 10px">Thank you for your purchase!</h2>
-    <p style="line-height:1.6;color:#3f3f46;margin:0 0 16px">You've successfully purchased a lease for <strong>${safeTitle}</strong> (${price}).</p>
-    ${safeUrl
-      ? `<p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:10px">Download Your Beat (MP3)</a></p>
-         <p style="color:#71717a;font-size:12px;margin:0 0 8px">Or paste this link into your browser:</p>
-         <p style="color:#a1a1aa;font-size:12px;word-break:break-all;margin:0 0 8px"><a href="${safeUrl}" style="color:#2563eb">${safeUrl}</a></p>`
-      : `<p style="color:#dc2626;margin:0 0 24px">Your download link will be sent shortly. If you don't receive it within 15 minutes, reply to this email.</p>`}
-    ${licenseHtml}
-    <hr style="border:none;border-top:1px solid #e4e4e7;margin:28px 0" />
-    <p style="color:#71717a;font-size:12px;margin:0">Questions? Reply to this email.<br>— KRAZYJAYDOTCOM</p>
-  </div></body></html>`;
+  const { resolveTemplate } = await import("@/lib/email-templates.server");
+  const resolved = await resolveTemplate("beat_purchase_buyer", {
+    beatTitle: opts.beatTitle,
+    downloadUrl: opts.downloadUrl || `${SITE}`,
+    amount: price,
+    sessionId: opts.sessionId,
+    buyerEmail: opts.to,
+    date,
+  });
+  const subject = resolved?.subject ?? `Your beat is ready — ${opts.beatTitle}`;
+  const html = resolved?.html ?? `<!doctype html><html><body><p>Thanks for purchasing ${escapeHtml(opts.beatTitle)} (${price}). ${opts.downloadUrl ? `<a href="${escapeHtml(opts.downloadUrl)}">Download</a>` : ""}</p></body></html>`;
+  const text = `Thank you for your purchase!\n\nBeat: ${opts.beatTitle}\nAmount: ${price}\nPurchase ID: ${opts.sessionId}\nDate: ${date}\n\n${opts.downloadUrl ? `Download: ${opts.downloadUrl}\n\n` : ""}— MYBEATCATALOG`;
+  await enqueue({ to: opts.to, subject, html, text, label: "beat_purchase_buyer", message_id: messageId });
+  return { queued: true, messageId };
+}
 
   const text = `Thank you for your purchase!\n\nBeat: ${opts.beatTitle}\nAmount: ${price}\nPurchase ID: ${opts.sessionId}\nDate: ${date}\n\n${opts.downloadUrl ? `Download: ${opts.downloadUrl}\n\n` : ""}UNLIMITED LICENSE — full monetization rights granted. Producer credits required (Writer: Jason A. Spencer 50%, Publishing: March 26th Publishing 50%, PRO: ASCAP). No resale of the underlying beat.\n\n— MYBEATCATALOG`;
   await enqueue({ to: opts.to, subject: `Your beat is ready — ${opts.beatTitle}`, html, text, label: "beat_purchase_buyer", message_id: messageId });
