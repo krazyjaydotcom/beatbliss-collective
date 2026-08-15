@@ -22,6 +22,7 @@ import {
   Image as ImageIcon,
   Mail,
   Menu,
+  Wallet,
 } from "lucide-react";
 
 
