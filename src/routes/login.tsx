@@ -33,7 +33,7 @@ function LoginPage() {
       return;
     }
     if (plan) {
-      navigate({ to: "/checkout", search: { plan } });
+      navigate({ to: "/checkout", search: { plan } as never });
     } else {
       navigate({ to: redirect ?? "/account" });
     }
