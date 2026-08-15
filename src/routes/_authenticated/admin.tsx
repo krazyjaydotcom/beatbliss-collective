@@ -68,7 +68,7 @@ const MOBILE_NAV = [
   { to: "/admin", label: "Home", icon: BarChart3, exact: true },
   { to: "/admin/beats", label: "Beats", icon: Music },
   { to: "/admin/beat-landing", label: "Landing", icon: Link2 },
-  { to: "/admin/email-templates", label: "Emails", icon: Mail },
+  { to: "/admin/sales", label: "Sales", icon: Wallet },
   { to: "/admin/members", label: "Members", icon: Users },
 ] as const;
 
