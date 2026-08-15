@@ -88,7 +88,7 @@ export function Hero({ onApplyForAccess }: HeroProps) {
               </Button>
             ) : (
               <Button size="xl" variant="hero" asChild>
-                <Link to="/apply">
+                <Link to="/signup">
                   Apply for Access
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>

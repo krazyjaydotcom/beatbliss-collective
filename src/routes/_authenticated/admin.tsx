@@ -22,6 +22,7 @@ import {
   Image as ImageIcon,
   Mail,
   Menu,
+  Wallet,
 } from "lucide-react";
 
 
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
+  { to: "/admin/sales", label: "Sales & Downloads", icon: Wallet },
   { to: "/admin/beats", label: "Beats", icon: Music },
   { to: "/admin/beat-landing", label: "Beat Landing Pages", icon: Link2 },
   { to: "/admin/email-templates", label: "Email Templates", icon: Mail },
@@ -66,7 +68,7 @@ const MOBILE_NAV = [
   { to: "/admin", label: "Home", icon: BarChart3, exact: true },
   { to: "/admin/beats", label: "Beats", icon: Music },
   { to: "/admin/beat-landing", label: "Landing", icon: Link2 },
-  { to: "/admin/email-templates", label: "Emails", icon: Mail },
+  { to: "/admin/sales", label: "Sales", icon: Wallet },
   { to: "/admin/members", label: "Members", icon: Users },
 ] as const;
 

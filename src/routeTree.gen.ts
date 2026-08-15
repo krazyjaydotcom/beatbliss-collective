@@ -52,6 +52,7 @@ import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminTagsRouteImport } from './routes/_authenticated/admin/tags'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
 import { Route as AuthenticatedAdminSeoPagesRouteImport } from './routes/_authenticated/admin/seo-pages'
+import { Route as AuthenticatedAdminSalesRouteImport } from './routes/_authenticated/admin/sales'
 import { Route as AuthenticatedAdminOnlineRouteImport } from './routes/_authenticated/admin/online'
 import { Route as AuthenticatedAdminOfferPageRouteImport } from './routes/_authenticated/admin/offer-page'
 import { Route as AuthenticatedAdminMembersRouteImport } from './routes/_authenticated/admin/members'
@@ -294,6 +295,11 @@ const AuthenticatedAdminSeoPagesRoute =
     path: '/seo-pages',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminSalesRoute = AuthenticatedAdminSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminOnlineRoute =
   AuthenticatedAdminOnlineRouteImport.update({
     id: '/online',
@@ -470,6 +476,7 @@ export interface FileRoutesByFullPath {
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
+  '/admin/sales': typeof AuthenticatedAdminSalesRoute
   '/admin/seo-pages': typeof AuthenticatedAdminSeoPagesRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
@@ -534,6 +541,7 @@ export interface FileRoutesByTo {
   '/admin/members': typeof AuthenticatedAdminMembersRoute
   '/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
   '/admin/online': typeof AuthenticatedAdminOnlineRoute
+  '/admin/sales': typeof AuthenticatedAdminSalesRoute
   '/admin/seo-pages': typeof AuthenticatedAdminSeoPagesRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
@@ -601,6 +609,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/members': typeof AuthenticatedAdminMembersRoute
   '/_authenticated/admin/offer-page': typeof AuthenticatedAdminOfferPageRoute
   '/_authenticated/admin/online': typeof AuthenticatedAdminOnlineRoute
+  '/_authenticated/admin/sales': typeof AuthenticatedAdminSalesRoute
   '/_authenticated/admin/seo-pages': typeof AuthenticatedAdminSeoPagesRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/tags': typeof AuthenticatedAdminTagsRoute
@@ -668,6 +677,7 @@ export interface FileRouteTypes {
     | '/admin/members'
     | '/admin/offer-page'
     | '/admin/online'
+    | '/admin/sales'
     | '/admin/seo-pages'
     | '/admin/support'
     | '/admin/tags'
@@ -732,6 +742,7 @@ export interface FileRouteTypes {
     | '/admin/members'
     | '/admin/offer-page'
     | '/admin/online'
+    | '/admin/sales'
     | '/admin/seo-pages'
     | '/admin/support'
     | '/admin/tags'
@@ -798,6 +809,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/members'
     | '/_authenticated/admin/offer-page'
     | '/_authenticated/admin/online'
+    | '/_authenticated/admin/sales'
     | '/_authenticated/admin/seo-pages'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/tags'
@@ -1145,6 +1157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSeoPagesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/sales': {
+      id: '/_authenticated/admin/sales'
+      path: '/sales'
+      fullPath: '/admin/sales'
+      preLoaderRoute: typeof AuthenticatedAdminSalesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/online': {
       id: '/_authenticated/admin/online'
       path: '/online'
@@ -1314,6 +1333,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminMembersRoute: typeof AuthenticatedAdminMembersRoute
   AuthenticatedAdminOfferPageRoute: typeof AuthenticatedAdminOfferPageRoute
   AuthenticatedAdminOnlineRoute: typeof AuthenticatedAdminOnlineRoute
+  AuthenticatedAdminSalesRoute: typeof AuthenticatedAdminSalesRoute
   AuthenticatedAdminSeoPagesRoute: typeof AuthenticatedAdminSeoPagesRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
   AuthenticatedAdminTagsRoute: typeof AuthenticatedAdminTagsRoute
@@ -1343,6 +1363,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminMembersRoute: AuthenticatedAdminMembersRoute,
   AuthenticatedAdminOfferPageRoute: AuthenticatedAdminOfferPageRoute,
   AuthenticatedAdminOnlineRoute: AuthenticatedAdminOnlineRoute,
+  AuthenticatedAdminSalesRoute: AuthenticatedAdminSalesRoute,
   AuthenticatedAdminSeoPagesRoute: AuthenticatedAdminSeoPagesRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
   AuthenticatedAdminTagsRoute: AuthenticatedAdminTagsRoute,

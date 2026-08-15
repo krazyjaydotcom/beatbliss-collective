@@ -202,6 +202,47 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                     }
                   }
 
+                  // Mark the recorded lease order as actually paid so the admin
+                  // Sales dashboard can separate real sales from abandoned checkouts.
+                  try {
+                    const { data: existingPaid } = await admin
+                      .from("lease_orders")
+                      .select("id")
+                      .eq("stripe_session_id", session.id)
+                      .limit(1);
+                    if (!existingPaid || existingPaid.length === 0) {
+                      let matched = false;
+                      if (buyerEmail && beatId) {
+                        const { data: pending } = await admin
+                          .from("lease_orders")
+                          .select("id")
+                          .eq("email", buyerEmail.toLowerCase())
+                          .eq("beat_id", beatId)
+                          .is("stripe_session_id", null)
+                          .order("created_at", { ascending: false })
+                          .limit(1);
+                        if (pending && pending.length > 0) {
+                          await admin
+                            .from("lease_orders")
+                            .update({ stripe_session_id: session.id, amount_cents: amount })
+                            .eq("id", (pending[0] as any).id);
+                          matched = true;
+                        }
+                      }
+                      if (!matched && buyerEmail) {
+                        await admin.from("lease_orders").insert({
+                          email: buyerEmail.toLowerCase(),
+                          beat_id: beatId ?? null,
+                          amount_cents: amount,
+                          used_first_time_discount: false,
+                          stripe_session_id: session.id,
+                        });
+                      }
+                    }
+                  } catch (err) {
+                    console.error("[webhook] lease_orders reconcile failed", err);
+                  }
+
                   const { queueBuyerPurchaseEmail, queueAdminSaleEmail } = await import(
                     "@/lib/beat-landing-email.server"
                   );
