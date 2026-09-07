@@ -45,6 +45,7 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as BSlugOfferRouteImport } from './routes/b.$slug.offer'
 import { Route as ApiPublicDownloadBeatRouteImport } from './routes/api/public/download-beat'
+import { Route as ApiPublicBeatLookupRouteImport } from './routes/api/public/beat-lookup'
 import { Route as ApiPublicBeatFreeDownloadRouteImport } from './routes/api/public/beat-free-download'
 import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat-claim'
 import { Route as ApiPublicBeatAttachmentRouteImport } from './routes/api/public/beat-attachment'
@@ -254,6 +255,11 @@ const BSlugOfferRoute = BSlugOfferRouteImport.update({
 const ApiPublicDownloadBeatRoute = ApiPublicDownloadBeatRouteImport.update({
   id: '/api/public/download-beat',
   path: '/api/public/download-beat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBeatLookupRoute = ApiPublicBeatLookupRouteImport.update({
+  id: '/api/public/beat-lookup',
+  path: '/api/public/beat-lookup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicBeatFreeDownloadRoute =
@@ -484,6 +490,7 @@ export interface FileRoutesByFullPath {
   '/api/public/beat-attachment': typeof ApiPublicBeatAttachmentRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/beat-free-download': typeof ApiPublicBeatFreeDownloadRoute
+  '/api/public/beat-lookup': typeof ApiPublicBeatLookupRoute
   '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -549,6 +556,7 @@ export interface FileRoutesByTo {
   '/api/public/beat-attachment': typeof ApiPublicBeatAttachmentRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/beat-free-download': typeof ApiPublicBeatFreeDownloadRoute
+  '/api/public/beat-lookup': typeof ApiPublicBeatLookupRoute
   '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -617,6 +625,7 @@ export interface FileRoutesById {
   '/api/public/beat-attachment': typeof ApiPublicBeatAttachmentRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
   '/api/public/beat-free-download': typeof ApiPublicBeatFreeDownloadRoute
+  '/api/public/beat-lookup': typeof ApiPublicBeatLookupRoute
   '/api/public/download-beat': typeof ApiPublicDownloadBeatRoute
   '/b/$slug/offer': typeof BSlugOfferRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -685,6 +694,7 @@ export interface FileRouteTypes {
     | '/api/public/beat-attachment'
     | '/api/public/beat-claim'
     | '/api/public/beat-free-download'
+    | '/api/public/beat-lookup'
     | '/api/public/download-beat'
     | '/b/$slug/offer'
     | '/admin/'
@@ -750,6 +760,7 @@ export interface FileRouteTypes {
     | '/api/public/beat-attachment'
     | '/api/public/beat-claim'
     | '/api/public/beat-free-download'
+    | '/api/public/beat-lookup'
     | '/api/public/download-beat'
     | '/b/$slug/offer'
     | '/admin'
@@ -817,6 +828,7 @@ export interface FileRouteTypes {
     | '/api/public/beat-attachment'
     | '/api/public/beat-claim'
     | '/api/public/beat-free-download'
+    | '/api/public/beat-lookup'
     | '/api/public/download-beat'
     | '/b/$slug/offer'
     | '/_authenticated/admin/'
@@ -849,6 +861,7 @@ export interface RootRouteChildren {
   ApiPublicBeatAttachmentRoute: typeof ApiPublicBeatAttachmentRoute
   ApiPublicBeatClaimRoute: typeof ApiPublicBeatClaimRoute
   ApiPublicBeatFreeDownloadRoute: typeof ApiPublicBeatFreeDownloadRoute
+  ApiPublicBeatLookupRoute: typeof ApiPublicBeatLookupRoute
   ApiPublicDownloadBeatRoute: typeof ApiPublicDownloadBeatRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -1106,6 +1119,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/download-beat'
       fullPath: '/api/public/download-beat'
       preLoaderRoute: typeof ApiPublicDownloadBeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/beat-lookup': {
+      id: '/api/public/beat-lookup'
+      path: '/api/public/beat-lookup'
+      fullPath: '/api/public/beat-lookup'
+      preLoaderRoute: typeof ApiPublicBeatLookupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/beat-free-download': {
@@ -1455,6 +1475,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBeatAttachmentRoute: ApiPublicBeatAttachmentRoute,
   ApiPublicBeatClaimRoute: ApiPublicBeatClaimRoute,
   ApiPublicBeatFreeDownloadRoute: ApiPublicBeatFreeDownloadRoute,
+  ApiPublicBeatLookupRoute: ApiPublicBeatLookupRoute,
   ApiPublicDownloadBeatRoute: ApiPublicDownloadBeatRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
