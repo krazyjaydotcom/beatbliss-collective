@@ -1,149 +1,186 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Music, Users, Wallet, Loader2 } from "lucide-react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { CheckSquare, Contact, DollarSign, Download, Loader2, Music, Wallet } from "lucide-react";
+
+import { adminListCustomerActivity } from "@/lib/admin-activity.functions";
+import { adminListCrm } from "@/lib/crm.functions";
+import { Button } from "@/components/ui/button";
+import { EmptyState, PageHeader, SectionTitle, StatTile, Surface } from "@/components/admin/ui";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
-  component: AdminDashboard,
+  component: AdminOverview,
 });
 
-function AdminDashboard() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-dashboard"],
-    queryFn: async () => {
-      const since = new Date(Date.now() - 30 * 86400000).toISOString();
-      const [profiles, downloads, agreements, transactions] = await Promise.all([
-        supabase.from("profiles").select("id, subscription_tier, subscription_status, created_at, credits_balance"),
-        supabase.from("downloads").select("id, beat_id, created_at, credits_used").gte("created_at", since),
-        supabase.from("agreements").select("id"),
-        supabase.from("transactions").select("type, credits_amount, created_at").gte("created_at", since),
-      ]);
-      return {
-        profiles: profiles.data ?? [],
-        downloads: downloads.data ?? [],
-        agreementsCount: agreements.data?.length ?? 0,
-        transactions: transactions.data ?? [],
-      };
-    },
-  });
+const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+const DAY = 86_400_000;
 
-  if (isLoading || !data) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+function AdminOverview() {
+  const fetchActivity = useServerFn(adminListCustomerActivity);
+  const fetchCrm = useServerFn(adminListCrm);
 
-  const totalUsers = data.profiles.length;
-  const activeSubs = data.profiles.filter((p: any) => p.subscription_status === "active").length;
-  const totalCreditsOut = data.profiles.reduce((s: number, p: any) => s + (p.credits_balance ?? 0), 0);
-  const downloads30 = data.downloads.length;
+  const activityQ = useQuery({ queryKey: ["admin-customer-activity"], queryFn: () => fetchActivity() });
+  const crmQ = useQuery({ queryKey: ["admin-crm"], queryFn: () => fetchCrm() });
 
-  // downloads per day (last 30)
-  const buckets: Record<string, number> = {};
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-    buckets[d] = 0;
-  }
-  data.downloads.forEach((d: any) => {
-    const k = d.created_at.slice(0, 10);
-    if (k in buckets) buckets[k]++;
-  });
-  const dailyData = Object.entries(buckets).map(([date, count]) => ({ date: date.slice(5), count }));
+  const stats = useMemo(() => {
+    const rows = activityQ.data?.rows ?? [];
+    const since = Date.now() - 30 * DAY;
+    const recent = rows.filter((r) => new Date(r.created_at).getTime() >= since);
+    const paid = recent.filter((r) => r.kind === "purchase" && r.paid);
+    const pending = recent.filter((r) => r.kind === "purchase" && !r.paid);
+    const downloads = recent.filter((r) => r.kind !== "purchase");
+    return {
+      revenue: paid.reduce((s, r) => s + (r.amount_cents ?? 0), 0),
+      paidCount: paid.length,
+      pendingCount: pending.length,
+      downloads: downloads.length,
+      newLeads: recent.filter((r) => r.kind === "free_download").length,
+      recent: rows.slice(0, 8),
+    };
+  }, [activityQ.data]);
 
-  // top beats
-  const counts: Record<string, number> = {};
-  data.downloads.forEach((d: any) => { counts[d.beat_id] = (counts[d.beat_id] ?? 0) + 1; });
-  const topBeatIds = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const followUps = useMemo(() => {
+    const tasks = (crmQ.data?.tasks ?? []).filter((t) => t.status === "open");
+    const today = new Date().toISOString().slice(0, 10);
+    return {
+      overdue: tasks.filter((t) => t.due_date && t.due_date < today),
+      today: tasks.filter((t) => t.due_date === today),
+      open: tasks.length,
+    };
+  }, [crmQ.data]);
+
+  const prospects = crmQ.data?.prospects ?? [];
+  const loading = activityQ.isLoading || crmQ.isLoading;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Last 30 days overview</p>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        breadcrumb="Workspace"
+        title="Overview"
+        description="Confirmed revenue, prospects and follow-ups from the last 30 days."
+        actions={
+          <>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/admin/customers">Add prospect</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link to="/admin/tasks">New task</Link>
+            </Button>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat icon={Users} label="Total users" value={totalUsers} />
-        <Stat icon={Wallet} label="Active subs" value={activeSubs} />
-        <Stat icon={Download} label="Downloads (30d)" value={downloads30} />
-        <Stat icon={Music} label="Credits in wallets" value={totalCreditsOut} />
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatTile icon={DollarSign} label="Paid revenue" value={money(stats.revenue)} hint="Last 30 days, confirmed only" />
+            <StatTile icon={Wallet} label="Paid sales" value={stats.paidCount} hint={`${stats.pendingCount} unpaid checkout${stats.pendingCount === 1 ? "" : "s"}`} />
+            <StatTile icon={Download} label="Downloads" value={stats.downloads} hint="Last 30 days" />
+            <StatTile icon={Contact} label="New prospects" value={stats.newLeads + prospects.length} hint={`${prospects.length} added by hand`} />
+          </div>
 
-      <Card title="Downloads per day">
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={dailyData}>
-            <defs>
-              <linearGradient id="fillBlue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.6} />
-                <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="date" stroke="#94a3b8" tick={{ fill: "#cbd5e1" }} fontSize={11} />
-            <YAxis stroke="#94a3b8" tick={{ fill: "#cbd5e1" }} fontSize={11} allowDecimals={false} />
-            <Tooltip
-              contentStyle={{ background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#f8fafc" }}
-              labelStyle={{ color: "#f8fafc" }}
-              itemStyle={{ color: "#f8fafc" }}
-            />
-            <Area type="monotone" dataKey="count" stroke="hsl(var(--accent))" fill="url(#fillBlue)" strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </Card>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Surface>
+              <SectionTitle
+                action={
+                  <Button asChild size="sm" variant="ghost">
+                    <Link to="/admin/tasks">All tasks</Link>
+                  </Button>
+                }
+              >
+                Follow-ups
+              </SectionTitle>
+              <div className="px-4 pb-4">
+                {followUps.open === 0 ? (
+                  <EmptyState
+                    title="No open tasks"
+                    description="Add a task to keep track of calls, quotes and custom work."
+                    action={
+                      <Button asChild size="sm" className="mt-2">
+                        <Link to="/admin/tasks">Create a task</Link>
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <ul className="space-y-2">
+                    {[...followUps.overdue, ...followUps.today].slice(0, 6).map((t) => (
+                      <li key={t.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2.5">
+                        <span className="min-w-0 truncate text-sm">{t.title}</span>
+                        <span className={t.due_date && t.due_date < new Date().toISOString().slice(0, 10) ? "shrink-0 text-xs font-semibold text-destructive" : "shrink-0 text-xs text-muted-foreground"}>
+                          {t.due_date}
+                        </span>
+                      </li>
+                    ))}
+                    {followUps.overdue.length + followUps.today.length === 0 && (
+                      <li className="rounded-lg border border-dashed border-border/70 px-3 py-4 text-center text-sm text-muted-foreground">
+                        Nothing due today. {followUps.open} task{followUps.open === 1 ? "" : "s"} scheduled later.
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            </Surface>
 
-      <Card title="Top beats (30d)">
-        <TopBeats topBeatIds={topBeatIds} />
-      </Card>
+            <Surface>
+              <SectionTitle
+                action={
+                  <Button asChild size="sm" variant="ghost">
+                    <Link to="/admin/sales">All activity</Link>
+                  </Button>
+                }
+              >
+                Recent activity
+              </SectionTitle>
+              <div className="px-4 pb-4">
+                {stats.recent.length === 0 ? (
+                  <EmptyState title="No activity yet" description="Sales and downloads will appear here as they happen." />
+                ) : (
+                  <ul className="divide-y divide-border/60">
+                    {stats.recent.map((r) => (
+                      <li key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2.5">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium">{r.beat_title}</div>
+                          <div className="truncate text-xs text-muted-foreground">{r.name ?? r.email ?? "Unknown customer"}</div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="text-sm tabular-nums">
+                            {r.kind === "purchase" ? (r.paid ? money(r.amount_cents ?? 0) : "Unpaid") : "Download"}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {new Date(r.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </Surface>
+          </div>
+
+          <Surface className="p-4">
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm" variant="outline">
+                <Link to="/admin/beats"><Music className="mr-1.5 h-4 w-4" /> Manage beats</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/admin/customers"><Contact className="mr-1.5 h-4 w-4" /> Customers &amp; leads</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/admin/tasks"><CheckSquare className="mr-1.5 h-4 w-4" /> Tasks</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/admin/sales"><Wallet className="mr-1.5 h-4 w-4" /> Sales &amp; downloads</Link>
+              </Button>
+            </div>
+          </Surface>
+        </>
+      )}
     </div>
-  );
-}
-
-function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5 text-slate-100">
-      <div className="flex items-center justify-between">
-        <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <div className="mt-3 text-3xl font-bold">{value}</div>
-    </div>
-  );
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5 text-slate-100">
-      <h3 className="font-semibold mb-4">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function TopBeats({ topBeatIds }: { topBeatIds: [string, number][] }) {
-  const ids = topBeatIds.map(([id]) => id);
-  const { data } = useQuery({
-    queryKey: ["top-beats", ids.join(",")],
-    enabled: ids.length > 0,
-    queryFn: async () => {
-      const { data } = await supabase.from("beats").select("id, title").in("id", ids);
-      return data ?? [];
-    },
-  });
-  if (ids.length === 0) return <p className="text-sm text-muted-foreground">No downloads yet.</p>;
-  const chartData = topBeatIds.map(([id, count]) => ({
-    name: data?.find((b: any) => b.id === id)?.title ?? id.slice(0, 6),
-    count,
-  }));
-  return (
-    <ResponsiveContainer width="100%" height={240}>
-      <BarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis type="number" stroke="#94a3b8" tick={{ fill: "#cbd5e1" }} fontSize={11} allowDecimals={false} />
-        <YAxis dataKey="name" type="category" stroke="#94a3b8" tick={{ fill: "#cbd5e1" }} fontSize={11} width={120} />
-        <Tooltip
-          contentStyle={{ background: "#0f172a", border: "1px solid #334155", borderRadius: 8, color: "#f8fafc" }}
-          labelStyle={{ color: "#f8fafc" }}
-          itemStyle={{ color: "#f8fafc" }}
-        />
-        <Bar dataKey="count" fill="hsl(var(--accent))" radius={[0, 6, 6, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
   );
 }
