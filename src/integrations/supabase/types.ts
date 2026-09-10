@@ -802,6 +802,98 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_prospects: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          name: string | null
+          next_follow_up_at: string | null
+          notes: string
+          phone: string | null
+          source: string
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          next_follow_up_at?: string | null
+          notes?: string
+          phone?: string | null
+          source?: string
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          next_follow_up_at?: string | null
+          notes?: string
+          phone?: string | null
+          source?: string
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_email: string | null
+          details: string
+          due_date: string | null
+          id: string
+          prospect_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          details?: string
+          due_date?: string | null
+          id?: string
+          prospect_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          details?: string
+          due_date?: string | null
+          id?: string
+          prospect_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tasks_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "crm_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       downloads: {
         Row: {
           beat_id: string

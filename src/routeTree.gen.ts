@@ -50,6 +50,7 @@ import { Route as ApiPublicBeatFreeDownloadRouteImport } from './routes/api/publ
 import { Route as ApiPublicBeatClaimRouteImport } from './routes/api/public/beat-claim'
 import { Route as ApiPublicBeatAttachmentRouteImport } from './routes/api/public/beat-attachment'
 import { Route as AuthenticatedAdminWhitelistRouteImport } from './routes/_authenticated/admin/whitelist'
+import { Route as AuthenticatedAdminTasksRouteImport } from './routes/_authenticated/admin/tasks'
 import { Route as AuthenticatedAdminTagsRouteImport } from './routes/_authenticated/admin/tags'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
 import { Route as AuthenticatedAdminSeoPagesRouteImport } from './routes/_authenticated/admin/seo-pages'
@@ -63,6 +64,7 @@ import { Route as AuthenticatedAdminHomeGalleryRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminGiftRouteImport } from './routes/_authenticated/admin/gift'
 import { Route as AuthenticatedAdminFunnelsRouteImport } from './routes/_authenticated/admin/funnels'
 import { Route as AuthenticatedAdminEmailTemplatesRouteImport } from './routes/_authenticated/admin/email-templates'
+import { Route as AuthenticatedAdminCustomersRouteImport } from './routes/_authenticated/admin/customers'
 import { Route as AuthenticatedAdminClassroomRouteImport } from './routes/_authenticated/admin/classroom'
 import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authenticated/admin/beats'
 import { Route as AuthenticatedAdminBeatRequestsRouteImport } from './routes/_authenticated/admin/beat-requests'
@@ -284,6 +286,11 @@ const AuthenticatedAdminWhitelistRoute =
     path: '/whitelist',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminTasksRoute = AuthenticatedAdminTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminTagsRoute = AuthenticatedAdminTagsRouteImport.update({
   id: '/tags',
   path: '/tags',
@@ -357,6 +364,12 @@ const AuthenticatedAdminEmailTemplatesRoute =
   AuthenticatedAdminEmailTemplatesRouteImport.update({
     id: '/email-templates',
     path: '/email-templates',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCustomersRoute =
+  AuthenticatedAdminCustomersRouteImport.update({
+    id: '/customers',
+    path: '/customers',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminClassroomRoute =
@@ -473,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
+  '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/email-templates': typeof AuthenticatedAdminEmailTemplatesRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
@@ -486,6 +500,7 @@ export interface FileRoutesByFullPath {
   '/admin/seo-pages': typeof AuthenticatedAdminSeoPagesRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
+  '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-attachment': typeof ApiPublicBeatAttachmentRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
@@ -539,6 +554,7 @@ export interface FileRoutesByTo {
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
+  '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/email-templates': typeof AuthenticatedAdminEmailTemplatesRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/admin/gift': typeof AuthenticatedAdminGiftRoute
@@ -552,6 +568,7 @@ export interface FileRoutesByTo {
   '/admin/seo-pages': typeof AuthenticatedAdminSeoPagesRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
+  '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-attachment': typeof ApiPublicBeatAttachmentRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
@@ -608,6 +625,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/_authenticated/admin/classroom': typeof AuthenticatedAdminClassroomRoute
+  '/_authenticated/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/_authenticated/admin/email-templates': typeof AuthenticatedAdminEmailTemplatesRoute
   '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
   '/_authenticated/admin/gift': typeof AuthenticatedAdminGiftRoute
@@ -621,6 +639,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/seo-pages': typeof AuthenticatedAdminSeoPagesRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/tags': typeof AuthenticatedAdminTagsRoute
+  '/_authenticated/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/_authenticated/admin/whitelist': typeof AuthenticatedAdminWhitelistRoute
   '/api/public/beat-attachment': typeof ApiPublicBeatAttachmentRoute
   '/api/public/beat-claim': typeof ApiPublicBeatClaimRoute
@@ -677,6 +696,7 @@ export interface FileRouteTypes {
     | '/admin/beat-requests'
     | '/admin/beats'
     | '/admin/classroom'
+    | '/admin/customers'
     | '/admin/email-templates'
     | '/admin/funnels'
     | '/admin/gift'
@@ -690,6 +710,7 @@ export interface FileRouteTypes {
     | '/admin/seo-pages'
     | '/admin/support'
     | '/admin/tags'
+    | '/admin/tasks'
     | '/admin/whitelist'
     | '/api/public/beat-attachment'
     | '/api/public/beat-claim'
@@ -743,6 +764,7 @@ export interface FileRouteTypes {
     | '/admin/beat-requests'
     | '/admin/beats'
     | '/admin/classroom'
+    | '/admin/customers'
     | '/admin/email-templates'
     | '/admin/funnels'
     | '/admin/gift'
@@ -756,6 +778,7 @@ export interface FileRouteTypes {
     | '/admin/seo-pages'
     | '/admin/support'
     | '/admin/tags'
+    | '/admin/tasks'
     | '/admin/whitelist'
     | '/api/public/beat-attachment'
     | '/api/public/beat-claim'
@@ -811,6 +834,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/beat-requests'
     | '/_authenticated/admin/beats'
     | '/_authenticated/admin/classroom'
+    | '/_authenticated/admin/customers'
     | '/_authenticated/admin/email-templates'
     | '/_authenticated/admin/funnels'
     | '/_authenticated/admin/gift'
@@ -824,6 +848,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/seo-pages'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/tags'
+    | '/_authenticated/admin/tasks'
     | '/_authenticated/admin/whitelist'
     | '/api/public/beat-attachment'
     | '/api/public/beat-claim'
@@ -1156,6 +1181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminWhitelistRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/tasks': {
+      id: '/_authenticated/admin/tasks'
+      path: '/tasks'
+      fullPath: '/admin/tasks'
+      preLoaderRoute: typeof AuthenticatedAdminTasksRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/tags': {
       id: '/_authenticated/admin/tags'
       path: '/tags'
@@ -1245,6 +1277,13 @@ declare module '@tanstack/react-router' {
       path: '/email-templates'
       fullPath: '/admin/email-templates'
       preLoaderRoute: typeof AuthenticatedAdminEmailTemplatesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/customers': {
+      id: '/_authenticated/admin/customers'
+      path: '/customers'
+      fullPath: '/admin/customers'
+      preLoaderRoute: typeof AuthenticatedAdminCustomersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/classroom': {
@@ -1344,6 +1383,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBeatRequestsRoute: typeof AuthenticatedAdminBeatRequestsRoute
   AuthenticatedAdminBeatsRoute: typeof AuthenticatedAdminBeatsRoute
   AuthenticatedAdminClassroomRoute: typeof AuthenticatedAdminClassroomRoute
+  AuthenticatedAdminCustomersRoute: typeof AuthenticatedAdminCustomersRoute
   AuthenticatedAdminEmailTemplatesRoute: typeof AuthenticatedAdminEmailTemplatesRoute
   AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRoute
   AuthenticatedAdminGiftRoute: typeof AuthenticatedAdminGiftRoute
@@ -1357,6 +1397,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminSeoPagesRoute: typeof AuthenticatedAdminSeoPagesRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
   AuthenticatedAdminTagsRoute: typeof AuthenticatedAdminTagsRoute
+  AuthenticatedAdminTasksRoute: typeof AuthenticatedAdminTasksRoute
   AuthenticatedAdminWhitelistRoute: typeof AuthenticatedAdminWhitelistRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminFunnelsIdRoute: typeof AuthenticatedAdminFunnelsIdRoute
@@ -1374,6 +1415,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBeatRequestsRoute: AuthenticatedAdminBeatRequestsRoute,
   AuthenticatedAdminBeatsRoute: AuthenticatedAdminBeatsRoute,
   AuthenticatedAdminClassroomRoute: AuthenticatedAdminClassroomRoute,
+  AuthenticatedAdminCustomersRoute: AuthenticatedAdminCustomersRoute,
   AuthenticatedAdminEmailTemplatesRoute: AuthenticatedAdminEmailTemplatesRoute,
   AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRoute,
   AuthenticatedAdminGiftRoute: AuthenticatedAdminGiftRoute,
@@ -1387,6 +1429,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminSeoPagesRoute: AuthenticatedAdminSeoPagesRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
   AuthenticatedAdminTagsRoute: AuthenticatedAdminTagsRoute,
+  AuthenticatedAdminTasksRoute: AuthenticatedAdminTasksRoute,
   AuthenticatedAdminWhitelistRoute: AuthenticatedAdminWhitelistRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminFunnelsIdRoute: AuthenticatedAdminFunnelsIdRoute,
