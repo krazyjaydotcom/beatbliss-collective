@@ -201,21 +201,8 @@ function BeatLandingPage() {
         </div>
 
         {/* SECONDARY CTAS */}
-        <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-2 sm:gap-3">
-          <button
-            onClick={() => setDownloadOpen(true)}
-            className="group rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left hover:border-blue-300 hover:shadow-md transition flex items-center gap-2 sm:gap-3"
-          >
-            <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-              <Download className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-bold text-[11px] sm:text-xs uppercase tracking-wide leading-tight">
-                Free Tagged MP3
-              </div>
-              <div className="text-[10px] sm:text-[11px] text-slate-500">Evaluation only</div>
-            </div>
-          </button>
+        <div className="mt-2 sm:mt-3 grid grid-cols-1 gap-2 sm:gap-3">
+
 
           <button
             onClick={() => setInquiryOpen(true)}
