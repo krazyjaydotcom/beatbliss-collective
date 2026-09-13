@@ -7,7 +7,6 @@ import {
   Pause,
   Volume2,
   Download,
-  Gift,
   Instagram,
   Mail,
   Phone,
@@ -29,8 +28,6 @@ import {
 
 import {
   getBeatLandingBySlug,
-  captureBeatLead,
-  checkDiscountEligibility,
   createBeatLeaseCheckoutSession,
   listInquiryQuestions,
   submitBeatInquiry,
