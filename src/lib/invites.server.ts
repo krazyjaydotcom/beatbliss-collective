@@ -128,24 +128,31 @@ ${opts.url}
 
 This link works once and expires in 7 days.`;
 
+  const messageId = randomUUID();
   try {
-    const unsubscribeToken = await getUnsubscribeToken(opts.to);
-    await supabaseAdmin.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
+    const apiKey = process.env["LOVABLE_API_KEY"];
+    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+    await sendLovableEmail(
+      {
         to: opts.to,
         from: "MYBEATCATALOG <noreply@notify.krazyjay.com>",
         sender_domain: "notify.krazyjay.com",
         subject,
         html,
         text,
+        purpose: "transactional",
         label: "invite_claim",
-        message_id: randomUUID(),
-        queued_at: new Date().toISOString(),
-        unsubscribe_token: unsubscribeToken,
+        idempotency_key: messageId,
       },
-    });
+      { apiKey, sendUrl: process.env["LOVABLE_SEND_URL"] }
+    );
+    await logInviteEmail(messageId, opts.to, "sent");
   } catch (err) {
-    console.error("[invites] failed to enqueue invite email", err);
+    if (err instanceof EmailAPIError && err.code === "recipient_suppressed") {
+      await logInviteEmail(messageId, opts.to, "suppressed", "Recipient is suppressed");
+      return;
+    }
+    console.error("[invites] failed to send invite email", err);
+    await logInviteEmail(messageId, opts.to, "failed", err instanceof Error ? err.message : "Failed to send email");
   }
 }
