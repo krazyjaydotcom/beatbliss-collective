@@ -88,8 +88,6 @@ export const Route = createFileRoute("/beats/$slug")({
 });
 
 function formatPostedAt(iso: string | null | undefined): string | null {
-
-function formatPostedAt(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const then = new Date(iso).getTime();
   if (!isFinite(then)) return null;
