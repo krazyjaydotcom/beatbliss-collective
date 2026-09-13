@@ -286,15 +286,12 @@ function BeatLandingPage() {
           }}
         />
       )}
-      {downloadOpen && <DownloadModal beatId={beat!.id} onClose={() => setDownloadOpen(false)} />}
       {leaseOpen && (
         <LeaseModal
           beatId={beat!.id}
           slug={params.slug}
           fullPriceCents={beat!.price_cents}
-          discountPriceCents={beat!.discount_price_cents}
           checkoutUrl={beat!.checkout_url}
-          showDiscount={showDiscount}
           onClose={() => setLeaseOpen(false)}
         />
       )}
