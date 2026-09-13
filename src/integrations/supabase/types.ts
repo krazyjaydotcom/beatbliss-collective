@@ -584,6 +584,7 @@ export type Database = {
           is_landing_published: boolean
           is_member_only: boolean
           landing_slug: string | null
+          landing_visibility: string
           mood: string
           music_key: string
           price_cents: number
@@ -616,6 +617,7 @@ export type Database = {
           is_landing_published?: boolean
           is_member_only?: boolean
           landing_slug?: string | null
+          landing_visibility?: string
           mood: string
           music_key: string
           price_cents?: number
@@ -648,6 +650,7 @@ export type Database = {
           is_landing_published?: boolean
           is_member_only?: boolean
           landing_slug?: string | null
+          landing_visibility?: string
           mood?: string
           music_key?: string
           price_cents?: number
