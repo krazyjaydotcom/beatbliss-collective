@@ -523,113 +523,19 @@ function NeedHelpModal({
   );
 }
 
-function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => void }) {
-  const capture = useServerFn(captureBeatLead);
-  const [firstName, setFirstName] = useState("");
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const downloadHref = `/api/public/beat-free-download?beatId=${encodeURIComponent(beatId)}`;
-
-  const triggerDownload = () => {
-    const a = document.createElement("a");
-    a.href = downloadHref;
-    a.rel = "noopener";
-    a.setAttribute("download", "");
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const r = await capture({ data: { beatId, firstName, email } });
-      if (!r.downloadUrl) {
-        setError("MP3 file not available yet.");
-        return;
-      }
-      setDone(true);
-      triggerDownload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <ModalShell onClose={onClose}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-black">Free MP3 Download</h3>
-        <button onClick={onClose} className="text-gray-400">
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-      {done ? (
-        <div className="mt-4 space-y-3">
-          <p className="text-sm text-gray-600">
-            Your download has started — check your Downloads folder. We've also emailed you the link.
-          </p>
-          <button
-            onClick={triggerDownload}
-            className="block w-full rounded-xl bg-blue-600 text-white text-center px-5 py-3 font-semibold hover:bg-blue-700"
-          >
-            Didn't start? Download again
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={submit} className="mt-4 space-y-3">
-          <input
-            required
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            placeholder="First name"
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-400"
-          />
-          <input
-            required
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-400"
-          />
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <button
-            disabled={loading}
-            className="w-full rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Preparing..." : "Get Free Download"}
-          </button>
-        </form>
-      )}
-    </ModalShell>
-  );
-}
-
 function LeaseModal({
   beatId,
   slug,
   fullPriceCents,
-  discountPriceCents,
   checkoutUrl,
-  showDiscount,
   onClose,
 }: {
   beatId: string;
   slug: string;
   fullPriceCents: number;
-  discountPriceCents: number;
   checkoutUrl: string | null;
-  showDiscount: boolean;
   onClose: () => void;
 }) {
-  const check = useServerFn(checkDiscountEligibility);
   const createSession = useServerFn(createBeatLeaseCheckoutSession);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -640,11 +546,6 @@ function LeaseModal({
     setLoading(true);
     setError(null);
     try {
-      let useDiscount = showDiscount;
-      if (useDiscount) {
-        const elig = await check({ data: { email } });
-        useDiscount = elig.eligible;
-      }
       const origin = window.location.origin;
       const successUrl = `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${origin}/beats/${slug}`;
@@ -657,7 +558,7 @@ function LeaseModal({
       }
 
       const r = await createSession({
-        data: { beatId, email, useDiscount, environment, successUrl, cancelUrl },
+        data: { beatId, email, useDiscount: false, environment, successUrl, cancelUrl },
       });
       if (r.error) throw new Error(r.error);
       if (r.url) {
@@ -687,16 +588,7 @@ function LeaseModal({
         </button>
       </div>
       <div className="mt-3 text-sm text-gray-500">
-        {showDiscount ? (
-          <>
-            First-time price: <span className="font-bold text-blue-700">{price(discountPriceCents)}</span> (regular{" "}
-            {price(fullPriceCents)})
-          </>
-        ) : (
-          <>
-            Price: <span className="font-bold">{price(fullPriceCents)}</span>
-          </>
-        )}
+        Price: <span className="font-bold">{price(fullPriceCents)}</span>
       </div>
       <form onSubmit={submit} className="mt-4 space-y-3">
         <input
