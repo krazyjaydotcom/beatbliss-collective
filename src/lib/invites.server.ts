@@ -1,5 +1,6 @@
 // Server-only helpers used by webhook + admin to issue invites.
 import { randomBytes, randomUUID } from "crypto";
+import { EmailAPIError, sendLovableEmail } from "@lovable.dev/email-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export function generateInviteToken(): string {
