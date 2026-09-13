@@ -105,10 +105,8 @@ function formatPostedAt(iso: string | null | undefined): string | null {
 function BeatLandingPage() {
   const { beat, global, attachments } = Route.useLoaderData();
   const params = Route.useParams();
-  const timer = useOfferTimer(params.slug);
 
   const [helpOpen, setHelpOpen] = useState(false);
-  const [downloadOpen, setDownloadOpen] = useState(false);
   const [leaseOpen, setLeaseOpen] = useState(false);
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -116,9 +114,8 @@ function BeatLandingPage() {
 
   const videoUrl = beat!.custom_video_url || global?.video_url || null;
   const price = (cents: number) => `$${(cents / 100).toFixed(2)}`.replace(/\.00$/, "");
-  const showDiscount = timer.active;
 
-  const activePrice = showDiscount ? beat!.discount_price_cents : beat!.price_cents;
+  const activePrice = beat!.price_cents;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900">
