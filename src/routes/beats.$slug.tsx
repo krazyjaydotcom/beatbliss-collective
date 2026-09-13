@@ -62,7 +62,11 @@ export const Route = createFileRoute("/beats/$slug")({
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
         { property: "og:type", content: "product" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: desc },
         ...(b?.cover_url ? [{ property: "og:image", content: b.cover_url }] : []),
+        ...(b?.cover_url ? [{ name: "twitter:image", content: b.cover_url }] : []),
       ],
       links: [{ rel: "canonical", href: url }],
     };

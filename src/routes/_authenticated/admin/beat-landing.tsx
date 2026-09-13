@@ -33,6 +33,8 @@ type BeatRow = {
   title: string;
   landing_slug: string | null;
   is_landing_published: boolean;
+  is_active: boolean;
+  landing_visibility: "public" | "unlisted" | "private";
   price_cents: number;
   discount_price_cents: number;
   cover_url: string | null;
@@ -313,16 +315,14 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
   };
   const clear = () => setSelected(new Set());
 
-  const runBulk = async (enable: boolean) => {
+  const runBulk = async (visibility: "public" | "unlisted" | "private") => {
     if (selected.size === 0) return;
     setBusy(true);
     try {
-      const res = await bulkFn({ data: { ids: Array.from(selected), enable } });
+      const res = await bulkFn({ data: { ids: Array.from(selected), visibility } });
       if (res.ok) {
         toast.success(
-          enable
-            ? `Enabled ${res.updated} landing page${res.updated === 1 ? "" : "s"}${res.slugsAssigned ? ` · ${res.slugsAssigned} new slug${res.slugsAssigned === 1 ? "" : "s"} generated` : ""}`
-            : `Disabled ${res.updated} landing page${res.updated === 1 ? "" : "s"}`,
+          `Set ${res.updated} landing page${res.updated === 1 ? "" : "s"} to ${visibility}${res.slugsAssigned ? ` · ${res.slugsAssigned} new link${res.slugsAssigned === 1 ? "" : "s"} generated` : ""}`,
         );
         clear();
         qc.invalidateQueries({ queryKey: ["admin-landing-beats"] });
@@ -340,8 +340,8 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
         <div>
           <h2 className="text-xl font-bold">Landing Page Beats</h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            Select beats and enable their public landing pages in one click. Missing slugs are auto-generated from the
-            title.
+            Public pages can be discovered, Unlisted pages open only by direct link, and Private pages stay closed.
+            Missing links are generated automatically.
           </p>
         </div>
         <div className="text-xs text-gray-500">
@@ -371,7 +371,7 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
                 <th className="py-2 hidden sm:table-cell">Slug</th>
                 <th className="py-2 hidden md:table-cell">Price</th>
                 <th className="py-2 hidden md:table-cell">Discount</th>
-                <th className="py-2">Live</th>
+                <th className="py-2">Visibility</th>
                 <th className="py-2"></th>
               </tr>
             </thead>
@@ -392,7 +392,7 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
                   </td>
                   <td className="py-3 font-medium">
                     <div>{b.title}</div>
-                    {b.landing_slug && b.is_landing_published && (
+                    {b.landing_slug && b.landing_visibility !== "private" && (
                       <div className="mt-2 space-y-1">
                         <ShareLinkRow url={`https://mybeatcatalog.com/beats/${b.landing_slug}`} label="Canonical" />
                       </div>
@@ -403,16 +403,17 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
                   <td className="py-3 hidden md:table-cell">${(b.discount_price_cents / 100).toFixed(2)}</td>
                   <td className="py-3">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs ${b.is_landing_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                      className={`px-2 py-0.5 rounded text-xs ${b.landing_visibility === "public" ? "bg-green-100 text-green-700" : b.landing_visibility === "unlisted" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}
                     >
-                      {b.is_landing_published ? "Live" : "Draft"}
+                      {b.landing_visibility === "public" ? "Public" : b.landing_visibility === "unlisted" ? "Unlisted" : "Private"}
                     </span>
+                    {!b.is_active && <div className="mt-1 text-[10px] font-semibold text-amber-600">Catalog inactive</div>}
                   </td>
                   <td className="py-3 whitespace-nowrap">
                     <button onClick={() => setEditing(b)} className="text-blue-600 hover:underline text-xs">
                       Edit
                     </button>
-                    {b.landing_slug && b.is_landing_published && (
+                    {b.landing_slug && b.landing_visibility !== "private" && b.is_active && (
                       <>
                         <a
                           href={`/beats/${b.landing_slug}`}
@@ -443,18 +444,25 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
               <strong>{selected.size}</strong> selected
             </div>
             <button
-              onClick={() => runBulk(true)}
+              onClick={() => runBulk("public")}
               disabled={busy}
               className="rounded-lg bg-emerald-500 hover:bg-emerald-400 px-3 py-2 text-xs font-semibold disabled:opacity-60"
             >
-              {busy ? "Working…" : "Enable landing slugs"}
+              {busy ? "Working…" : "Make Public"}
             </button>
             <button
-              onClick={() => runBulk(false)}
+              onClick={() => runBulk("unlisted")}
+              disabled={busy}
+              className="rounded-lg bg-blue-500 hover:bg-blue-400 px-3 py-2 text-xs font-semibold disabled:opacity-60"
+            >
+              Make Unlisted
+            </button>
+            <button
+              onClick={() => runBulk("private")}
               disabled={busy}
               className="rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 px-3 py-2 text-xs font-semibold disabled:opacity-60"
             >
-              Disable
+              Make Private
             </button>
             <button
               onClick={clear}
@@ -520,7 +528,7 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
     seo_description: beat.seo_description || "",
     custom_video_url: beat.custom_video_url || "",
     custom_video_recorded_at: beat.custom_video_recorded_at ? beat.custom_video_recorded_at.slice(0, 16) : "",
-    is_landing_published: beat.is_landing_published,
+    landing_visibility: beat.landing_visibility,
     producer_name: beat.producer_name || "",
   });
 
@@ -539,7 +547,7 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
         custom_video_recorded_at: form.custom_video_recorded_at
           ? new Date(form.custom_video_recorded_at).toISOString()
           : null,
-        is_landing_published: form.is_landing_published,
+        landing_visibility: form.landing_visibility,
         producer_name: form.producer_name || null,
       },
     });
@@ -656,16 +664,21 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
               onChange={(e) => setForm({ ...form, seo_description: e.target.value })}
             />
           </div>
-          <div className="sm:col-span-2 flex items-center gap-2">
-            <input
-              id="pub"
-              type="checkbox"
-              checked={form.is_landing_published}
-              onChange={(e) => setForm({ ...form, is_landing_published: e.target.checked })}
-            />
-            <label htmlFor="pub" className="text-sm">
-              Published (visible at /beats/{form.landing_slug || "…"})
-            </label>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold" htmlFor="visibility">Landing page visibility</label>
+            <select
+              id="visibility"
+              value={form.landing_visibility}
+              onChange={(e) => setForm({ ...form, landing_visibility: e.target.value as BeatRow["landing_visibility"] })}
+              className={inp}
+            >
+              <option value="public">Public — link opens and may appear in public lookups</option>
+              <option value="unlisted">Unlisted — link opens only when shared directly</option>
+              <option value="private">Private — link shows Beat not found</option>
+            </select>
+            {!beat.is_active && form.landing_visibility !== "private" && (
+              <p className="mt-2 text-xs font-medium text-amber-600">This beat is inactive in the catalog, so its landing link remains unavailable until catalog access is reactivated.</p>
+            )}
           </div>
           <div className="sm:col-span-2 border-t border-gray-100 pt-4 mt-2">
             <AttachmentsManager beatId={beat.id} />

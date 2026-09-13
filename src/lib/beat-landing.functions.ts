@@ -35,6 +35,8 @@ export type BeatLanding = {
   mood: string | null;
 };
 
+export type LandingVisibility = "public" | "unlisted" | "private";
+
 
 export type GlobalVideo = {
   video_url: string | null;
@@ -80,7 +82,7 @@ export const getBeatLandingBySlug = createServerFn({ method: "GET" })
         .select("id,landing_slug,title,producer_name,cover_url,audio_url_tagged,audio_url,price_cents,discount_price_cents,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,bpm,genre,mood,is_landing_published,is_active")
 
         .eq("landing_slug", data.slug)
-        .eq("is_landing_published", true)
+        .neq("landing_visibility", "private")
         .eq("is_active", true)
         .maybeSingle(),
       sb.from("global_video")
@@ -258,7 +260,7 @@ export const adminListBeats = createServerFn({ method: "GET" })
       }
     }
     const { data } = await sb.from("beats")
-      .select("id,title,landing_slug,is_landing_published,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,audio_url_tagged,audio_url")
+      .select("id,title,landing_slug,landing_visibility,is_landing_published,is_active,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,audio_url_tagged,audio_url")
       // show all beats so admin can assign slugs
       .order("title", { ascending: true });
     return { beats: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
@@ -279,14 +281,34 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
     custom_video_url?: string | null;
     custom_video_recorded_at?: string | null;
     is_landing_published?: boolean;
+    landing_visibility?: LandingVisibility;
     producer_name?: string | null;
-  }) => input)
+  }) => z.object({
+    id: z.string().uuid(),
+    landing_slug: z.string().max(120).optional(),
+    price_cents: z.number().int().min(0).max(10_000_000).optional(),
+    discount_price_cents: z.number().int().min(0).max(10_000_000).optional(),
+    checkout_url: z.string().max(2048).nullable().optional(),
+    application_url: z.string().max(2048).nullable().optional(),
+    seo_title: z.string().max(120).nullable().optional(),
+    seo_description: z.string().max(500).nullable().optional(),
+    custom_video_url: z.string().max(2048).nullable().optional(),
+    custom_video_recorded_at: z.string().datetime().nullable().optional(),
+    is_landing_published: z.boolean().optional(),
+    landing_visibility: z.enum(["public", "unlisted", "private"]).optional(),
+    producer_name: z.string().max(160).nullable().optional(),
+  }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const sb = adminClient() as any;
     const { id, ...updates } = data;
     const clean: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(updates)) if (v !== undefined) clean[k] = v;
+    if (data.landing_visibility) {
+      clean.is_landing_published = data.landing_visibility !== "private";
+    } else if (typeof data.is_landing_published === "boolean") {
+      clean.landing_visibility = data.is_landing_published ? "public" : "private";
+    }
     if (typeof clean.landing_slug === "string") {
       const cleaned = clean.landing_slug.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
       if (cleaned) {
@@ -302,6 +324,20 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
         } else {
           delete clean.landing_slug;
         }
+      }
+    }
+    if (clean.landing_visibility !== "private" && !clean.landing_slug) {
+      const { data: current } = await sb.from("beats").select("title,landing_slug").eq("id", id).maybeSingle();
+      if (!current?.landing_slug && current?.title) {
+        const base = slugifyTitle(current.title) || "beat";
+        let candidate = base;
+        let suffix = 2;
+        while (true) {
+          const { data: collision } = await sb.from("beats").select("id").eq("landing_slug", candidate).neq("id", id).maybeSingle();
+          if (!collision) break;
+          candidate = `${base}-${suffix++}`;
+        }
+        clean.landing_slug = candidate;
       }
     }
     const { error } = await sb.from("beats").update(clean).eq("id", id);
@@ -766,10 +802,10 @@ export const adminSendTestEmail = createServerFn({ method: "POST" })
 
 export const adminBulkEnableLandingSlugs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { ids: string[]; enable: boolean }) =>
+  .inputValidator((input: { ids: string[]; visibility: LandingVisibility }) =>
     z.object({
       ids: z.array(z.string().uuid()).min(1).max(500),
-      enable: z.boolean(),
+      visibility: z.enum(["public", "unlisted", "private"]),
     }).parse(input),
   )
   .handler(async ({ data, context }): Promise<{ ok: boolean; updated: number; slugsAssigned: number; error?: string }> => {
@@ -792,8 +828,11 @@ export const adminBulkEnableLandingSlugs = createServerFn({ method: "POST" })
     let slugsAssigned = 0;
     let updated = 0;
     for (const b of beats) {
-      const patch: Record<string, unknown> = { is_landing_published: data.enable };
-      if (!b.landing_slug) {
+      const patch: Record<string, unknown> = {
+        landing_visibility: data.visibility,
+        is_landing_published: data.visibility !== "private",
+      };
+      if (data.visibility !== "private" && !b.landing_slug) {
         const base = slugifyTitle(b.title || "beat") || "beat";
         let candidate = base;
         let n = 2;
