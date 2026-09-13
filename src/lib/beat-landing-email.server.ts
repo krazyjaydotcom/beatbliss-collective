@@ -64,7 +64,7 @@ async function enqueue(payload: EmailPayload): Promise<{ messageId: string }> {
         sender_domain: SENDER_DOMAIN,
         subject: String(payload.subject ?? ""),
         html: String(payload.html ?? ""),
-        text: payload.text ? String(payload.text) : undefined,
+        text: String(payload.text ?? ""),
         reply_to: payload.reply_to ? String(payload.reply_to) : undefined,
         purpose: "transactional",
         label: payload.label || "beat_landing_email",
