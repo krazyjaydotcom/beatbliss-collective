@@ -71,31 +71,20 @@ const TIER_LABEL: Record<string, string> = {
   label: "Label",
 };
 
-async function getUnsubscribeToken(email: string): Promise<string> {
-  const normalizedEmail = email.toLowerCase().trim();
-  const { data: existing, error: readError } = await supabaseAdmin
-    .from("email_unsubscribe_tokens")
-    .select("token")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
-  if (readError) throw readError;
-  if (existing?.token) return existing.token;
-
-  const token = randomUUID();
-  const { data: inserted, error: insertError } = await supabaseAdmin
-    .from("email_unsubscribe_tokens")
-    .insert({ email: normalizedEmail, token })
-    .select("token")
-    .maybeSingle();
-  if (!insertError && inserted?.token) return inserted.token;
-
-  const { data: raced, error: racedError } = await supabaseAdmin
-    .from("email_unsubscribe_tokens")
-    .select("token")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
-  if (racedError || !raced?.token) throw insertError || racedError || new Error("Failed to create unsubscribe token");
-  return raced.token;
+async function logInviteEmail(
+  messageId: string,
+  to: string,
+  status: "sent" | "suppressed" | "failed",
+  errorMessage?: string
+): Promise<void> {
+  const { error } = await (supabaseAdmin as any).from("email_send_log").insert({
+    message_id: messageId,
+    template_name: "invite_claim",
+    recipient_email: to,
+    status,
+    error_message: errorMessage ?? null,
+  });
+  if (error) console.error("[invites] failed to log invite email", error);
 }
 
 async function sendInviteEmail(opts: { to: string; url: string; tier: string }) {
