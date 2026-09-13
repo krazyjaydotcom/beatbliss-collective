@@ -1,5 +1,6 @@
 // Server-only helpers used by webhook + admin to issue invites.
 import { randomBytes, randomUUID } from "crypto";
+import { EmailAPIError, sendLovableEmail } from "@lovable.dev/email-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export function generateInviteToken(): string {
@@ -71,31 +72,20 @@ const TIER_LABEL: Record<string, string> = {
   label: "Label",
 };
 
-async function getUnsubscribeToken(email: string): Promise<string> {
-  const normalizedEmail = email.toLowerCase().trim();
-  const { data: existing, error: readError } = await supabaseAdmin
-    .from("email_unsubscribe_tokens")
-    .select("token")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
-  if (readError) throw readError;
-  if (existing?.token) return existing.token;
-
-  const token = randomUUID();
-  const { data: inserted, error: insertError } = await supabaseAdmin
-    .from("email_unsubscribe_tokens")
-    .insert({ email: normalizedEmail, token })
-    .select("token")
-    .maybeSingle();
-  if (!insertError && inserted?.token) return inserted.token;
-
-  const { data: raced, error: racedError } = await supabaseAdmin
-    .from("email_unsubscribe_tokens")
-    .select("token")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
-  if (racedError || !raced?.token) throw insertError || racedError || new Error("Failed to create unsubscribe token");
-  return raced.token;
+async function logInviteEmail(
+  messageId: string,
+  to: string,
+  status: "sent" | "suppressed" | "failed",
+  errorMessage?: string
+): Promise<void> {
+  const { error } = await (supabaseAdmin as any).from("email_send_log").insert({
+    message_id: messageId,
+    template_name: "invite_claim",
+    recipient_email: to,
+    status,
+    error_message: errorMessage ?? null,
+  });
+  if (error) console.error("[invites] failed to log invite email", error);
 }
 
 async function sendInviteEmail(opts: { to: string; url: string; tier: string }) {
@@ -139,24 +129,31 @@ ${opts.url}
 
 This link works once and expires in 7 days.`;
 
+  const messageId = randomUUID();
   try {
-    const unsubscribeToken = await getUnsubscribeToken(opts.to);
-    await supabaseAdmin.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
+    const apiKey = process.env["LOVABLE_API_KEY"];
+    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+    await sendLovableEmail(
+      {
         to: opts.to,
         from: "MYBEATCATALOG <noreply@notify.krazyjay.com>",
         sender_domain: "notify.krazyjay.com",
         subject,
         html,
         text,
+        purpose: "transactional",
         label: "invite_claim",
-        message_id: randomUUID(),
-        queued_at: new Date().toISOString(),
-        unsubscribe_token: unsubscribeToken,
+        idempotency_key: messageId,
       },
-    });
+      { apiKey, sendUrl: process.env["LOVABLE_SEND_URL"] }
+    );
+    await logInviteEmail(messageId, opts.to, "sent");
   } catch (err) {
-    console.error("[invites] failed to enqueue invite email", err);
+    if (err instanceof EmailAPIError && err.code === "recipient_suppressed") {
+      await logInviteEmail(messageId, opts.to, "suppressed", "Recipient is suppressed");
+      return;
+    }
+    console.error("[invites] failed to send invite email", err);
+    await logInviteEmail(messageId, opts.to, "failed", err instanceof Error ? err.message : "Failed to send email");
   }
 }
