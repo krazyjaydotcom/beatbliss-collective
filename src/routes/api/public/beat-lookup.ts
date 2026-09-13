@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { slugifyTitle } from "@/lib/slug";
 
-const SITE = "https://beatbliss-collective.lovable.app";
+const SITE = "https://mybeatcatalog.com";
 
 function normalizeMatch(value: string): string {
   return slugifyTitle(value);
@@ -21,8 +21,9 @@ export const Route = createFileRoute("/api/public/beat-lookup")({
 
         const { data: beats, error: beatsError } = await (supabaseAdmin as any)
           .from("beats")
-          .select("id, title, bpm, genre, mood, music_key, producer_name, is_active")
-          .eq("is_active", true);
+          .select("id, title, landing_slug, bpm, genre, mood, music_key, producer_name, is_active, landing_visibility")
+          .eq("is_active", true)
+          .eq("landing_visibility", "public");
 
         if (beatsError || !beats) {
           return new Response("Catalog lookup failed", { status: 500 });
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/api/public/beat-lookup")({
           });
         }
 
-        const beatSlug = slugifyTitle(beat.title);
+        const beatSlug = beat.landing_slug || slugifyTitle(beat.title);
         const beatPageUrl = `${SITE}/beats/${beatSlug}`;
 
         const { data: funnels } = await (supabaseAdmin as any)
