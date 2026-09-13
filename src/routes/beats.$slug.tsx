@@ -157,19 +157,6 @@ function BeatLandingPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 sm:px-6 pt-2 sm:pt-4 pb-[96px]">
-        {/* DISCOUNT PILL */}
-        {showDiscount && (
-          <div className="rounded-full bg-blue-50 border border-blue-200 px-3 py-1 flex items-center justify-center gap-2 shadow-sm">
-            <Gift className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-            <span className="text-[11px] sm:text-xs">
-              <span className="font-bold text-blue-700">50% Off</span> Unlimited License
-            </span>
-            <span className="text-blue-700 font-black tabular-nums text-xs sm:text-sm">
-              {String(timer.min).padStart(2, "0")}:{String(timer.sec).padStart(2, "0")}
-            </span>
-          </div>
-        )}
-
         {/* VIDEO */}
         <div className="relative mx-auto mt-2 sm:mt-4 rounded-2xl overflow-hidden bg-slate-900 aspect-square w-full max-w-[38vh] sm:max-w-[48vh] shadow-[0_20px_60px_-20px_rgba(37,99,235,0.35)] ring-1 ring-slate-200">
           {videoUrl ? (
