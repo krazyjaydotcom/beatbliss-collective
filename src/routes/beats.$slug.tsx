@@ -7,7 +7,6 @@ import {
   Pause,
   Volume2,
   Download,
-  Gift,
   Instagram,
   Mail,
   Phone,
@@ -29,8 +28,6 @@ import {
 
 import {
   getBeatLandingBySlug,
-  captureBeatLead,
-  checkDiscountEligibility,
   createBeatLeaseCheckoutSession,
   listInquiryQuestions,
   submitBeatInquiry,
@@ -87,31 +84,6 @@ export const Route = createFileRoute("/beats/$slug")({
   component: BeatLandingPage,
 });
 
-const OFFER_DURATION_MS = 20 * 60 * 1000;
-
-function useOfferTimer(slug: string) {
-  const [remaining, setRemaining] = useState<number>(OFFER_DURATION_MS);
-  useEffect(() => {
-    const key = `mbc_offer_start_${slug}`;
-    let start = Number(localStorage.getItem(key) || 0);
-    if (!start) {
-      start = Date.now();
-      localStorage.setItem(key, String(start));
-    }
-    const tick = () => {
-      const elapsed = Date.now() - start;
-      setRemaining(Math.max(0, OFFER_DURATION_MS - elapsed));
-    };
-    tick();
-    const iv = setInterval(tick, 1000);
-    return () => clearInterval(iv);
-  }, [slug]);
-  const active = remaining > 0;
-  const min = Math.floor(remaining / 60000);
-  const sec = Math.floor((remaining % 60000) / 1000);
-  return { active, min, sec };
-}
-
 function formatPostedAt(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const then = new Date(iso).getTime();
@@ -130,10 +102,8 @@ function formatPostedAt(iso: string | null | undefined): string | null {
 function BeatLandingPage() {
   const { beat, global, attachments } = Route.useLoaderData();
   const params = Route.useParams();
-  const timer = useOfferTimer(params.slug);
 
   const [helpOpen, setHelpOpen] = useState(false);
-  const [downloadOpen, setDownloadOpen] = useState(false);
   const [leaseOpen, setLeaseOpen] = useState(false);
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -141,9 +111,8 @@ function BeatLandingPage() {
 
   const videoUrl = beat!.custom_video_url || global?.video_url || null;
   const price = (cents: number) => `$${(cents / 100).toFixed(2)}`.replace(/\.00$/, "");
-  const showDiscount = timer.active;
 
-  const activePrice = showDiscount ? beat!.discount_price_cents : beat!.price_cents;
+  const activePrice = beat!.price_cents;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900">
@@ -185,19 +154,6 @@ function BeatLandingPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 sm:px-6 pt-2 sm:pt-4 pb-[96px]">
-        {/* DISCOUNT PILL */}
-        {showDiscount && (
-          <div className="rounded-full bg-blue-50 border border-blue-200 px-3 py-1 flex items-center justify-center gap-2 shadow-sm">
-            <Gift className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-            <span className="text-[11px] sm:text-xs">
-              <span className="font-bold text-blue-700">50% Off</span> Unlimited License
-            </span>
-            <span className="text-blue-700 font-black tabular-nums text-xs sm:text-sm">
-              {String(timer.min).padStart(2, "0")}:{String(timer.sec).padStart(2, "0")}
-            </span>
-          </div>
-        )}
-
         {/* VIDEO */}
         <div className="relative mx-auto mt-2 sm:mt-4 rounded-2xl overflow-hidden bg-slate-900 aspect-square w-full max-w-[38vh] sm:max-w-[48vh] shadow-[0_20px_60px_-20px_rgba(37,99,235,0.35)] ring-1 ring-slate-200">
           {videoUrl ? (
@@ -221,11 +177,6 @@ function BeatLandingPage() {
               </div>
               <div className="mt-0.5 flex items-baseline gap-2 justify-center md:justify-start">
                 <span className="text-3xl sm:text-4xl font-black tracking-tight">{price(activePrice)}</span>
-                {showDiscount && (
-                  <span className="text-blue-200/80 line-through text-base font-semibold">
-                    {price(beat!.price_cents)}
-                  </span>
-                )}
               </div>
               <p className="mt-1 text-[11px] sm:text-xs text-blue-50 leading-snug">
                 Unlimited MP3 · Unlimited songs · Streams &amp; sales · Keep 100% royalties
@@ -247,21 +198,8 @@ function BeatLandingPage() {
         </div>
 
         {/* SECONDARY CTAS */}
-        <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-2 sm:gap-3">
-          <button
-            onClick={() => setDownloadOpen(true)}
-            className="group rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left hover:border-blue-300 hover:shadow-md transition flex items-center gap-2 sm:gap-3"
-          >
-            <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-              <Download className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-bold text-[11px] sm:text-xs uppercase tracking-wide leading-tight">
-                Free Tagged MP3
-              </div>
-              <div className="text-[10px] sm:text-[11px] text-slate-500">Evaluation only</div>
-            </div>
-          </button>
+        <div className="mt-2 sm:mt-3 grid grid-cols-1 gap-2 sm:gap-3">
+
 
           <button
             onClick={() => setInquiryOpen(true)}
@@ -345,15 +283,12 @@ function BeatLandingPage() {
           }}
         />
       )}
-      {downloadOpen && <DownloadModal beatId={beat!.id} onClose={() => setDownloadOpen(false)} />}
       {leaseOpen && (
         <LeaseModal
           beatId={beat!.id}
           slug={params.slug}
           fullPriceCents={beat!.price_cents}
-          discountPriceCents={beat!.discount_price_cents}
           checkoutUrl={beat!.checkout_url}
-          showDiscount={showDiscount}
           onClose={() => setLeaseOpen(false)}
         />
       )}
@@ -585,113 +520,19 @@ function NeedHelpModal({
   );
 }
 
-function DownloadModal({ beatId, onClose }: { beatId: string; onClose: () => void }) {
-  const capture = useServerFn(captureBeatLead);
-  const [firstName, setFirstName] = useState("");
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const downloadHref = `/api/public/beat-free-download?beatId=${encodeURIComponent(beatId)}`;
-
-  const triggerDownload = () => {
-    const a = document.createElement("a");
-    a.href = downloadHref;
-    a.rel = "noopener";
-    a.setAttribute("download", "");
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const r = await capture({ data: { beatId, firstName, email } });
-      if (!r.downloadUrl) {
-        setError("MP3 file not available yet.");
-        return;
-      }
-      setDone(true);
-      triggerDownload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <ModalShell onClose={onClose}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-black">Free MP3 Download</h3>
-        <button onClick={onClose} className="text-gray-400">
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-      {done ? (
-        <div className="mt-4 space-y-3">
-          <p className="text-sm text-gray-600">
-            Your download has started — check your Downloads folder. We've also emailed you the link.
-          </p>
-          <button
-            onClick={triggerDownload}
-            className="block w-full rounded-xl bg-blue-600 text-white text-center px-5 py-3 font-semibold hover:bg-blue-700"
-          >
-            Didn't start? Download again
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={submit} className="mt-4 space-y-3">
-          <input
-            required
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            placeholder="First name"
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-400"
-          />
-          <input
-            required
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-400"
-          />
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <button
-            disabled={loading}
-            className="w-full rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Preparing..." : "Get Free Download"}
-          </button>
-        </form>
-      )}
-    </ModalShell>
-  );
-}
-
 function LeaseModal({
   beatId,
   slug,
   fullPriceCents,
-  discountPriceCents,
   checkoutUrl,
-  showDiscount,
   onClose,
 }: {
   beatId: string;
   slug: string;
   fullPriceCents: number;
-  discountPriceCents: number;
   checkoutUrl: string | null;
-  showDiscount: boolean;
   onClose: () => void;
 }) {
-  const check = useServerFn(checkDiscountEligibility);
   const createSession = useServerFn(createBeatLeaseCheckoutSession);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -702,11 +543,6 @@ function LeaseModal({
     setLoading(true);
     setError(null);
     try {
-      let useDiscount = showDiscount;
-      if (useDiscount) {
-        const elig = await check({ data: { email } });
-        useDiscount = elig.eligible;
-      }
       const origin = window.location.origin;
       const successUrl = `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${origin}/beats/${slug}`;
@@ -719,7 +555,7 @@ function LeaseModal({
       }
 
       const r = await createSession({
-        data: { beatId, email, useDiscount, environment, successUrl, cancelUrl },
+        data: { beatId, email, useDiscount: false, environment, successUrl, cancelUrl },
       });
       if (r.error) throw new Error(r.error);
       if (r.url) {
@@ -749,16 +585,7 @@ function LeaseModal({
         </button>
       </div>
       <div className="mt-3 text-sm text-gray-500">
-        {showDiscount ? (
-          <>
-            First-time price: <span className="font-bold text-blue-700">{price(discountPriceCents)}</span> (regular{" "}
-            {price(fullPriceCents)})
-          </>
-        ) : (
-          <>
-            Price: <span className="font-bold">{price(fullPriceCents)}</span>
-          </>
-        )}
+        Price: <span className="font-bold">{price(fullPriceCents)}</span>
       </div>
       <form onSubmit={submit} className="mt-4 space-y-3">
         <input
