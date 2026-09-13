@@ -180,11 +180,6 @@ function BeatLandingPage() {
               </div>
               <div className="mt-0.5 flex items-baseline gap-2 justify-center md:justify-start">
                 <span className="text-3xl sm:text-4xl font-black tracking-tight">{price(activePrice)}</span>
-                {showDiscount && (
-                  <span className="text-blue-200/80 line-through text-base font-semibold">
-                    {price(beat!.price_cents)}
-                  </span>
-                )}
               </div>
               <p className="mt-1 text-[11px] sm:text-xs text-blue-50 leading-snug">
                 Unlimited MP3 · Unlimited songs · Streams &amp; sales · Keep 100% royalties
