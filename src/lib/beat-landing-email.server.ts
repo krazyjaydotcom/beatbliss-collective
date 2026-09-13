@@ -1,5 +1,6 @@
-// Server-only helpers for queueing beat-landing related emails.
-// Uses the existing project email queue (transactional_emails) via supabaseAdmin.
+// Server-only helpers for sending beat-landing related emails.
+// Sends through Lovable's managed email API.
+import { EmailAPIError, sendLovableEmail } from "@lovable.dev/email-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const FROM = "MYBEATCATALOG <noreply@notify.krazyjay.com>";
@@ -10,6 +11,10 @@ const SITE = "https://mybeatcatalog.com";
 type EmailPayload = Record<string, unknown> & {
   message_id: string;
   to: string;
+  subject?: string;
+  html?: string;
+  text?: string;
+  reply_to?: string;
   label?: string;
 };
 
@@ -32,37 +37,11 @@ async function alreadyQueued(messageId: string): Promise<boolean> {
   }
 }
 
-async function getUnsubscribeToken(email: string): Promise<string> {
-  const normalizedEmail = email.toLowerCase().trim();
-  const { data: existing, error: readError } = await (supabaseAdmin as any)
-    .from("email_unsubscribe_tokens")
-    .select("token")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
-  if (readError) throw new Error(`Failed to read unsubscribe token: ${readError.message}`);
-  if (existing?.token) return existing.token as string;
-
-  const token = crypto.randomUUID();
-  const { data: inserted, error: insertError } = await (supabaseAdmin as any)
-    .from("email_unsubscribe_tokens")
-    .insert({ email: normalizedEmail, token })
-    .select("token")
-    .maybeSingle();
-
-  if (!insertError && inserted?.token) return inserted.token as string;
-
-  const { data: raced, error: racedError } = await (supabaseAdmin as any)
-    .from("email_unsubscribe_tokens")
-    .select("token")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
-  if (racedError || !raced?.token) {
-    throw new Error(insertError?.message || racedError?.message || "Failed to create unsubscribe token");
-  }
-  return raced.token as string;
-}
-
-async function logEmailAttempt(payload: EmailPayload, status: "pending" | "failed", errorMessage?: string): Promise<void> {
+async function logEmailAttempt(
+  payload: EmailPayload,
+  status: "sent" | "suppressed" | "failed",
+  errorMessage?: string
+): Promise<void> {
   const { error } = await (supabaseAdmin as any).from("email_send_log").insert({
     message_id: payload.message_id,
     template_name: payload.label || "beat_landing_email",
@@ -74,26 +53,34 @@ async function logEmailAttempt(payload: EmailPayload, status: "pending" | "faile
 }
 
 async function enqueue(payload: EmailPayload): Promise<{ messageId: string }> {
-  const unsubscribeToken = await getUnsubscribeToken(payload.to);
-  await logEmailAttempt(payload, "pending");
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+
   try {
-    const { error } = await (supabaseAdmin as any).rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
+    await sendLovableEmail(
+      {
+        to: payload.to,
         from: FROM,
         sender_domain: SENDER_DOMAIN,
-        queued_at: new Date().toISOString(),
+        subject: String(payload.subject ?? ""),
+        html: String(payload.html ?? ""),
+        text: payload.text ? String(payload.text) : undefined,
+        reply_to: payload.reply_to ? String(payload.reply_to) : undefined,
         purpose: "transactional",
+        label: payload.label || "beat_landing_email",
         idempotency_key: payload.message_id,
-        unsubscribe_token: unsubscribeToken,
-        ...payload,
       },
-    });
-    if (error) throw error;
+      { apiKey, sendUrl: process.env["LOVABLE_SEND_URL"] }
+    );
+    await logEmailAttempt(payload, "sent");
     return { messageId: payload.message_id };
   } catch (err) {
-    console.error("[beat-landing-email] enqueue failed", err);
-    await logEmailAttempt(payload, "failed", err instanceof Error ? err.message : "Failed to enqueue email");
+    if (err instanceof EmailAPIError && err.code === "recipient_suppressed") {
+      await logEmailAttempt(payload, "suppressed", "Recipient is suppressed");
+      return { messageId: payload.message_id };
+    }
+    console.error("[beat-landing-email] send failed", err);
+    await logEmailAttempt(payload, "failed", err instanceof Error ? err.message : "Failed to send email");
     throw err;
   }
 }
