@@ -87,30 +87,7 @@ export const Route = createFileRoute("/beats/$slug")({
   component: BeatLandingPage,
 });
 
-const OFFER_DURATION_MS = 20 * 60 * 1000;
-
-function useOfferTimer(slug: string) {
-  const [remaining, setRemaining] = useState<number>(OFFER_DURATION_MS);
-  useEffect(() => {
-    const key = `mbc_offer_start_${slug}`;
-    let start = Number(localStorage.getItem(key) || 0);
-    if (!start) {
-      start = Date.now();
-      localStorage.setItem(key, String(start));
-    }
-    const tick = () => {
-      const elapsed = Date.now() - start;
-      setRemaining(Math.max(0, OFFER_DURATION_MS - elapsed));
-    };
-    tick();
-    const iv = setInterval(tick, 1000);
-    return () => clearInterval(iv);
-  }, [slug]);
-  const active = remaining > 0;
-  const min = Math.floor(remaining / 60000);
-  const sec = Math.floor((remaining % 60000) / 1000);
-  return { active, min, sec };
-}
+function formatPostedAt(iso: string | null | undefined): string | null {
 
 function formatPostedAt(iso: string | null | undefined): string | null {
   if (!iso) return null;
