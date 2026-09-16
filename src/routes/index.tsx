@@ -139,9 +139,11 @@ function StorePage() {
   }, [beats, search.q, genre, bpm, sort, view, savedIds]);
 
   const selected: StoreBeat | null = useMemo(() => {
-    if (!search.beat) return null;
-    return beats.find((b) => b.slug === search.beat || b.id === search.beat) ?? null;
-  }, [beats, search.beat]);
+    // `b` is the legacy shared-link param; keep it working.
+    const ref = search.beat ?? search.b;
+    if (!ref) return null;
+    return beats.find((b) => b.slug === ref || b.id === ref) ?? null;
+  }, [beats, search.beat, search.b]);
 
   const openBeat = (b: StoreBeat) => setSearch({ beat: b.slug ?? b.id });
   const closeBeat = () => setSearch({ beat: undefined });
