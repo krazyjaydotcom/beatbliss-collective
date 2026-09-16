@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, Heart, Music2, Pause, Play, X } from "lucide-react";
+import { ExternalLink, Heart, Pause, Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
 import { formatTime } from "@/components/store/player-provider";
 import { LicenseCheckout, LicenseTerms } from "@/components/store/license-panel";
+import { CoverArt } from "@/components/store/cover-art";
 
 export function BeatDetail({
   beat,
@@ -13,6 +14,7 @@ export function BeatDetail({
   isSaved,
   onPlay,
   onSave,
+  onClose,
 }: {
   beat: StoreBeat;
   isCurrent: boolean;
@@ -20,6 +22,7 @@ export function BeatDetail({
   isSaved: boolean;
   onPlay: () => void;
   onSave: () => void;
+  onClose?: () => void;
 }) {
   const [termsOpen, setTermsOpen] = useState(false);
   const meta = [
@@ -31,18 +34,31 @@ export function BeatDetail({
 
   return (
     <div className="space-y-5">
+      {onClose ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close details"
+            className="flex h-9 items-center gap-1.5 rounded-full border border-white/12 px-3 text-xs font-medium text-muted-foreground transition-colors hover:border-white/25 hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" /> Close details
+          </button>
+        </div>
+      ) : null}
       <div className="flex gap-4">
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-white/[0.06]">
-          {beat.coverUrl ? (
-            <img src={beat.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-              <Music2 className="h-5 w-5" />
-            </div>
-          )}
+          <CoverArt
+            title={beat.title}
+            seed={beat.id}
+            src={beat.coverUrl}
+            textClassName="text-lg"
+          />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-xl font-semibold text-foreground">{beat.title}</h2>
+          <h2 className="truncate text-lg font-semibold tracking-tight text-foreground">
+            {beat.title}
+          </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{beat.producerName}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {meta.map((m) => (
