@@ -1,4 +1,5 @@
-import { X } from "lucide-react";
+import { useEffect } from "react";
+import { SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type BpmBucket = "all" | "under-80" | "80-99" | "100-119" | "120-139" | "140-plus";
