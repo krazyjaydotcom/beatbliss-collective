@@ -8,6 +8,7 @@ import { adminListCustomerActivity } from "@/lib/admin-activity.functions";
 import { adminListCrm } from "@/lib/crm.functions";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, SectionTitle, StatTile, Surface } from "@/components/admin/ui";
+import { RevenueChart, buildDailyRevenue } from "@/components/admin/revenue-chart";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminOverview,
