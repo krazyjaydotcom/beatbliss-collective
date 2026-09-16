@@ -85,6 +85,21 @@ function AdminOverview() {
             <StatTile icon={Contact} label="New prospects" value={stats.newLeads + prospects.length} hint={`${prospects.length} added by hand`} />
           </div>
 
+          <Surface>
+            <SectionTitle
+              action={
+                <span className="text-[11px] text-muted-foreground">
+                  Confirmed payments only · last 30 days
+                </span>
+              }
+            >
+              Revenue
+            </SectionTitle>
+            <div className="px-2 pb-4 sm:px-4">
+              <RevenueChart data={buildDailyRevenue(activityQ.data?.rows ?? [])} />
+            </div>
+          </Surface>
+
           <div className="grid gap-4 lg:grid-cols-2">
             <Surface>
               <SectionTitle
