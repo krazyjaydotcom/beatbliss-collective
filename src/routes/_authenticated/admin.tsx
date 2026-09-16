@@ -141,6 +141,11 @@ function AdminLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const now = useNow();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [navGroup, setNavGroup] = useState("Workspace");
+  useEffect(() => {
+    const group = NAV_GROUPS.find((g) => g.items.some((item) => isActive(path, item)));
+    if (group) setNavGroup(group.title);
+  }, [path]);
 
   useEffect(() => {
     if (isAdmin === false) navigate({ to: "/beats" });
@@ -162,9 +167,9 @@ function AdminLayout() {
   const timeStr = now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-background text-foreground pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur">
-        <div className="mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 sm:px-6">
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground">
+      <header className="shrink-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur">
+        <div className="mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 sm:px-5">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
@@ -235,15 +240,45 @@ function AdminLayout() {
         </div>
       )}
 
-      <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-5 px-3 py-4 sm:px-6 sm:py-6 md:grid-cols-[248px_minmax(0,1fr)]">
-        <aside className="hidden md:block md:sticky md:top-20 md:max-h-[calc(100vh-6rem)] md:overflow-y-auto">
-          <nav className="space-y-5 pr-1">
+      <div className="mx-auto grid w-full max-w-[1600px] min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden px-3 py-3 sm:px-5 md:grid-cols-[208px_minmax(0,1fr)]">
+        <aside className="hidden min-h-0 overflow-y-auto overscroll-contain md:block">
+          <nav className="space-y-2 pr-1" aria-label="Admin sections">
+            <label className="mb-3 block">
+              <span className="mb-1 block px-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Jump to
+              </span>
+              <select
+                aria-label="Jump to admin page"
+                value={NAV_GROUPS.flatMap((g) => g.items).some((i) => i.to === path) ? path : "/admin"}
+                onChange={(e) => navigate({ to: e.target.value })}
+                className="h-11 w-full rounded-lg border border-border bg-card px-2 text-xs"
+              >
+                {NAV_GROUPS.map((g) => (
+                  <optgroup key={g.title} label={g.title}>
+                    {g.items.map((i) => (
+                      <option key={i.to} value={i.to}>
+                        {i.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
             {NAV_GROUPS.map((g) => (
-              <div key={g.title}>
-                <div className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
-                  {g.title}
-                </div>
-                <div className="space-y-0.5">
+              <div key={g.title} className="rounded-xl border border-border/60 bg-card/40">
+                <button
+                  type="button"
+                  aria-expanded={navGroup === g.title}
+                  aria-controls={"admin-nav-" + g.title}
+                  onClick={() => setNavGroup(navGroup === g.title ? "" : g.title)}
+                  className="flex min-h-11 w-full items-center justify-between px-3 text-xs font-semibold"
+                >
+                  <span>{g.title}</span>
+                  <span aria-hidden="true" className="text-muted-foreground">
+                    {navGroup === g.title ? "−" : "+"}
+                  </span>
+                </button>
+                <div id={"admin-nav-" + g.title} hidden={navGroup !== g.title} className="space-y-0.5 px-1 pb-1">
                   {g.items.map((item) => (
                     <NavLinkRow key={item.to} item={item} path={path} />
                   ))}
@@ -253,13 +288,21 @@ function AdminLayout() {
           </nav>
         </aside>
 
-        <main className="min-w-0 max-w-full">
+        <main
+          key={path}
+          className={cn(
+            "min-h-0 min-w-0 max-w-full overscroll-contain",
+            path === "/admin" || path === "/admin/" || path === "/admin/beat-landing"
+              ? "overflow-hidden"
+              : "overflow-y-auto",
+          )}
+        >
           <Outlet />
         </main>
       </div>
 
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+        className="md:hidden shrink-0 z-40 border-t border-border/70 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
         aria-label="Primary"
       >
         <div className="grid grid-cols-5">

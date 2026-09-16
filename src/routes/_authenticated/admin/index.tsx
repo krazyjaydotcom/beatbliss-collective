@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckSquare, Contact, DollarSign, Download, Loader2, Music, Wallet } from "lucide-react";
@@ -18,6 +18,7 @@ const money = (c: number) => `$${(c / 100).toFixed(2)}`;
 const DAY = 86_400_000;
 
 function AdminOverview() {
+  const [view, setView] = useState("revenue");
   const fetchActivity = useServerFn(adminListCustomerActivity);
   const fetchCrm = useServerFn(adminListCrm);
 
@@ -55,67 +56,132 @@ function AdminOverview() {
   const loading = activityQ.isLoading || crmQ.isLoading;
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        breadcrumb="Workspace"
-        title="Overview"
-        description="Confirmed revenue, prospects and follow-ups from the last 30 days."
-        actions={
-          <>
-            <Button asChild size="sm" variant="outline">
-              <Link to="/admin/customers">Add prospect</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link to="/admin/tasks">New task</Link>
-            </Button>
-          </>
-        }
-      />
-
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="flex shrink-0 items-center justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Workspace · last 30 days
+          </p>
+          <h1 className="text-xl font-bold sm:text-2xl">Overview</h1>
         </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatTile icon={DollarSign} label="Paid revenue" value={money(stats.revenue)} hint="Last 30 days, confirmed only" />
-            <StatTile icon={Wallet} label="Paid sales" value={stats.paidCount} hint={`${stats.pendingCount} unpaid checkout${stats.pendingCount === 1 ? "" : "s"}`} />
-            <StatTile icon={Download} label="Downloads" value={stats.downloads} hint="Last 30 days" />
-            <StatTile icon={Contact} label="New prospects" value={stats.newLeads + prospects.length} hint={`${prospects.length} added by hand`} />
+        <div className="flex gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link to="/admin/customers">Add prospect</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link to="/admin/tasks">New task</Link>
+          </Button>
+        </div>
+      </div>
+      <div className="grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-4">
+        {[
+          { label: "Paid revenue", value: money(stats.revenue), note: "Confirmed payments" },
+          { label: "Paid sales", value: stats.paidCount, note: stats.pendingCount + " unpaid checkouts" },
+          { label: "Downloads", value: stats.downloads, note: "Last 30 days" },
+          { label: "Prospects", value: stats.newLeads + prospects.length, note: prospects.length + " added by hand" },
+        ].map((item) => (
+          <div key={item.label} className="rounded-xl border border-border bg-card px-3 py-2">
+            <div className="text-[11px] text-muted-foreground">{item.label}</div>
+            <div className="text-xl font-bold tabular-nums">{loading ? "—" : item.value}</div>
+            <div className="text-[10px] text-muted-foreground">{item.note}</div>
           </div>
-
-          <Surface>
-            <SectionTitle
-              action={
-                <span className="text-[11px] text-muted-foreground">
-                  Confirmed payments only · last 30 days
-                </span>
-              }
+        ))}
+      </div>
+      <nav
+        aria-label="Quick actions"
+        className="grid shrink-0 grid-cols-4 gap-1 rounded-xl border border-border bg-card p-1"
+      >
+        {[
+          { to: "/admin/beats", label: "Beats", Icon: Music },
+          { to: "/admin/beat-landing", label: "Pages", Icon: Download },
+          { to: "/admin/customers", label: "Customers", Icon: Contact },
+          { to: "/admin/sales", label: "Sales", Icon: Wallet },
+        ].map(({ to, label, Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex min-h-11 items-center justify-center gap-1 rounded-lg text-xs hover:bg-secondary"
+          >
+            <Icon className="h-4 w-4" />
+            <span>{label}</span>
+          </Link>
+        ))}
+      </nav>
+      <div
+        className="grid shrink-0 grid-cols-3 gap-1 rounded-xl bg-secondary/50 p-1"
+        role="tablist"
+        aria-label="Overview panels"
+      >
+        {[
+          { id: "revenue", label: "Revenue" },
+          { id: "followups", label: "Follow-ups", count: followUps.overdue.length + followUps.today.length },
+          { id: "activity", label: "Activity" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={"overview-tab-" + tab.id}
+            aria-selected={view === tab.id}
+            aria-controls={"overview-panel-" + tab.id}
+            onClick={() => setView(tab.id)}
+            className={
+              "min-h-11 rounded-lg px-2 text-xs font-semibold transition-colors " +
+              (view === tab.id ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")
+            }
+          >
+            {tab.label}
+            {tab.count ? " (" + tab.count + ")" : ""}
+          </button>
+        ))}
+      </div>
+      <section
+        role="tabpanel"
+        id={"overview-panel-" + view}
+        aria-labelledby={"overview-tab-" + view}
+        tabIndex={0}
+        className="min-h-0 flex-1 overflow-auto overscroll-contain rounded-xl border border-border bg-card p-3 sm:p-4"
+      >
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        ) : activityQ.isError || crmQ.isError ? (
+          <div className="space-y-3">
+            <p>Some dashboard data could not be loaded.</p>
+            <Button
+              size="sm"
+              onClick={() => {
+                void activityQ.refetch();
+                void crmQ.refetch();
+              }}
             >
-              Revenue
-            </SectionTitle>
-            <div className="px-2 pb-4 sm:px-4">
-              <RevenueChart data={buildDailyRevenue(activityQ.data?.rows ?? [])} />
-            </div>
-          </Surface>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Surface>
-              <SectionTitle
-                action={
-                  <Button asChild size="sm" variant="ghost">
-                    <Link to="/admin/tasks">All tasks</Link>
-                  </Button>
-                }
-              >
-                Follow-ups
-              </SectionTitle>
-              <div className="px-4 pb-4">
+              Retry
+            </Button>
+          </div>
+        ) : (
+          <>
+            {view === "revenue" && (
+              <>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="font-semibold">Revenue</h2>
+                  <span className="text-[10px] text-muted-foreground">Paid only · 30 days</span>
+                </div>
+                <RevenueChart data={buildDailyRevenue(activityQ.data?.rows ?? [])} />
+              </>
+            )}
+            {view === "followups" && (
+              <>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="font-semibold">Due & overdue</h2>
+                  <Link to="/admin/tasks" className="text-xs text-primary">
+                    All tasks →
+                  </Link>
+                </div>
                 {followUps.open === 0 ? (
                   <EmptyState
                     title="No open tasks"
-                    description="Add a task to keep track of calls, quotes and custom work."
+                    description="Add a task to track calls, quotes and custom work."
                     action={
                       <Button asChild size="sm" className="mt-2">
                         <Link to="/admin/tasks">Create a task</Link>
@@ -124,50 +190,49 @@ function AdminOverview() {
                   />
                 ) : (
                   <ul className="space-y-2">
-                    {[...followUps.overdue, ...followUps.today].slice(0, 6).map((t) => (
-                      <li key={t.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2.5">
+                    {[...followUps.overdue, ...followUps.today].map((t) => (
+                      <li
+                        key={t.id}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                      >
                         <span className="min-w-0 truncate text-sm">{t.title}</span>
-                        <span className={t.due_date && t.due_date < new Date().toISOString().slice(0, 10) ? "shrink-0 text-xs font-semibold text-destructive" : "shrink-0 text-xs text-muted-foreground"}>
-                          {t.due_date}
-                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">{t.due_date}</span>
                       </li>
                     ))}
                     {followUps.overdue.length + followUps.today.length === 0 && (
-                      <li className="rounded-lg border border-dashed border-border/70 px-3 py-4 text-center text-sm text-muted-foreground">
-                        Nothing due today. {followUps.open} task{followUps.open === 1 ? "" : "s"} scheduled later.
+                      <li className="text-sm text-muted-foreground">
+                        Nothing due today. {followUps.open} tasks scheduled later.
                       </li>
                     )}
                   </ul>
                 )}
-              </div>
-            </Surface>
-
-            <Surface>
-              <SectionTitle
-                action={
-                  <Button asChild size="sm" variant="ghost">
-                    <Link to="/admin/sales">All activity</Link>
-                  </Button>
-                }
-              >
-                Recent activity
-              </SectionTitle>
-              <div className="px-4 pb-4">
+              </>
+            )}
+            {view === "activity" && (
+              <>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="font-semibold">Recent activity</h2>
+                  <Link to="/admin/sales" className="text-xs text-primary">
+                    All activity →
+                  </Link>
+                </div>
                 {stats.recent.length === 0 ? (
-                  <EmptyState title="No activity yet" description="Sales and downloads will appear here as they happen." />
+                  <EmptyState title="No activity yet" description="Sales and downloads appear here as they happen." />
                 ) : (
-                  <ul className="divide-y divide-border/60">
+                  <ul className="divide-y divide-border">
                     {stats.recent.map((r) => (
-                      <li key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2.5">
+                      <li key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-medium">{r.beat_title}</div>
-                          <div className="truncate text-xs text-muted-foreground">{r.name ?? r.email ?? "Unknown customer"}</div>
+                          <div className="truncate text-xs text-muted-foreground">
+                            {r.name ?? r.email ?? "Unknown customer"}
+                          </div>
                         </div>
-                        <div className="shrink-0 text-right">
+                        <div className="text-right">
                           <div className="text-sm tabular-nums">
                             {r.kind === "purchase" ? (r.paid ? money(r.amount_cents ?? 0) : "Unpaid") : "Download"}
                           </div>
-                          <div className="text-[11px] text-muted-foreground">
+                          <div className="text-[10px] text-muted-foreground">
                             {new Date(r.created_at).toLocaleDateString()}
                           </div>
                         </div>
@@ -175,28 +240,11 @@ function AdminOverview() {
                     ))}
                   </ul>
                 )}
-              </div>
-            </Surface>
-          </div>
-
-          <Surface className="p-4">
-            <div className="flex flex-wrap gap-2">
-              <Button asChild size="sm" variant="outline">
-                <Link to="/admin/beats"><Music className="mr-1.5 h-4 w-4" /> Manage beats</Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/admin/customers"><Contact className="mr-1.5 h-4 w-4" /> Customers &amp; leads</Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/admin/tasks"><CheckSquare className="mr-1.5 h-4 w-4" /> Tasks</Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/admin/sales"><Wallet className="mr-1.5 h-4 w-4" /> Sales &amp; downloads</Link>
-              </Button>
-            </div>
-          </Surface>
-        </>
-      )}
+              </>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }

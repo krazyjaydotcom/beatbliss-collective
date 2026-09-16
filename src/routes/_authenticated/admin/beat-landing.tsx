@@ -51,30 +51,92 @@ type BeatRow = {
 
 function BeatLandingAdmin() {
   const listFn = useServerFn(adminListBeats);
-  const beatsQuery = useQuery({
-    queryKey: ["admin-landing-beats"],
-    queryFn: () => listFn(),
-  });
-
+  const beatsQuery = useQuery({ queryKey: ["admin-landing-beats"], queryFn: () => listFn() });
+  const [tab, setTab] = useState("beats");
+  const tabs = [
+    { id: "beats", label: "Beats" },
+    { id: "media", label: "Media & contact" },
+    { id: "pricing", label: "Pricing" },
+    { id: "questions", label: "Questions" },
+    { id: "inquiries", label: "Inquiries" },
+    { id: "leads", label: "Leads" },
+    { id: "orders", label: "Orders" },
+    { id: "email", label: "Email & delivery" },
+  ];
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <header className="flex shrink-0 items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black">Beat Landing Pages</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Configure the public /beats/[slug] pages and the global video shown on every landing page.
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Catalog workspace</p>
+          <h1 className="text-base font-bold sm:text-2xl">Landing Pages</h1>
         </div>
-
-        <DeliveryInfoCard />
-        <EmailTesterCard />
-        <BulkPricingCard />
-        <GlobalVideoCard />
-        <AllBeatsTable beats={(beatsQuery.data?.beats ?? []) as unknown as BeatRow[]} loading={beatsQuery.isLoading} />
-        <InquiryQuestionsCard />
-        <InquirySubmissionsCard />
-        <LeadsCard />
-        <OrdersCard />
+        <span className="text-xs text-muted-foreground">{beatsQuery.data?.beats?.length ?? "—"} beats</span>
+      </header>
+      <nav
+        aria-label="Landing page sections"
+        className="grid shrink-0 grid-cols-4 gap-1 rounded-xl border border-border bg-card p-1 xl:grid-cols-8"
+        role="tablist"
+      >
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            id={"landing-tab-" + t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            aria-controls={"landing-panel-" + t.id}
+            onClick={() => setTab(t.id)}
+            className={
+              "min-h-11 rounded-lg px-1 text-[11px] font-semibold transition-colors sm:text-xs " +
+              (tab === t.id ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary")
+            }
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
+      <div className="min-h-0 flex-1 overflow-hidden">
+        {tabs.map((t) => (
+          <section
+            key={t.id}
+            id={"landing-panel-" + t.id}
+            role="tabpanel"
+            aria-labelledby={"landing-tab-" + t.id}
+            tabIndex={0}
+            style={{ display: tab === t.id ? "block" : "none" }}
+            className={"h-full min-h-0 overscroll-contain " + (t.id === "beats" ? "overflow-hidden" : "overflow-auto")}
+          >
+            {t.id === "beats" &&
+              (beatsQuery.isError ? (
+                <div className="rounded-xl border border-border p-4">
+                  <p>Could not load beats.</p>
+                  <button className="mt-3 min-h-11 text-primary" onClick={() => void beatsQuery.refetch()}>
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <AllBeatsTable
+                  beats={(beatsQuery.data?.beats ?? []) as unknown as BeatRow[]}
+                  loading={beatsQuery.isLoading}
+                />
+              ))}
+            {t.id === "media" && <GlobalVideoCard />}
+            {t.id === "pricing" && <BulkPricingCard />}
+            {t.id === "questions" && <InquiryQuestionsCard />}
+            {t.id === "inquiries" && <InquirySubmissionsCard />}
+            {t.id === "leads" && <LeadsCard />}
+            {t.id === "orders" && <OrdersCard />}
+            {t.id === "email" && (
+              <>
+                <details className="mb-3 rounded-xl border border-border p-3">
+                  <summary className="cursor-pointer text-sm font-semibold">How delivery works</summary>
+                  <DeliveryInfoCard />
+                </details>
+                <EmailTesterCard />
+              </>
+            )}
+          </section>
+        ))}
       </div>
     </div>
   );
@@ -187,12 +249,20 @@ function GlobalVideoCard() {
   };
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm space-y-4">
-      <div>
-        <h2 className="text-xl font-bold">Global Video & Contact Info</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Shows on every beat landing page unless a beat has its own custom video.
-        </p>
+    <div className="rounded-2xl bg-card border border-border p-4 shadow-sm space-y-4">
+      <div className="sticky top-0 z-10 flex items-start justify-between gap-3 bg-card pb-2">
+        <div>
+          <h2 className="text-base font-bold">Global Video & Contact Info</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Shows on every beat landing page unless a beat has its own custom video.
+          </p>
+        </div>
+        <button
+          onClick={save}
+          className="min-h-11 shrink-0 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground"
+        >
+          Save
+        </button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -202,10 +272,10 @@ function GlobalVideoCard() {
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm"
           />
           <div className="mt-2 flex gap-2 flex-wrap">
-            <label className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:border-gray-300">
+            <label className="cursor-pointer rounded-lg border border-border bg-card px-3 py-2 text-sm hover:border-gray-300">
               {uploading ? "Uploading..." : "Upload File"}
               <input
                 type="file"
@@ -241,7 +311,7 @@ function GlobalVideoCard() {
           <video
             ref={previewVideoRef}
             controls
-            className="mt-3 w-full aspect-video rounded-lg bg-gray-900"
+            className="mt-3 w-full max-h-48 aspect-video rounded-lg bg-gray-900"
             src={!recording && !recordedBlob ? videoUrl : undefined}
           />
         </div>
@@ -253,7 +323,7 @@ function GlobalVideoCard() {
               value={ig}
               onChange={(e) => setIg(e.target.value)}
               placeholder="@krazyjaydotcom"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm"
             />
           </div>
           <div>
@@ -262,7 +332,7 @@ function GlobalVideoCard() {
               value={em}
               onChange={(e) => setEm(e.target.value)}
               placeholder="hello@..."
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm"
             />
           </div>
           <div>
@@ -271,15 +341,9 @@ function GlobalVideoCard() {
               value={ph}
               onChange={(e) => setPh(e.target.value)}
               placeholder="+1..."
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm"
             />
           </div>
-          <button
-            onClick={save}
-            className="w-full rounded-lg bg-black text-white px-4 py-2.5 font-semibold hover:bg-gray-800"
-          >
-            Save
-          </button>
         </div>
       </div>
     </div>
@@ -288,12 +352,16 @@ function GlobalVideoCard() {
 
 function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean }) {
   const [editing, setEditing] = useState<BeatRow | null>(null);
+  const [search, setSearch] = useState("");
+  const visibleBeats = beats.filter((b) =>
+    (b.title + " " + (b.landing_slug || "")).toLowerCase().includes(search.trim().toLowerCase()),
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const bulkFn = useServerFn(adminBulkEnableLandingSlugs);
   const qc = useQueryClient();
 
-  const allVisibleIds = beats.map((b) => b.id);
+  const allVisibleIds = visibleBeats.map((b) => b.id);
   const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selected.has(id));
   const someSelected = selected.size > 0;
 
@@ -335,29 +403,36 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
   };
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-4 sm:p-6 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+    <div className="flex h-full min-h-0 flex-col rounded-xl bg-card border border-border p-3 sm:p-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 mb-3">
         <div>
-          <h2 className="text-xl font-bold">Landing Page Beats</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h2 className="text-base font-bold">Landing Page Beats</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Public pages can be discovered, Unlisted pages open only by direct link, and Private pages stay closed.
             Missing links are generated automatically.
           </p>
         </div>
-        <div className="text-xs text-gray-500">
-          {beats.length} beats · {selected.size} selected
+        <div className="text-xs text-muted-foreground">
+          {visibleBeats.length} of {beats.length} beats · {selected.size} selected
         </div>
       </div>
 
+      <input
+        aria-label="Search landing pages"
+        placeholder="Search beats or links…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="mb-3 h-11 w-full shrink-0 rounded-lg border border-border bg-background px-3 text-sm"
+      />
       {loading ? (
-        <p className="text-sm text-gray-500">Loading...</p>
-      ) : beats.length === 0 ? (
-        <p className="text-sm text-gray-500">No beats yet. Create beats in /admin/beats first.</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : visibleBeats.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No matching beats. Clear your search or add beats in Catalog.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="min-h-0 flex-1 overflow-auto overscroll-contain">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+            <thead className="sticky top-0 z-10 bg-card">
+              <tr className="text-left text-xs text-muted-foreground border-b border-border/60">
                 <th className="py-2 pr-2 w-8">
                   <input
                     type="checkbox"
@@ -376,10 +451,10 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
               </tr>
             </thead>
             <tbody>
-              {beats.map((b) => (
+              {visibleBeats.map((b) => (
                 <tr
                   key={b.id}
-                  className={`border-b border-gray-50 align-top ${selected.has(b.id) ? "bg-blue-50/50" : ""}`}
+                  className={`border-b border-border/40 align-top ${selected.has(b.id) ? "bg-blue-50/50" : ""}`}
                 >
                   <td className="py-3 pr-2">
                     <input
@@ -390,10 +465,10 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
                       className="h-4 w-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
                     />
                   </td>
-                  <td className="py-3 font-medium">
-                    <div>{b.title}</div>
+                  <td className="max-w-[180px] py-2 font-medium">
+                    <div className="break-words">{b.title}</div>
                     {b.landing_slug && b.landing_visibility !== "private" && (
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-1 hidden space-y-1 lg:block">
                         <ShareLinkRow url={`https://mybeatcatalog.com/beats/${b.landing_slug}`} label="Canonical" />
                       </div>
                     )}
@@ -403,11 +478,17 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
                   <td className="py-3 hidden md:table-cell">${(b.discount_price_cents / 100).toFixed(2)}</td>
                   <td className="py-3">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs ${b.landing_visibility === "public" ? "bg-green-100 text-green-700" : b.landing_visibility === "unlisted" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}
+                      className={`px-2 py-0.5 rounded text-xs ${b.landing_visibility === "public" ? "bg-green-100 text-green-700" : b.landing_visibility === "unlisted" ? "bg-blue-100 text-blue-700" : "bg-secondary text-muted-foreground"}`}
                     >
-                      {b.landing_visibility === "public" ? "Public" : b.landing_visibility === "unlisted" ? "Unlisted" : "Private"}
+                      {b.landing_visibility === "public"
+                        ? "Public"
+                        : b.landing_visibility === "unlisted"
+                          ? "Unlisted"
+                          : "Private"}
                     </span>
-                    {!b.is_active && <div className="mt-1 text-[10px] font-semibold text-amber-600">Catalog inactive</div>}
+                    {!b.is_active && (
+                      <div className="mt-1 text-[10px] font-semibold text-amber-600">Catalog inactive</div>
+                    )}
                   </td>
                   <td className="py-3 whitespace-nowrap">
                     <button onClick={() => setEditing(b)} className="text-blue-600 hover:underline text-xs">
@@ -419,7 +500,7 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
                           href={`/beats/${b.landing_slug}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="ml-2 text-gray-500 hover:underline text-xs"
+                          className="ml-2 text-muted-foreground hover:underline text-xs"
                         >
                           View →
                         </a>
@@ -438,7 +519,7 @@ function AllBeatsTable({ beats, loading }: { beats: BeatRow[]; loading: boolean 
 
       {/* Sticky bulk action bar */}
       {someSelected && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100vw-2rem)] max-w-2xl">
+        <div className="shrink-0 pt-3">
           <div className="rounded-2xl bg-slate-900 text-white shadow-2xl border border-slate-700 p-3 flex flex-wrap items-center gap-2">
             <div className="flex-1 min-w-0 text-sm">
               <strong>{selected.size}</strong> selected
@@ -499,7 +580,7 @@ function ShareLinkRow({ url, label }: { url: string; label: string }) {
   };
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className="text-gray-400 w-16 shrink-0">{label}</span>
+      <span className="text-muted-foreground w-16 shrink-0">{label}</span>
       <a
         href={url}
         target="_blank"
@@ -508,7 +589,7 @@ function ShareLinkRow({ url, label }: { url: string; label: string }) {
       >
         {url}
       </a>
-      <button onClick={copy} className="rounded border border-gray-200 px-2 py-0.5 text-[10px] hover:bg-gray-50">
+      <button onClick={copy} className="rounded border border-border px-2 py-0.5 text-[10px] hover:bg-secondary/40">
         {copied ? "Copied!" : "Copy"}
       </button>
     </div>
@@ -560,18 +641,18 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
     }
   };
 
-  const inp = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm";
+  const inp = "w-full rounded-lg border border-border px-3 py-2 text-sm";
   return (
     <div
       className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl my-8 animate-scale-in"
+        className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-card p-4 shadow-xl animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-xl font-black mb-4">Edit: {beat.title}</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="min-h-0 flex-1 overflow-auto overscroll-contain grid gap-3 sm:grid-cols-2">
           <div>
             <label className="text-xs font-semibold">URL slug</label>
             <input
@@ -610,7 +691,7 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           <div className="sm:col-span-2">
             <label className="text-xs font-semibold">
               Legacy external checkout URL{" "}
-              <span className="text-gray-400 font-normal">
+              <span className="text-muted-foreground font-normal">
                 (optional fallback — leave blank to use built-in Stripe checkout)
               </span>
             </label>
@@ -665,11 +746,15 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="text-xs font-semibold" htmlFor="visibility">Landing page visibility</label>
+            <label className="text-xs font-semibold" htmlFor="visibility">
+              Landing page visibility
+            </label>
             <select
               id="visibility"
               value={form.landing_visibility}
-              onChange={(e) => setForm({ ...form, landing_visibility: e.target.value as BeatRow["landing_visibility"] })}
+              onChange={(e) =>
+                setForm({ ...form, landing_visibility: e.target.value as BeatRow["landing_visibility"] })
+              }
               className={inp}
             >
               <option value="public">Public — link opens and may appear in public lookups</option>
@@ -677,15 +762,18 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
               <option value="private">Private — link shows Beat not found</option>
             </select>
             {!beat.is_active && form.landing_visibility !== "private" && (
-              <p className="mt-2 text-xs font-medium text-amber-600">This beat is inactive in the catalog, so its landing link remains unavailable until catalog access is reactivated.</p>
+              <p className="mt-2 text-xs font-medium text-amber-600">
+                This beat is inactive in the catalog, so its landing link remains unavailable until catalog access is
+                reactivated.
+              </p>
             )}
           </div>
-          <div className="sm:col-span-2 border-t border-gray-100 pt-4 mt-2">
+          <div className="sm:col-span-2 border-t border-border/60 pt-4 mt-2">
             <AttachmentsManager beatId={beat.id} />
           </div>
         </div>
-        <div className="mt-6 flex gap-2 justify-end">
-          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-200">
+        <div className="mt-3 flex shrink-0 gap-2 justify-end border-t border-border pt-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-border">
             Cancel
           </button>
           <button
@@ -711,12 +799,12 @@ function LeadsCard() {
     beat_id: string | null;
   }>;
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
-      <h2 className="text-xl font-bold mb-3">Tagged Download Leads ({leads.length})</h2>
+    <div className="rounded-2xl bg-card border border-border p-4 shadow-sm">
+      <h2 className="text-base font-bold mb-3">Tagged Download Leads ({leads.length})</h2>
       <div className="max-h-64 overflow-y-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-gray-500 text-left border-b border-gray-100">
+            <tr className="text-xs text-muted-foreground text-left border-b border-border/60">
               <th className="py-1.5">Name</th>
               <th>Email</th>
               <th>When</th>
@@ -724,10 +812,10 @@ function LeadsCard() {
           </thead>
           <tbody>
             {leads.map((l) => (
-              <tr key={l.id} className="border-b border-gray-50">
+              <tr key={l.id} className="border-b border-border/40">
                 <td className="py-1.5">{l.first_name}</td>
                 <td>{l.email}</td>
-                <td className="text-xs text-gray-500">{new Date(l.created_at).toLocaleString()}</td>
+                <td className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
@@ -748,12 +836,12 @@ function OrdersCard() {
     created_at: string;
   }>;
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
-      <h2 className="text-xl font-bold mb-3">Lease Orders ({orders.length})</h2>
+    <div className="rounded-2xl bg-card border border-border p-4 shadow-sm">
+      <h2 className="text-base font-bold mb-3">Lease Orders ({orders.length})</h2>
       <div className="max-h-64 overflow-y-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-gray-500 text-left border-b border-gray-100">
+            <tr className="text-xs text-muted-foreground text-left border-b border-border/60">
               <th className="py-1.5">Email</th>
               <th>Amount</th>
               <th>Discount</th>
@@ -762,11 +850,11 @@ function OrdersCard() {
           </thead>
           <tbody>
             {orders.map((o) => (
-              <tr key={o.id} className="border-b border-gray-50">
+              <tr key={o.id} className="border-b border-border/40">
                 <td className="py-1.5">{o.email}</td>
                 <td>${(o.amount_cents / 100).toFixed(2)}</td>
                 <td>{o.used_first_time_discount ? <span className="text-orange-600 text-xs">First-time</span> : ""}</td>
-                <td className="text-xs text-gray-500">{new Date(o.created_at).toLocaleString()}</td>
+                <td className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
@@ -842,16 +930,16 @@ function BulkPricingCard() {
   };
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
+    <div className="rounded-2xl bg-card border border-border p-4 shadow-sm">
       <div className="mb-4">
-        <h2 className="text-xl font-bold">Bulk pricing</h2>
-        <p className="text-sm text-gray-500 mt-1">
+        <h2 className="text-base font-bold">Bulk pricing</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           Set lease and optional first-time discount pricing once and apply to landing pages in bulk. Only updates{" "}
           <code className="text-xs">price_cents</code> and <code className="text-xs">discount_price_cents</code>.
           Membership pricing is not affected.
         </p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div>
           <label className="block text-xs font-semibold mb-1">Lease price (USD)</label>
           <input
@@ -860,7 +948,7 @@ function BulkPricingCard() {
             min="0.5"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm"
           />
         </div>
         <div>
@@ -872,7 +960,7 @@ function BulkPricingCard() {
             value={discount}
             onChange={(e) => setDiscount(e.target.value)}
             placeholder="Leave blank to skip"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm"
           />
         </div>
         <div>
@@ -880,7 +968,7 @@ function BulkPricingCard() {
           <select
             value={target}
             onChange={(e) => setTarget(e.target.value as "published" | "all")}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm"
           >
             <option value="published">Published landing pages only</option>
             <option value="all">All beats</option>
@@ -955,14 +1043,14 @@ function EmailTesterCard() {
   const statusClass = (status: string) => {
     if (status === "sent") return "bg-green-50 text-green-700 border-green-200";
     if (status === "pending") return "bg-yellow-50 text-yellow-700 border-yellow-200";
-    if (status === "suppressed") return "bg-gray-50 text-gray-700 border-gray-200";
+    if (status === "suppressed") return "bg-secondary/40 text-foreground border-border";
     return "bg-red-50 text-red-700 border-red-200";
   };
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
+    <div className="rounded-2xl bg-card border border-border p-4 shadow-sm">
       <div className="mb-3">
-        <h2 className="text-xl font-bold">Test emails</h2>
-        <p className="text-sm text-gray-500 mt-1">
+        <h2 className="text-base font-bold">Test emails</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           Send a real copy of each beat-landing email to any address to verify delivery and template.
         </p>
       </div>
@@ -971,7 +1059,7 @@ function EmailTesterCard() {
           value={to}
           onChange={(e) => setTo(e.target.value)}
           placeholder="recipient@example.com"
-          className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          className="flex-1 rounded-lg border border-border px-3 py-2 text-sm"
         />
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -988,17 +1076,17 @@ function EmailTesterCard() {
           {busy === "exclusive_inquiry" ? "Sending…" : "Exclusive inquiry"}
         </button>
       </div>
-      <div className="mt-6 border-t border-gray-100 pt-5">
+      <div className="mt-6 border-t border-border/60 pt-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-sm font-bold">Email delivery status</h3>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Latest unique attempts for free downloads, purchases, inquiries, and invites.
             </p>
           </div>
           <button
             onClick={() => statusQuery.refetch()}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary/40"
           >
             Refresh status
           </button>
@@ -1010,9 +1098,9 @@ function EmailTesterCard() {
           <StatPill label="Failed" value={stats.failed} tone="red" />
           <StatPill label="Suppressed" value={stats.suppressed} />
         </div>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-gray-100">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-border/60">
           <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-gray-500">
+            <thead className="bg-secondary/40 text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 font-semibold">Type</th>
                 <th className="px-3 py-2 font-semibold">Recipient</th>
@@ -1024,23 +1112,23 @@ function EmailTesterCard() {
             <tbody className="divide-y divide-gray-100">
               {statusQuery.isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-gray-500">
+                  <td colSpan={5} className="px-3 py-4 text-muted-foreground">
                     Loading email status…
                   </td>
                 </tr>
               ) : emails.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-gray-500">
+                  <td colSpan={5} className="px-3 py-4 text-muted-foreground">
                     No email attempts found yet.
                   </td>
                 </tr>
               ) : (
                 emails.slice(0, 12).map((email) => (
                   <tr key={email.message_id}>
-                    <td className="px-3 py-2 font-medium text-gray-900">
+                    <td className="px-3 py-2 font-medium text-foreground">
                       {email.template_name.replace(/^beat_/, "").replace(/_/g, " ")}
                     </td>
-                    <td className="px-3 py-2 text-gray-600">{email.recipient_email}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{email.recipient_email}</td>
                     <td className="px-3 py-2">
                       <span
                         className={`inline-flex rounded-full border px-2 py-0.5 font-semibold ${statusClass(email.status)}`}
@@ -1048,7 +1136,7 @@ function EmailTesterCard() {
                         {email.status}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-gray-500">{new Date(email.created_at).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{new Date(email.created_at).toLocaleString()}</td>
                     <td className="max-w-[260px] truncate px-3 py-2 text-red-600" title={email.error_message || ""}>
                       {email.error_message || "—"}
                     </td>
@@ -1079,7 +1167,7 @@ function StatPill({
         ? "bg-yellow-50 text-yellow-700"
         : tone === "red"
           ? "bg-red-50 text-red-700"
-          : "bg-gray-50 text-gray-700";
+          : "bg-secondary/40 text-foreground";
   return (
     <div className={`rounded-lg px-3 py-2 ${toneClass}`}>
       <div className="text-lg font-black leading-none">{value}</div>
@@ -1108,11 +1196,11 @@ function InquiryQuestionsCard() {
   const [adding, setAdding] = useState(false);
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
+    <div className="rounded-2xl bg-card border border-border p-4 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-xl font-bold">Exclusive Inquiry Questions</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-base font-bold">Exclusive Inquiry Questions</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             These populate the popup when someone taps "Apply for Exclusive / Custom Work". Answers are emailed to
             jason@krazyjay.com.
           </p>
@@ -1125,7 +1213,7 @@ function InquiryQuestionsCard() {
         </button>
       </div>
       {q.isLoading ? (
-        <p className="text-sm text-gray-500">Loading…</p>
+        <p className="text-sm text-muted-foreground">Loading…</p>
       ) : (
         <ul className="divide-y divide-gray-100">
           {questions.map((qq) => (
@@ -1195,13 +1283,13 @@ function QuestionRow({
   if (!editing) {
     return (
       <li className="py-3 flex items-center gap-3">
-        <span className="text-xs text-gray-400 w-8 tabular-nums">{q.sort_order}</span>
+        <span className="text-xs text-muted-foreground w-8 tabular-nums">{q.sort_order}</span>
         <div className="flex-1 min-w-0">
           <div className="font-medium truncate">
             {q.label}
             {q.required && <span className="text-red-500 ml-1">*</span>}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-muted-foreground">
             {q.field_type}
             {q.active ? "" : " · disabled"}
           </div>
@@ -1215,9 +1303,9 @@ function QuestionRow({
       </li>
     );
   }
-  const inp = "w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm";
+  const inp = "w-full rounded-lg border border-border px-2 py-1.5 text-sm";
   return (
-    <li className="py-3 space-y-2 bg-gray-50 rounded-lg p-3">
+    <li className="py-3 space-y-2 bg-secondary/40 rounded-lg p-3">
       <input className={inp} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Question label" />
       <input
         className={inp}
@@ -1246,7 +1334,7 @@ function QuestionRow({
         <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Active
       </label>
       <div className="flex gap-2 justify-end">
-        <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200">
+        <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded-lg border border-border">
           Cancel
         </button>
         <button
@@ -1282,9 +1370,9 @@ function NewQuestionForm({
   const [fieldType, setFieldType] = useState("text");
   const [required, setRequired] = useState(true);
   const [sortOrder, setSortOrder] = useState(100);
-  const inp = "w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm";
+  const inp = "w-full rounded-lg border border-border px-2 py-1.5 text-sm";
   return (
-    <div className="mt-4 p-3 bg-gray-50 rounded-lg space-y-2">
+    <div className="mt-4 p-3 bg-secondary/40 rounded-lg space-y-2">
       <input className={inp} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Question label" />
       <input
         className={inp}
@@ -1310,7 +1398,7 @@ function NewQuestionForm({
         </label>
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200">
+        <button onClick={onCancel} className="px-3 py-1.5 text-xs rounded-lg border border-border">
           Cancel
         </button>
         <button
@@ -1350,20 +1438,20 @@ function InquirySubmissionsCard() {
     created_at: string;
   }>;
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
-      <h2 className="text-xl font-bold mb-3">Exclusive Inquiries ({rows.length})</h2>
+    <div className="rounded-2xl bg-card border border-border p-4 shadow-sm">
+      <h2 className="text-base font-bold mb-3">Exclusive Inquiries ({rows.length})</h2>
       <div className="max-h-96 overflow-y-auto space-y-2">
         {rows.length === 0 ? (
-          <p className="text-sm text-gray-500">No submissions yet.</p>
+          <p className="text-sm text-muted-foreground">No submissions yet.</p>
         ) : (
           rows.map((r) => (
-            <details key={r.id} className="border border-gray-100 rounded-lg p-3">
+            <details key={r.id} className="border border-border/60 rounded-lg p-3">
               <summary className="cursor-pointer text-sm font-semibold flex items-center gap-3">
                 <span>{r.name}</span>
-                <span className="text-gray-500 font-normal">{r.email}</span>
-                <span className="ml-auto text-xs text-gray-400">{new Date(r.created_at).toLocaleString()}</span>
+                <span className="text-muted-foreground font-normal">{r.email}</span>
+                <span className="ml-auto text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</span>
               </summary>
-              <pre className="mt-2 text-xs bg-gray-50 rounded p-2 overflow-x-auto">
+              <pre className="mt-2 text-xs bg-secondary/40 rounded p-2 overflow-x-auto">
                 {JSON.stringify(r.answers, null, 2)}
               </pre>
             </details>
@@ -1431,13 +1519,13 @@ function AttachmentsManager({ beatId }: { beatId: string }) {
         </label>
       </div>
       {rows.length === 0 ? (
-        <p className="text-xs text-gray-500">None yet.</p>
+        <p className="text-xs text-muted-foreground">None yet.</p>
       ) : (
         <ul className="space-y-1.5">
           {rows.map((r) => (
-            <li key={r.id} className="flex items-center gap-3 rounded-lg border border-gray-100 px-3 py-2">
+            <li key={r.id} className="flex items-center gap-3 rounded-lg border border-border/60 px-3 py-2">
               <span className="flex-1 text-sm truncate">{r.filename}</span>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-muted-foreground">
                 {r.size_bytes ? `${(r.size_bytes / 1024).toFixed(1)} KB` : ""}
               </span>
               <button
