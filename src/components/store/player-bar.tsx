@@ -123,14 +123,18 @@ export function PlayerBar() {
             <CoverArt title={current.title} seed={current.id} src={current.coverUrl} />
           </button>
 
-          <button
-            type="button"
-            onClick={() => setSheetOpen(true)}
-            className="min-w-0 flex-1 text-left lg:pointer-events-none"
-            aria-label={`Open now playing: ${current.title}`}
-          >
-            <div className="truncate text-sm font-medium text-foreground">{current.title}</div>
-            <div className="truncate text-xs text-muted-foreground">{statusLine}</div>
+          <div className="min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => setSheetOpen(true)}
+              className="block w-full min-w-0 text-left lg:pointer-events-none"
+              aria-label={`Open now playing: ${current.title}`}
+            >
+              <span className="block truncate text-sm font-medium text-foreground">
+                {current.title}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">{statusLine}</span>
+            </button>
             <div className="mt-1.5 hidden items-center gap-2 sm:flex">
               <span className="w-9 text-[11px] tabular-nums text-muted-foreground">
                 {formatTime(progress)}
@@ -142,15 +146,14 @@ export function PlayerBar() {
                 step={0.1}
                 value={Math.min(progress, max || 1)}
                 onChange={(e) => seek(Number(e.target.value))}
-                onClick={(e) => e.stopPropagation()}
                 aria-label="Seek"
-                className="pointer-events-auto h-1 flex-1 cursor-pointer appearance-none rounded-full bg-white/15 accent-[var(--primary)]"
+                className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-white/15 accent-[var(--primary)]"
               />
               <span className="w-9 text-[11px] tabular-nums text-muted-foreground">
                 {formatTime(max)}
               </span>
             </div>
-          </button>
+          </div>
 
           <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
             {status === "error" ? (
