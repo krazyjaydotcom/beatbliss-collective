@@ -9,6 +9,9 @@ import { BeatRow } from "@/components/store/beat-row";
 import {
   ActiveFilters,
   FilterBar,
+  FilterSheet,
+  FilterSheetTrigger,
+  SORTS,
   matchesBpm,
   type BpmBucket,
   type SortKey,
@@ -76,7 +79,7 @@ function CatalogError() {
   );
 }
 
-const VIEWS: StoreView[] = ["browse", "new", "charts", "saved"];
+const VIEWS: StoreView[] = ["browse", "new", "saved"];
 
 function StorePage() {
   const { beats, genres } = Route.useLoaderData();
@@ -84,8 +87,13 @@ function StorePage() {
   const navigate = useNavigate({ from: "/" });
   const player = usePlayer();
   const { savedIds, isSaved, toggle: toggleSaved } = useSavedBeats();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const view = (VIEWS.includes(search.view as StoreView) ? search.view : "browse") as StoreView;
+  // `charts` is a legacy link target. No beat in the catalog carries a featured
+  // flag and there is no play/sales data, so there is nothing to rank: it maps
+  // to New Releases rather than pretending to be a chart.
+  const rawView = search.view === "charts" ? "new" : search.view;
+  const view = (VIEWS.includes(rawView as StoreView) ? rawView : "browse") as StoreView;
   const genre = search.genre;
   const bpm = search.bpm as BpmBucket;
   const sort = search.sort as SortKey;
@@ -121,13 +129,6 @@ function StorePage() {
     if (view === "saved") list = list.filter((b) => savedIds.includes(b.id));
     if (view === "new") {
       list = [...list].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 30);
-    } else if (view === "charts") {
-      list = [...list]
-        .sort((a, b) => {
-          if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
-          return a.createdAt < b.createdAt ? 1 : -1;
-        })
-        .slice(0, 20);
     } else {
       list = [...list].sort((a, b) => {
         if (sort === "title") return a.title.localeCompare(b.title);
@@ -145,46 +146,44 @@ function StorePage() {
     return beats.find((b) => b.slug === ref || b.id === ref) ?? null;
   }, [beats, search.beat, search.b]);
 
-  const openBeat = (b: StoreBeat) => setSearch({ beat: b.slug ?? b.id });
-  const closeBeat = () => setSearch({ beat: undefined });
+  const openBeat = (b: StoreBeat) => setSearch({ beat: b.slug ?? b.id, b: undefined });
+  const closeBeat = () => setSearch({ beat: undefined, b: undefined });
 
   const playBeat = (b: StoreBeat) => {
     if (player.current?.id === b.id) player.toggle();
     else player.play(b, results);
   };
 
+  const resetFilters = () => setSearch({ genre: "all", bpm: "all", q: "" });
+
   const activeFilters = [
     ...(genre !== "all" ? [{ label: genre, onClear: () => setSearch({ genre: "all" }) }] : []),
-    ...(bpm !== "all" ? [{ label: `Tempo: ${bpm.replace("-plus", "+").replace("-", "–")}`, onClear: () => setSearch({ bpm: "all" }) }] : []),
+    ...(bpm !== "all"
+      ? [
+          {
+            label: `Tempo: ${bpm.replace("-plus", "+").replace("-", "–")}`,
+            onClear: () => setSearch({ bpm: "all" }),
+          },
+        ]
+      : []),
     ...(search.q ? [{ label: `“${search.q}”`, onClear: () => setSearch({ q: "" }) }] : []),
   ];
 
+  const filterSummary = [
+    genre === "all" ? "All genres" : genre,
+    bpm === "all" ? "any tempo" : bpm.replace("-plus", "+").replace("-", "–"),
+    SORTS.find((s) => s.value === sort)?.label.toLowerCase() ?? "newest",
+  ].join(" · ");
+
   const heading =
     view === "new"
-      ? { title: "New releases", sub: "The most recently added beats in the catalog." }
-      : view === "charts"
-        ? {
-            title: "Producer picks",
-            sub: "Curated by KRAZYJAYDOTCOM, ordered by featured status then release date — not a play-count or sales ranking.",
-          }
-        : view === "saved"
-          ? { title: "Saved", sub: "Saved in this browser only. These do not sync between devices." }
-          : { title: "Find your next sound", sub: `${beats.length} beats available to preview and license.` };
-
-  const detail = selected ? (
-    <BeatDetail
-      beat={selected}
-      isCurrent={player.current?.id === selected.id}
-      isPlaying={player.isPlaying}
-      isSaved={isSaved(selected.id)}
-      onPlay={() => playBeat(selected)}
-      onSave={() => toggleSaved(selected.id)}
-    />
-  ) : (
-    <div className="text-sm text-muted-foreground">
-      Select a beat to see its details and license options.
-    </div>
-  );
+      ? { title: "New releases", sub: "The 30 most recently added beats." }
+      : view === "saved"
+        ? { title: "Saved", sub: "Saved in this browser only — these do not sync between devices." }
+        : {
+            title: "Find your next sound",
+            sub: `${beats.length} beats to preview and license.`,
+          };
 
   return (
     <>
@@ -194,12 +193,30 @@ function StorePage() {
         query={queryInput}
         onQuery={setQueryInput}
         savedCount={savedIds.length}
-        aside={detail}
+        aside={
+          selected ? (
+            <BeatDetail
+              beat={selected}
+              isCurrent={player.current?.id === selected.id}
+              isPlaying={player.isPlaying}
+              isSaved={isSaved(selected.id)}
+              onPlay={() => playBeat(selected)}
+              onSave={() => toggleSaved(selected.id)}
+              onClose={closeBeat}
+            />
+          ) : undefined
+        }
       >
         <div className="sticky top-0 z-10 border-b border-white/[0.08] bg-background/95 px-4 pb-3 pt-4 backdrop-blur sm:px-6">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{heading.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{heading.sub}</p>
-          <div className="mt-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h1 className="text-lg font-semibold tracking-tight sm:text-xl">{heading.title}</h1>
+            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+              {results.length} {results.length === 1 ? "beat" : "beats"}
+            </span>
+          </div>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">{heading.sub}</p>
+
+          <div className="mt-3 hidden lg:block">
             <FilterBar
               genres={genres}
               genre={genre}
@@ -210,17 +227,19 @@ function StorePage() {
               onSort={(v) => setSearch({ sort: v })}
             />
           </div>
+          <div className="mt-3 lg:hidden">
+            <FilterSheetTrigger
+              activeCount={activeFilters.length}
+              summary={filterSummary}
+              onOpen={() => setFiltersOpen(true)}
+            />
+          </div>
+
           {activeFilters.length ? (
             <div className="mt-3">
-              <ActiveFilters
-                items={activeFilters}
-                onReset={() => setSearch({ genre: "all", bpm: "all", q: "" })}
-              />
+              <ActiveFilters items={activeFilters} onReset={resetFilters} />
             </div>
           ) : null}
-          <p className="mt-3 text-xs text-muted-foreground">
-            {results.length} {results.length === 1 ? "beat" : "beats"}
-          </p>
         </div>
 
         {results.length === 0 ? (
@@ -233,7 +252,7 @@ function StorePage() {
             {activeFilters.length ? (
               <button
                 type="button"
-                onClick={() => setSearch({ genre: "all", bpm: "all", q: "" })}
+                onClick={resetFilters}
                 className="mt-4 h-11 rounded-full border border-white/12 px-5 text-sm font-medium hover:border-primary/60 hover:text-primary"
               >
                 Clear filters
@@ -246,7 +265,7 @@ function StorePage() {
               <li key={b.id}>
                 <BeatRow
                   beat={b}
-                  rank={view === "charts" ? i + 1 : undefined}
+                  rank={view === "new" ? i + 1 : undefined}
                   isCurrent={player.current?.id === b.id}
                   isPlaying={player.isPlaying}
                   isSaved={isSaved(b.id)}
@@ -259,6 +278,19 @@ function StorePage() {
           </ul>
         )}
       </StoreShell>
+
+      <FilterSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        onReset={resetFilters}
+        genres={genres}
+        genre={genre}
+        bpm={bpm}
+        sort={sort}
+        onGenre={(v) => setSearch({ genre: v })}
+        onBpm={(v) => setSearch({ bpm: v })}
+        onSort={(v) => setSearch({ sort: v })}
+      />
 
       <BeatDetailDrawer
         beat={selected}

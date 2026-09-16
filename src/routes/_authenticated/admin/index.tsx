@@ -8,6 +8,7 @@ import { adminListCustomerActivity } from "@/lib/admin-activity.functions";
 import { adminListCrm } from "@/lib/crm.functions";
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, SectionTitle, StatTile, Surface } from "@/components/admin/ui";
+import { RevenueChart, buildDailyRevenue } from "@/components/admin/revenue-chart";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminOverview,
@@ -83,6 +84,21 @@ function AdminOverview() {
             <StatTile icon={Download} label="Downloads" value={stats.downloads} hint="Last 30 days" />
             <StatTile icon={Contact} label="New prospects" value={stats.newLeads + prospects.length} hint={`${prospects.length} added by hand`} />
           </div>
+
+          <Surface>
+            <SectionTitle
+              action={
+                <span className="text-[11px] text-muted-foreground">
+                  Confirmed payments only · last 30 days
+                </span>
+              }
+            >
+              Revenue
+            </SectionTitle>
+            <div className="px-2 pb-4 sm:px-4">
+              <RevenueChart data={buildDailyRevenue(activityQ.data?.rows ?? [])} />
+            </div>
+          </Surface>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Surface>

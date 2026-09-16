@@ -67,25 +67,25 @@
 :root {
   --radius: 0.75rem;
   /* Krazy dark theme */
-  --background: oklch(0.14 0.01 20);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.18 0.012 20);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.18 0.012 20);
-  --popover-foreground: oklch(0.98 0 0);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.975 0 0);
+  --card: oklch(0.185 0 0);
+  --card-foreground: oklch(0.975 0 0);
+  --popover: oklch(0.185 0 0);
+  --popover-foreground: oklch(0.975 0 0);
   --primary: oklch(0.62 0.22 250);
   --primary-foreground: oklch(0.99 0 0);
   --primary-glow: oklch(0.72 0.2 250);
-  --secondary: oklch(0.22 0.012 250);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.22 0.012 250);
-  --muted-foreground: oklch(0.7 0.01 250);
+  --secondary: oklch(0.225 0.004 250);
+  --secondary-foreground: oklch(0.975 0 0);
+  --muted: oklch(0.225 0.004 250);
+  --muted-foreground: oklch(0.705 0.005 250);
   --accent: oklch(0.62 0.22 250);
   --accent-foreground: oklch(0.99 0 0);
   --destructive: oklch(0.62 0.24 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.26 0.015 250);
-  --input: oklch(0.22 0.012 250);
+  --border: oklch(0.265 0.005 250);
+  --input: oklch(0.225 0.004 250);
   --ring: oklch(0.62 0.22 250);
   --gradient-primary: linear-gradient(135deg, oklch(0.62 0.22 250), oklch(0.72 0.2 250));
   --gradient-radial-red: radial-gradient(circle at 70% 50%, oklch(0.4 0.18 250 / 0.35), transparent 60%);
@@ -152,6 +152,34 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+
+  /* Narrow, dark scrollbars instead of the glaring native light track. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.42 0 0) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: oklch(0.36 0 0);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(0.48 0 0);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 @layer components {

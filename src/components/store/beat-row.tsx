@@ -1,7 +1,8 @@
-import { Heart, Music2, Pause, Play } from "lucide-react";
+import { Heart, Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
 import { formatPrice, formatTime } from "@/components/store/player-provider";
+import { CoverArt } from "@/components/store/cover-art";
 
 type Props = {
   beat: StoreBeat;
@@ -38,27 +39,15 @@ export function BeatRow({
         {typeof rank === "number" ? (
           <span
             className={cn(
-              "w-5 shrink-0 text-right text-sm tabular-nums",
-              isCurrent ? "text-primary" : "text-muted-foreground",
+              "w-6 shrink-0 text-right text-[13px] font-semibold tabular-nums",
+              isCurrent ? "text-primary" : "text-muted-foreground/70",
             )}
           >
             {rank}
           </span>
         ) : null}
         <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-white/[0.06] sm:h-12 sm:w-12">
-          {beat.coverUrl ? (
-            <img
-              src={beat.coverUrl}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-              <Music2 className="h-4 w-4" />
-            </div>
-          )}
+          <CoverArt title={beat.title} seed={beat.id} src={beat.coverUrl} />
           <button
             type="button"
             onClick={onPlay}

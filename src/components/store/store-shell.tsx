@@ -1,16 +1,15 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { BarChart3, Heart, LogIn, Search, Sparkles, User, Waves, X } from "lucide-react";
+import { Heart, LogIn, Search, Sparkles, User, Waves, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { PlayerBar } from "@/components/store/player-bar";
 
-export type StoreView = "browse" | "new" | "charts" | "saved";
+export type StoreView = "browse" | "new" | "saved";
 
 export const STORE_VIEWS: { value: StoreView; label: string; icon: typeof Waves }[] = [
   { value: "browse", label: "Browse", icon: Waves },
   { value: "new", label: "New Releases", icon: Sparkles },
-  { value: "charts", label: "Charts", icon: BarChart3 },
   { value: "saved", label: "Saved", icon: Heart },
 ];
 
@@ -90,16 +89,20 @@ export function StoreShell({
             {user ? (
               <Link
                 to="/account"
+                aria-label="My account"
                 className="inline-flex h-10 items-center gap-2 rounded-full border border-white/12 px-3 text-xs font-medium text-foreground hover:border-primary/60 hover:text-primary sm:px-4"
               >
-                <User className="h-4 w-4" /> <span className="hidden sm:inline">My account</span>
+                <User className="h-4 w-4" aria-hidden />{" "}
+                <span className="hidden sm:inline">My account</span>
               </Link>
             ) : (
               <Link
                 to="/login"
+                aria-label="Member login"
                 className="inline-flex h-10 items-center gap-2 rounded-full border border-white/12 px-3 text-xs font-medium text-foreground hover:border-primary/60 hover:text-primary sm:px-4"
               >
-                <LogIn className="h-4 w-4" /> <span className="hidden sm:inline">Member login</span>
+                <LogIn className="h-4 w-4" aria-hidden />{" "}
+                <span className="hidden sm:inline">Member login</span>
               </Link>
             )}
           </nav>
@@ -157,7 +160,7 @@ export function StoreShell({
       <PlayerBar />
 
       <nav className="shrink-0 border-t border-white/[0.08] bg-card/95 pb-[env(safe-area-inset-bottom)] lg:hidden">
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-3">
           {STORE_VIEWS.map((item) => (
             <li key={item.value}>
               <button
