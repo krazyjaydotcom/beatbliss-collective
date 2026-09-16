@@ -160,7 +160,7 @@ export function StoreShell({
       <PlayerBar />
 
       <nav className="shrink-0 border-t border-white/[0.08] bg-card/95 pb-[env(safe-area-inset-bottom)] lg:hidden">
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-3">
           {STORE_VIEWS.map((item) => (
             <li key={item.value}>
               <button
