@@ -65,6 +65,7 @@ import { Route as AuthenticatedAdminGiftRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminFunnelsRouteImport } from './routes/_authenticated/admin/funnels'
 import { Route as AuthenticatedAdminEmailTemplatesRouteImport } from './routes/_authenticated/admin/email-templates'
 import { Route as AuthenticatedAdminCustomersRouteImport } from './routes/_authenticated/admin/customers'
+import { Route as AuthenticatedAdminCommercialsRouteImport } from './routes/_authenticated/admin/commercials'
 import { Route as AuthenticatedAdminClassroomRouteImport } from './routes/_authenticated/admin/classroom'
 import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authenticated/admin/beats'
 import { Route as AuthenticatedAdminBeatRequestsRouteImport } from './routes/_authenticated/admin/beat-requests'
@@ -374,6 +375,12 @@ const AuthenticatedAdminCustomersRoute =
     path: '/customers',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCommercialsRoute =
+  AuthenticatedAdminCommercialsRouteImport.update({
+    id: '/commercials',
+    path: '/commercials',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminClassroomRoute =
   AuthenticatedAdminClassroomRouteImport.update({
     id: '/classroom',
@@ -498,6 +505,7 @@ export interface FileRoutesByFullPath {
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
+  '/admin/commercials': typeof AuthenticatedAdminCommercialsRoute
   '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/email-templates': typeof AuthenticatedAdminEmailTemplatesRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
@@ -568,6 +576,7 @@ export interface FileRoutesByTo {
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
+  '/admin/commercials': typeof AuthenticatedAdminCommercialsRoute
   '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/email-templates': typeof AuthenticatedAdminEmailTemplatesRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
@@ -641,6 +650,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
   '/_authenticated/admin/beats': typeof AuthenticatedAdminBeatsRoute
   '/_authenticated/admin/classroom': typeof AuthenticatedAdminClassroomRoute
+  '/_authenticated/admin/commercials': typeof AuthenticatedAdminCommercialsRoute
   '/_authenticated/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/_authenticated/admin/email-templates': typeof AuthenticatedAdminEmailTemplatesRoute
   '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
@@ -714,6 +724,7 @@ export interface FileRouteTypes {
     | '/admin/beat-requests'
     | '/admin/beats'
     | '/admin/classroom'
+    | '/admin/commercials'
     | '/admin/customers'
     | '/admin/email-templates'
     | '/admin/funnels'
@@ -784,6 +795,7 @@ export interface FileRouteTypes {
     | '/admin/beat-requests'
     | '/admin/beats'
     | '/admin/classroom'
+    | '/admin/commercials'
     | '/admin/customers'
     | '/admin/email-templates'
     | '/admin/funnels'
@@ -856,6 +868,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/beat-requests'
     | '/_authenticated/admin/beats'
     | '/_authenticated/admin/classroom'
+    | '/_authenticated/admin/commercials'
     | '/_authenticated/admin/customers'
     | '/_authenticated/admin/email-templates'
     | '/_authenticated/admin/funnels'
@@ -1312,6 +1325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCustomersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/commercials': {
+      id: '/_authenticated/admin/commercials'
+      path: '/commercials'
+      fullPath: '/admin/commercials'
+      preLoaderRoute: typeof AuthenticatedAdminCommercialsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/classroom': {
       id: '/_authenticated/admin/classroom'
       path: '/classroom'
@@ -1423,6 +1443,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBeatRequestsRoute: typeof AuthenticatedAdminBeatRequestsRoute
   AuthenticatedAdminBeatsRoute: typeof AuthenticatedAdminBeatsRoute
   AuthenticatedAdminClassroomRoute: typeof AuthenticatedAdminClassroomRoute
+  AuthenticatedAdminCommercialsRoute: typeof AuthenticatedAdminCommercialsRoute
   AuthenticatedAdminCustomersRoute: typeof AuthenticatedAdminCustomersRoute
   AuthenticatedAdminEmailTemplatesRoute: typeof AuthenticatedAdminEmailTemplatesRoute
   AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRoute
@@ -1455,6 +1476,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBeatRequestsRoute: AuthenticatedAdminBeatRequestsRoute,
   AuthenticatedAdminBeatsRoute: AuthenticatedAdminBeatsRoute,
   AuthenticatedAdminClassroomRoute: AuthenticatedAdminClassroomRoute,
+  AuthenticatedAdminCommercialsRoute: AuthenticatedAdminCommercialsRoute,
   AuthenticatedAdminCustomersRoute: AuthenticatedAdminCustomersRoute,
   AuthenticatedAdminEmailTemplatesRoute: AuthenticatedAdminEmailTemplatesRoute,
   AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRoute,
