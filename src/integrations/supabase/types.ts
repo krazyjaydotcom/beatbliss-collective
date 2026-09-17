@@ -104,6 +104,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_spots: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          cta_label: string | null
+          cta_url: string | null
+          id: string
+          impressions: number
+          is_active: boolean
+          media_type: string
+          media_url: string
+          skips: number
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          id?: string
+          impressions?: number
+          is_active?: boolean
+          media_type?: string
+          media_url: string
+          skips?: number
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          id?: string
+          impressions?: number
+          is_active?: boolean
+          media_type?: string
+          media_url?: string
+          skips?: number
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agreements: {
         Row: {
           accepted_at: string
@@ -1971,6 +2019,10 @@ export type Database = {
       process_beat_download: {
         Args: { _beat_id: string; _file_type?: string }
         Returns: Json
+      }
+      record_ad_event: {
+        Args: { _ad_id: string; _event: string }
+        Returns: undefined
       }
     }
     Enums: {
