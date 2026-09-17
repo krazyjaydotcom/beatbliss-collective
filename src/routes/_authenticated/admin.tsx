@@ -19,6 +19,7 @@ import {
   Tag,
   FileText,
   Image as ImageIcon,
+  Megaphone,
   Mail,
   Menu,
   Wallet,
