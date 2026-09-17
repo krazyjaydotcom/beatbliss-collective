@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import type { StoreBeat } from "@/lib/store.functions";
+import { useAuth } from "@/hooks/use-auth";
+import { AdOverlay, fetchActiveAds, pickNextAd, type AdSpot } from "./ad-overlay";
 
 type Status = "idle" | "loading" | "ready" | "error";
 
@@ -32,6 +34,34 @@ type PlayerValue = {
 
 const PlayerContext = createContext<PlayerValue | null>(null);
 
+// Guests hear a short sponsor message after 5 beats or 10 minutes of listening,
+// whichever comes first. Signed-in listeners are never metered.
+const BEAT_LIMIT = 5;
+const SECONDS_LIMIT = 600;
+const METER_KEY = "mbc.listen.meter";
+
+type Meter = { beats: number; seconds: number };
+
+function readMeter(): Meter {
+  if (typeof window === "undefined") return { beats: 0, seconds: 0 };
+  try {
+    const raw = sessionStorage.getItem(METER_KEY);
+    if (!raw) return { beats: 0, seconds: 0 };
+    const parsed = JSON.parse(raw) as Partial<Meter>;
+    return { beats: Number(parsed.beats) || 0, seconds: Number(parsed.seconds) || 0 };
+  } catch {
+    return { beats: 0, seconds: 0 };
+  }
+}
+
+function writeMeter(meter: Meter) {
+  try {
+    sessionStorage.setItem(METER_KEY, JSON.stringify(meter));
+  } catch {
+    /* storage unavailable — the meter simply resets on reload */
+  }
+}
+
 /**
  * ONE persistent <audio> element for the whole app. It lives above the router
  * outlet, so playback survives searching, filtering, opening detail drawers and
@@ -47,7 +77,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [volume, setVolumeState] = useState(1);
   const [status, setStatus] = useState<Status>("idle");
 
-  const start = useCallback((beat: StoreBeat, nextQueue?: StoreBeat[]) => {
+  const { user } = useAuth();
+  const isGuest = !user;
+  const isGuestRef = useRef(isGuest);
+  isGuestRef.current = isGuest;
+
+  const meterRef = useRef<Meter>({ beats: 0, seconds: 0 });
+  const lastTimeRef = useRef(0);
+  const adsRef = useRef<AdSpot[] | null>(null);
+  const pendingRef = useRef<{ beat: StoreBeat; queue?: StoreBeat[] } | null>(null);
+  const [ad, setAd] = useState<AdSpot | null>(null);
+
+  useEffect(() => {
+    meterRef.current = readMeter();
+  }, []);
+
+  const resetMeter = useCallback(() => {
+    meterRef.current = { beats: 0, seconds: 0 };
+    writeMeter(meterRef.current);
+  }, []);
+
+  const playNow = useCallback((beat: StoreBeat, nextQueue?: StoreBeat[]) => {
     const audio = audioRef.current;
     if (!audio || !beat.previewUrl) {
       setStatus("error");
@@ -56,6 +106,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (nextQueue && nextQueue.length) setQueue(nextQueue);
     setCurrent(beat);
     setProgress(0);
+    lastTimeRef.current = 0;
     setDuration(beat.durationSeconds ?? 0);
     setStatus("loading");
     audio.src = beat.previewUrl;
@@ -67,7 +118,57 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         setIsPlaying(false);
         setStatus("error");
       });
+
+    if (isGuestRef.current) {
+      meterRef.current = { ...meterRef.current, beats: meterRef.current.beats + 1 };
+      writeMeter(meterRef.current);
+    }
   }, []);
+
+  const start = useCallback(
+    (beat: StoreBeat, nextQueue?: StoreBeat[]) => {
+      const meter = meterRef.current;
+      const overLimit = meter.beats >= BEAT_LIMIT || meter.seconds >= SECONDS_LIMIT;
+      if (!isGuestRef.current || !overLimit) {
+        playNow(beat, nextQueue);
+        return;
+      }
+
+      // Hold the requested beat, show the sponsor message, resume right after.
+      audioRef.current?.pause();
+      setIsPlaying(false);
+      pendingRef.current = { beat, queue: nextQueue };
+
+      const show = (list: AdSpot[]) => {
+        const spot = pickNextAd(list);
+        if (!spot) {
+          pendingRef.current = null;
+          resetMeter();
+          playNow(beat, nextQueue);
+          return;
+        }
+        setAd(spot);
+      };
+
+      if (adsRef.current) {
+        show(adsRef.current);
+      } else {
+        void fetchActiveAds().then((list) => {
+          adsRef.current = list;
+          show(list);
+        });
+      }
+    },
+    [playNow, resetMeter],
+  );
+
+  const finishAd = useCallback(() => {
+    setAd(null);
+    resetMeter();
+    const pending = pendingRef.current;
+    pendingRef.current = null;
+    if (pending) playNow(pending.beat, pending.queue);
+  }, [playNow, resetMeter]);
 
   const pause = useCallback(() => {
     audioRef.current?.pause();
@@ -108,6 +209,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current;
     if (!audio || !isFinite(seconds)) return;
     audio.currentTime = seconds;
+    lastTimeRef.current = seconds;
     setProgress(seconds);
   }, []);
 
@@ -117,8 +219,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const retry = useCallback(() => {
-    if (current) start(current);
-  }, [current, start]);
+    if (current) playNow(current);
+  }, [current, playNow]);
 
   const value = useMemo<PlayerValue>(
     () => ({
@@ -144,10 +246,23 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   return (
     <PlayerContext.Provider value={value}>
       {children}
+      {ad ? <AdOverlay ad={ad} onDone={finishAd} /> : null}
       <audio
         ref={audioRef}
         preload="none"
-        onTimeUpdate={(e) => setProgress(e.currentTarget.currentTime)}
+        onTimeUpdate={(e) => {
+          const t = e.currentTarget.currentTime;
+          const delta = t - lastTimeRef.current;
+          lastTimeRef.current = t;
+          if (isGuestRef.current && delta > 0 && delta < 2) {
+            meterRef.current = {
+              ...meterRef.current,
+              seconds: meterRef.current.seconds + delta,
+            };
+            writeMeter(meterRef.current);
+          }
+          setProgress(t);
+        }}
         onLoadedMetadata={(e) => {
           setDuration(e.currentTarget.duration || 0);
           setStatus("ready");
