@@ -76,6 +76,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { to: "/admin/funnels", label: "Offer Page", icon: PanelsTopLeft },
       { to: "/admin/seo-pages", label: "SEO Pages", icon: FileText },
       { to: "/admin/home-gallery", label: "Home Gallery", icon: ImageIcon },
+      { to: "/admin/commercials", label: "Commercials", icon: Megaphone },
     ],
   },
   {
