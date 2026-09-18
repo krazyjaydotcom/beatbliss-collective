@@ -104,8 +104,38 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_events: {
+        Row: {
+          ad_id: string
+          created_at: string
+          event: string
+          id: string
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string
+          event: string
+          id?: string
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string
+          event?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_events_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ad_spots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_spots: {
         Row: {
+          clicks: number
           cover_url: string | null
           created_at: string
           cta_label: string | null
@@ -121,6 +151,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          clicks?: number
           cover_url?: string | null
           created_at?: string
           cta_label?: string | null
@@ -136,6 +167,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          clicks?: number
           cover_url?: string | null
           created_at?: string
           cta_label?: string | null
@@ -521,6 +553,38 @@ export type Database = {
           },
         ]
       }
+      beat_plays: {
+        Row: {
+          beat_id: string
+          created_at: string
+          id: string
+          is_member: boolean
+          session_key: string | null
+        }
+        Insert: {
+          beat_id: string
+          created_at?: string
+          id?: string
+          is_member?: boolean
+          session_key?: string | null
+        }
+        Update: {
+          beat_id?: string
+          created_at?: string
+          id?: string
+          is_member?: boolean
+          session_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_plays_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beat_requests: {
         Row: {
           created_at: string
@@ -625,6 +689,7 @@ export type Database = {
           custom_video_url: string | null
           discount_price_cents: number
           duration_seconds: number
+          exclusive_price_cents: number | null
           genre: string
           id: string
           is_active: boolean
@@ -635,6 +700,7 @@ export type Database = {
           landing_visibility: string
           mood: string
           music_key: string
+          nonexclusive_price_cents: number | null
           price_cents: number
           producer_name: string
           release_at: string | null
@@ -658,6 +724,7 @@ export type Database = {
           custom_video_url?: string | null
           discount_price_cents?: number
           duration_seconds: number
+          exclusive_price_cents?: number | null
           genre: string
           id?: string
           is_active?: boolean
@@ -668,6 +735,7 @@ export type Database = {
           landing_visibility?: string
           mood: string
           music_key: string
+          nonexclusive_price_cents?: number | null
           price_cents?: number
           producer_name?: string
           release_at?: string | null
@@ -691,6 +759,7 @@ export type Database = {
           custom_video_url?: string | null
           discount_price_cents?: number
           duration_seconds?: number
+          exclusive_price_cents?: number | null
           genre?: string
           id?: string
           is_active?: boolean
@@ -701,6 +770,7 @@ export type Database = {
           landing_visibility?: string
           mood?: string
           music_key?: string
+          nonexclusive_price_cents?: number | null
           price_cents?: number
           producer_name?: string
           release_at?: string | null
@@ -2022,6 +2092,10 @@ export type Database = {
       }
       record_ad_event: {
         Args: { _ad_id: string; _event: string }
+        Returns: undefined
+      }
+      record_beat_play: {
+        Args: { _beat_id: string; _session_key?: string }
         Returns: undefined
       }
     }
