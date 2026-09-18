@@ -20,6 +20,8 @@ export type StoreBeat = {
   coverUrl: string | null;
   previewUrl: string | null;
   priceCents: number;
+  nonExclusivePriceCents: number | null;
+  exclusivePriceCents: number | null;
   bpm: number | null;
   genre: string | null;
   mood: string | null;
@@ -55,7 +57,7 @@ export const listStoreBeats = createServerFn({ method: "GET" }).handler(
     const { data, error } = await sb
       .from("beats")
       .select(
-        "id,title,landing_slug,producer_name,cover_url,audio_url,audio_url_tagged,price_cents,bpm,genre,mood,music_key,duration_seconds,created_at,release_at,is_featured",
+        "id,title,landing_slug,producer_name,cover_url,audio_url,audio_url_tagged,price_cents,nonexclusive_price_cents,exclusive_price_cents,bpm,genre,mood,music_key,duration_seconds,created_at,release_at,is_featured",
       )
       .eq("is_active", true)
       .eq("landing_visibility", "public")
@@ -72,6 +74,14 @@ export const listStoreBeats = createServerFn({ method: "GET" }).handler(
       coverUrl: b.cover_url ?? null,
       previewUrl: b.audio_url_tagged ?? b.audio_url ?? null,
       priceCents: b.price_cents ?? 0,
+      nonExclusivePriceCents:
+        typeof b.nonexclusive_price_cents === "number" && b.nonexclusive_price_cents > 0
+          ? b.nonexclusive_price_cents
+          : null,
+      exclusivePriceCents:
+        typeof b.exclusive_price_cents === "number" && b.exclusive_price_cents > 0
+          ? b.exclusive_price_cents
+          : null,
       bpm: typeof b.bpm === "number" && b.bpm > 0 ? b.bpm : null,
       genre: clean(b.genre),
       mood: clean(b.mood),
