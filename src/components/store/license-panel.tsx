@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, FileText, ShieldCheck } from "lucide-react";
-import { createBeatLeaseCheckoutSession } from "@/lib/beat-landing.functions";
+import { ArrowRight, Check, FileText, Plus, ShieldCheck } from "lucide-react";
+import { createCartCheckoutSession } from "@/lib/cart.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { formatPrice } from "@/components/store/player-provider";
+import { useCart } from "@/components/store/cart-provider";
+import { TIER_META, TIER_ORDER, tierPriceCents, type LicenseTier } from "@/lib/licensing";
+import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
 
 /** The exact license terms already used on the public beat pages. */
@@ -65,13 +69,33 @@ export function LicenseTerms() {
 }
 
 export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
-  const createSession = useServerFn(createBeatLeaseCheckoutSession);
+  const checkout = useServerFn(createCartCheckoutSession);
+  const cart = useCart();
+  const [tier, setTier] = useState<LicenseTier>("unlimited");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const price = useMemo(() => tierPriceCents(beat, tier), [beat, tier]);
+  const inquiryOnly = price === null;
+  const inCart = cart.has(beat.id, tier);
+
+  const addToCart = () => {
+    if (price === null) return;
+    cart.add({
+      beatId: beat.id,
+      title: beat.title,
+      producerName: beat.producerName,
+      coverUrl: beat.coverUrl,
+      slug: beat.slug,
+      tier,
+      priceCents: price,
+    });
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (price === null) return;
     setLoading(true);
     setError(null);
     try {
@@ -82,11 +106,10 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
       } catch {
         throw new Error("Payments are not configured. Please try again later or contact support.");
       }
-      const r = await createSession({
+      const r = await checkout({
         data: {
-          beatId: beat.id,
+          items: [{ beatId: beat.id, tier }],
           email,
-          useDiscount: false,
           environment,
           successUrl: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: beat.slug ? `${origin}/beats/${beat.slug}` : origin,
@@ -106,40 +129,112 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-3">
-      <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-semibold tabular-nums text-foreground">
-          {formatPrice(beat.priceCents)}
-        </span>
-        <span className="text-xs uppercase tracking-wider text-muted-foreground">
-          Unlimited license
-        </span>
+    <div className="space-y-4">
+      <div className="grid gap-2" role="radiogroup" aria-label="License type">
+        {TIER_ORDER.map((t) => {
+          const p = tierPriceCents(beat, t);
+          const active = t === tier;
+          return (
+            <button
+              key={t}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => setTier(t)}
+              className={cn(
+                "flex items-start gap-3 rounded-xl border p-3 text-left transition-colors",
+                active
+                  ? "border-primary/60 bg-primary/[0.08]"
+                  : "border-white/10 bg-white/[0.02] hover:border-white/25",
+              )}
+            >
+              <span
+                className={cn(
+                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+                  active ? "border-primary bg-primary text-primary-foreground" : "border-white/30",
+                )}
+              >
+                {active ? <Check className="h-3 w-3" /> : null}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm font-semibold text-foreground">{TIER_META[t].label}</span>
+                  <span className="text-sm font-semibold tabular-nums text-foreground">
+                    {p === null ? "Inquire" : formatPrice(p)}
+                  </span>
+                </span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                  {TIER_META[t].blurb}
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
+
       <ul className="space-y-1 text-sm text-muted-foreground">
-        <li>Unlimited MP3 · unlimited songs</li>
-        <li>Streams, sales and monetization</li>
-        <li>Keep 100% of your master royalties</li>
+        {TIER_META[tier].bullets.map((b) => (
+          <li key={b}>{b}</li>
+        ))}
       </ul>
-      <input
-        required
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email for your license and files"
-        className="h-11 w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/60"
-      />
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <button
-        type="submit"
-        disabled={loading}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-      >
-        {loading ? "Opening checkout…" : "Continue to checkout"}
-        {loading ? null : <ArrowRight className="h-4 w-4" />}
-      </button>
-      <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-        <ShieldCheck className="h-3.5 w-3.5" /> Secure payment · license document issued on purchase
-      </p>
-    </form>
+
+      {inquiryOnly ? (
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Exclusive rights for this beat are priced case by case. Send an inquiry and you&apos;ll
+            get a reply with terms.
+          </p>
+          {beat.slug ? (
+            <Link
+              to="/beats/$slug"
+              params={{ slug: beat.slug }}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-primary/50 text-sm font-semibold uppercase tracking-wide text-primary"
+            >
+              Send exclusive inquiry
+            </Link>
+          ) : null}
+        </div>
+      ) : (
+        <form onSubmit={submit} className="space-y-3">
+          <button
+            type="button"
+            onClick={addToCart}
+            disabled={inCart}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-medium text-foreground transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-60"
+          >
+            {inCart ? (
+              <>
+                <Check className="h-4 w-4" /> In your cart
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" /> Add to cart
+              </>
+            )}
+          </button>
+          <input
+            required
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email for your license and files"
+            className="h-11 w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/60"
+          />
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          >
+            {loading ? "Opening checkout…" : `Buy now · ${formatPrice(price)}`}
+            {loading ? null : <ArrowRight className="h-4 w-4" />}
+          </button>
+          <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5" /> Secure payment · license document issued on
+            purchase
+          </p>
+        </form>
+      )}
+    </div>
   );
 }
