@@ -272,6 +272,93 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                 break;
               }
 
+              // Multi-beat cart purchase: reconcile one lease order per beat and
+              // deliver every beat in the same way a single purchase is delivered.
+              if (session.metadata?.source === "beat_cart") {
+                try {
+                  const admin = getAdmin();
+                  const buyerEmail = (
+                    session.customer_details?.email ||
+                    session.customer_email ||
+                    session.metadata?.buyer_email ||
+                    ""
+                  ).toLowerCase();
+                  const beatIds = (session.metadata?.beat_ids ?? "")
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                  const tiers = (session.metadata?.tiers ?? "").split(",").map((s) => s.trim());
+
+                  const { data: beats } = await admin
+                    .from("beats")
+                    .select("id,title,audio_url,audio_url_tagged,landing_slug")
+                    .in("id", beatIds);
+                  const byId = new Map(
+                    ((beats ?? []) as any[]).map((b) => [b.id as string, b]),
+                  );
+
+                  const { queueBuyerPurchaseEmail, queueAdminSaleEmail } = await import(
+                    "@/lib/beat-landing-email.server"
+                  );
+
+                  for (let i = 0; i < beatIds.length; i += 1) {
+                    const beatId = beatIds[i]!;
+                    const beat = byId.get(beatId) as any;
+                    const beatTitle = beat?.title ?? "Your beat";
+                    const licenseType = tiers[i] ?? "lease";
+
+                    try {
+                      const { data: pending } = await admin
+                        .from("lease_orders")
+                        .select("id")
+                        .eq("email", buyerEmail)
+                        .eq("beat_id", beatId)
+                        .is("stripe_session_id", null)
+                        .order("created_at", { ascending: false })
+                        .limit(1);
+                      if (pending && pending.length > 0) {
+                        await admin
+                          .from("lease_orders")
+                          .update({ stripe_session_id: session.id })
+                          .eq("id", (pending[0] as any).id);
+                      } else if (buyerEmail) {
+                        await admin.from("lease_orders").insert({
+                          email: buyerEmail,
+                          beat_id: beatId,
+                          amount_cents: 0,
+                          used_first_time_discount: false,
+                          stripe_session_id: session.id,
+                        });
+                      }
+                    } catch (err) {
+                      console.error("[webhook] beat_cart order reconcile failed", err);
+                    }
+
+                    if (buyerEmail) {
+                      await queueBuyerPurchaseEmail({
+                        to: buyerEmail,
+                        beatTitle: `${beatTitle} (${licenseType})`,
+                        downloadUrl: beat?.audio_url ?? beat?.audio_url_tagged ?? null,
+                        amountCents: 0,
+                        sessionId: `${session.id}:${beatId}`,
+                        beatSlug: beat?.landing_slug ?? null,
+                      });
+                    }
+                  }
+
+                  await queueAdminSaleEmail({
+                    beatTitle: `${beatIds.length} beat(s) — cart purchase`,
+                    buyerEmail: buyerEmail || "(unknown)",
+                    amountCents: session.amount_total ?? 0,
+                    sessionId: session.id,
+                    beatSlug: null,
+                  });
+                } catch (err) {
+                  console.error("[webhook] beat_cart handling failed", err);
+                }
+                break;
+              }
+
               if (session.mode === "subscription" && session.subscription) {
                 const subId = typeof session.subscription === "string"
                   ? session.subscription

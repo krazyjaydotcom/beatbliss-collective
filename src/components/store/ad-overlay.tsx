@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type AdSpot = {
   id: string;
   title: string;
-  media_type: "audio" | "video";
+  media_type: "audio" | "video" | "embed";
   media_url: string;
   cover_url: string | null;
   cta_label: string | null;
@@ -38,8 +38,39 @@ export function pickNextAd(ads: AdSpot[]): AdSpot | null {
   return ads[idx % ads.length] ?? null;
 }
 
-function recordEvent(adId: string, event: "impression" | "skip") {
+function recordEvent(adId: string, event: "impression" | "skip" | "click") {
   void supabase.rpc("record_ad_event", { _ad_id: adId, _event: event });
+}
+
+/**
+ * Turns a YouTube / Vimeo watch link into an embeddable player URL.
+ * Anything else is passed through untouched.
+ */
+export function toEmbedUrl(raw: string): string {
+  const url = raw.trim();
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+    if (host === "youtu.be") {
+      return `https://www.youtube.com/embed/${u.pathname.slice(1)}?autoplay=1&rel=0`;
+    }
+    if (host.endsWith("youtube.com")) {
+      if (u.pathname.startsWith("/embed/")) return url;
+      const v = u.searchParams.get("v");
+      if (v) return `https://www.youtube.com/embed/${v}?autoplay=1&rel=0`;
+      if (u.pathname.startsWith("/shorts/")) {
+        return `https://www.youtube.com/embed/${u.pathname.split("/")[2]}?autoplay=1&rel=0`;
+      }
+    }
+    if (host.endsWith("vimeo.com")) {
+      if (host.startsWith("player.")) return url;
+      const id = u.pathname.split("/").filter(Boolean)[0];
+      if (id) return `https://player.vimeo.com/video/${id}?autoplay=1`;
+    }
+  } catch {
+    /* not a parseable URL — show it as-is */
+  }
+  return url;
 }
 
 export function AdOverlay({ ad, onDone }: { ad: AdSpot; onDone: () => void }) {
@@ -69,13 +100,15 @@ export function AdOverlay({ ad, onDone }: { ad: AdSpot; onDone: () => void }) {
   });
 
   return (
+    // Stops above the player bar (and the mobile bottom nav) so listeners can
+    // always see they are still inside the store.
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Sponsor message"
-      className="fixed inset-0 z-[90] flex flex-col bg-black/95 backdrop-blur"
+      className="fixed inset-x-0 top-0 bottom-[9.75rem] z-[90] flex flex-col overflow-y-auto bg-black/92 backdrop-blur lg:bottom-[6.25rem]"
     >
-      <div className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6">
+      <div className="flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6">
         <span className="rounded-full border border-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Sponsor message
         </span>
@@ -89,15 +122,25 @@ export function AdOverlay({ ad, onDone }: { ad: AdSpot; onDone: () => void }) {
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 pb-10 text-center">
-        {ad.media_type === "video" ? (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5 py-6 text-center">
+        {ad.media_type === "embed" ? (
+          <div className="aspect-video w-full max-w-2xl overflow-hidden rounded-xl bg-black">
+            <iframe
+              src={toEmbedUrl(ad.media_url)}
+              title={ad.title}
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              className="h-full w-full border-0"
+            />
+          </div>
+        ) : ad.media_type === "video" ? (
           <video
             ref={mediaRef as React.RefObject<HTMLVideoElement>}
             src={ad.media_url}
             playsInline
             controls
             onEnded={onDone}
-            className="max-h-[60vh] w-full max-w-2xl rounded-xl bg-black"
+            className="max-h-[46vh] w-full max-w-2xl rounded-xl bg-black"
           />
         ) : (
           <>
@@ -105,7 +148,7 @@ export function AdOverlay({ ad, onDone }: { ad: AdSpot; onDone: () => void }) {
               <img
                 src={ad.cover_url}
                 alt=""
-                className="h-48 w-48 rounded-xl object-cover sm:h-60 sm:w-60"
+                className="h-36 w-36 rounded-xl object-cover sm:h-48 sm:w-48"
               />
             ) : null}
             <audio
@@ -126,6 +169,7 @@ export function AdOverlay({ ad, onDone }: { ad: AdSpot; onDone: () => void }) {
               href={ad.cta_url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => recordEvent(ad.id, "click")}
               className="flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
             >
               {ad.cta_label || "Learn more"}
