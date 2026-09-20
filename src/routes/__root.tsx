@@ -12,6 +12,8 @@ import {
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/hooks/use-auth";
 import { PlayerProvider } from "@/components/store/player-provider";
+import { CartProvider } from "@/components/store/cart-provider";
+import { CartSheet } from "@/components/store/cart-sheet";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
