@@ -87,6 +87,7 @@ export function StoreShell({
             </label>
           </div>
           <nav className="flex shrink-0 items-center gap-2">
+            <CartButton />
             {user ? (
               <Link
                 to="/account"
