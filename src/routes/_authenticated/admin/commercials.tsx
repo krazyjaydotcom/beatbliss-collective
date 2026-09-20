@@ -47,6 +47,7 @@ function CommercialsAdmin() {
   const [title, setTitle] = useState("");
   const [ctaLabel, setCtaLabel] = useState("");
   const [ctaUrl, setCtaUrl] = useState("");
+  const [embedUrl, setEmbedUrl] = useState("");
   const [preview, setPreview] = useState<Row | null>(null);
   const mediaRef = useRef<HTMLInputElement | null>(null);
   const coverRef = useRef<HTMLInputElement | null>(null);
@@ -68,21 +69,22 @@ function CommercialsAdmin() {
 
   async function addSpot() {
     const file = mediaRef.current?.files?.[0];
+    const link = embedUrl.trim();
     if (!title.trim()) return toast.error("Give the commercial a title.");
-    if (!file) return toast.error("Choose an audio or video file.");
-    const isVideo = file.type.startsWith("video");
-    const isAudio = file.type.startsWith("audio");
-    if (!isVideo && !isAudio) return toast.error("That file is not audio or video.");
+    if (!file && !link) return toast.error("Choose a file or paste a YouTube/Vimeo link.");
+    const isVideo = file ? file.type.startsWith("video") : false;
+    const isAudio = file ? file.type.startsWith("audio") : false;
+    if (file && !isVideo && !isAudio) return toast.error("That file is not audio or video.");
 
     setUploading(true);
     try {
-      const mediaUrl = await uploadToBucket(file, "ads");
+      const mediaUrl = link ? link : await uploadToBucket(file!, "ads");
       const coverFile = coverRef.current?.files?.[0];
       const coverUrl = coverFile ? await uploadToBucket(coverFile, "ads/covers") : null;
 
       const { error } = await supabase.from("ad_spots").insert({
         title: title.trim(),
-        media_type: isVideo ? "video" : "audio",
+        media_type: link ? "embed" : isVideo ? "video" : "audio",
         media_url: mediaUrl,
         cover_url: coverUrl,
         cta_label: ctaLabel.trim() || null,
