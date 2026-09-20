@@ -299,6 +299,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
             };
             writeMeter(meterRef.current);
           }
+          if (t >= nextTagAtRef.current) {
+            const tag = tagRef.current;
+            nextTagAtRef.current = t + tagSettingsRef.current.intervalSeconds;
+            if (tag) {
+              tag.volume = tagSettingsRef.current.volume;
+              tag.currentTime = 0;
+              void tag.play().catch(() => undefined);
+            }
+          }
           setProgress(t);
         }}
         onLoadedMetadata={(e) => {
