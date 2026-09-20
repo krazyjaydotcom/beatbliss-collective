@@ -10,6 +10,12 @@ import {
 } from "react";
 import type { StoreBeat } from "@/lib/store.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  AUDIO_TAG_DEFAULTS,
+  fetchAudioTagSettings,
+  type AudioTagSettings,
+} from "@/lib/audio-tag";
 import { AdOverlay, fetchActiveAds, pickNextAd, type AdSpot } from "./ad-overlay";
 
 type Status = "idle" | "loading" | "ready" | "error";
@@ -88,8 +94,31 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const pendingRef = useRef<{ beat: StoreBeat; queue?: StoreBeat[] } | null>(null);
   const [ad, setAd] = useState<AdSpot | null>(null);
 
+  // Producer audio tag laid over previews.
+  const tagRef = useRef<HTMLAudioElement | null>(null);
+  const tagSettingsRef = useRef<AudioTagSettings>(AUDIO_TAG_DEFAULTS);
+  const nextTagAtRef = useRef<number>(Number.POSITIVE_INFINITY);
+  const [tagUrl, setTagUrl] = useState<string | null>(null);
+
+  // Stable per-browser key so repeated plays can be grouped without identifying anyone.
+  const sessionKeyRef = useRef<string>("");
+
   useEffect(() => {
     meterRef.current = readMeter();
+    try {
+      let key = sessionStorage.getItem("mbc.session.key");
+      if (!key) {
+        key = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        sessionStorage.setItem("mbc.session.key", key);
+      }
+      sessionKeyRef.current = key;
+    } catch {
+      sessionKeyRef.current = "";
+    }
+    void fetchAudioTagSettings().then((s) => {
+      tagSettingsRef.current = s;
+      if (s.isEnabled && s.tagUrl) setTagUrl(s.tagUrl);
+    });
   }, []);
 
   const resetMeter = useCallback(() => {
@@ -118,6 +147,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         setIsPlaying(false);
         setStatus("error");
       });
+
+    const tag = tagSettingsRef.current;
+    nextTagAtRef.current =
+      tag.isEnabled && tag.tagUrl ? tag.startOffsetSeconds : Number.POSITIVE_INFINITY;
+
+    // Play counter (admin analytics). Never blocks playback.
+    void (supabase as any)
+      .rpc("record_beat_play", { _beat_id: beat.id, _session_key: sessionKeyRef.current || null })
+      .then(() => undefined, () => undefined);
 
     if (isGuestRef.current) {
       meterRef.current = { ...meterRef.current, beats: meterRef.current.beats + 1 };
@@ -261,6 +299,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
             };
             writeMeter(meterRef.current);
           }
+          if (t >= nextTagAtRef.current) {
+            const tag = tagRef.current;
+            nextTagAtRef.current = t + tagSettingsRef.current.intervalSeconds;
+            if (tag) {
+              tag.volume = tagSettingsRef.current.volume;
+              tag.currentTime = 0;
+              void tag.play().catch(() => undefined);
+            }
+          }
           setProgress(t);
         }}
         onLoadedMetadata={(e) => {
@@ -272,7 +319,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           setIsPlaying(true);
         }}
         onWaiting={() => setStatus("loading")}
-        onPause={() => setIsPlaying(false)}
+        onPause={() => {
+          setIsPlaying(false);
+          tagRef.current?.pause();
+        }}
         onError={() => {
           setStatus("error");
           setIsPlaying(false);
@@ -280,6 +330,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         onEnded={() => step(1)}
         className="hidden"
       />
+      {tagUrl ? <audio ref={tagRef} src={tagUrl} preload="auto" className="hidden" /> : null}
     </PlayerContext.Provider>
   );
 }

@@ -256,6 +256,39 @@ export type Database = {
           },
         ]
       }
+      audio_tag_settings: {
+        Row: {
+          created_at: string
+          id: number
+          interval_seconds: number
+          is_enabled: boolean
+          start_offset_seconds: number
+          tag_url: string | null
+          updated_at: string
+          volume: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          interval_seconds?: number
+          is_enabled?: boolean
+          start_offset_seconds?: number
+          tag_url?: string | null
+          updated_at?: string
+          volume?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          interval_seconds?: number
+          is_enabled?: boolean
+          start_offset_seconds?: number
+          tag_url?: string | null
+          updated_at?: string
+          volume?: number
+        }
+        Relationships: []
+      }
       beat_claims: {
         Row: {
           beat_id: string
