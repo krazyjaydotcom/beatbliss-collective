@@ -330,6 +330,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         onEnded={() => step(1)}
         className="hidden"
       />
+      {tagUrl ? <audio ref={tagRef} src={tagUrl} preload="auto" className="hidden" /> : null}
     </PlayerContext.Provider>
   );
 }
