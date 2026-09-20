@@ -94,8 +94,31 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const pendingRef = useRef<{ beat: StoreBeat; queue?: StoreBeat[] } | null>(null);
   const [ad, setAd] = useState<AdSpot | null>(null);
 
+  // Producer audio tag laid over previews.
+  const tagRef = useRef<HTMLAudioElement | null>(null);
+  const tagSettingsRef = useRef<AudioTagSettings>(AUDIO_TAG_DEFAULTS);
+  const nextTagAtRef = useRef<number>(Number.POSITIVE_INFINITY);
+  const [tagUrl, setTagUrl] = useState<string | null>(null);
+
+  // Stable per-browser key so repeated plays can be grouped without identifying anyone.
+  const sessionKeyRef = useRef<string>("");
+
   useEffect(() => {
     meterRef.current = readMeter();
+    try {
+      let key = sessionStorage.getItem("mbc.session.key");
+      if (!key) {
+        key = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        sessionStorage.setItem("mbc.session.key", key);
+      }
+      sessionKeyRef.current = key;
+    } catch {
+      sessionKeyRef.current = "";
+    }
+    void fetchAudioTagSettings().then((s) => {
+      tagSettingsRef.current = s;
+      if (s.isEnabled && s.tagUrl) setTagUrl(s.tagUrl);
+    });
   }, []);
 
   const resetMeter = useCallback(() => {
