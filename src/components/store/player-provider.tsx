@@ -148,6 +148,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         setStatus("error");
       });
 
+    const tag = tagSettingsRef.current;
+    nextTagAtRef.current =
+      tag.isEnabled && tag.tagUrl ? tag.startOffsetSeconds : Number.POSITIVE_INFINITY;
+
+    // Play counter (admin analytics). Never blocks playback.
+    void (supabase as any)
+      .rpc("record_beat_play", { _beat_id: beat.id, _session_key: sessionKeyRef.current || null })
+      .then(() => undefined, () => undefined);
+
     if (isGuestRef.current) {
       meterRef.current = { ...meterRef.current, beats: meterRef.current.beats + 1 };
       writeMeter(meterRef.current);
