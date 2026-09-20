@@ -10,6 +10,12 @@ import {
 } from "react";
 import type { StoreBeat } from "@/lib/store.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  AUDIO_TAG_DEFAULTS,
+  fetchAudioTagSettings,
+  type AudioTagSettings,
+} from "@/lib/audio-tag";
 import { AdOverlay, fetchActiveAds, pickNextAd, type AdSpot } from "./ad-overlay";
 
 type Status = "idle" | "loading" | "ready" | "error";
