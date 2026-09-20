@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/admin/commercials")({
 type Row = {
   id: string;
   title: string;
-  media_type: "audio" | "video";
+  media_type: "audio" | "video" | "embed";
   media_url: string;
   cover_url: string | null;
   cta_label: string | null;
@@ -24,6 +24,7 @@ type Row = {
   sort_order: number;
   impressions: number;
   skips: number;
+  clicks: number;
 };
 
 const BUCKET = "homepage-media";
