@@ -319,7 +319,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           setIsPlaying(true);
         }}
         onWaiting={() => setStatus("loading")}
-        onPause={() => setIsPlaying(false)}
+        onPause={() => {
+          setIsPlaying(false);
+          tagRef.current?.pause();
+        }}
         onError={() => {
           setStatus("error");
           setIsPlaying(false);
