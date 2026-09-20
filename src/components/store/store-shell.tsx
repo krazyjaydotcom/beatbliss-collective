@@ -4,6 +4,7 @@ import { Heart, LogIn, Search, Sparkles, User, Waves, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { PlayerBar } from "@/components/store/player-bar";
+import { CartButton } from "@/components/store/cart-sheet";
 
 export type StoreView = "browse" | "new" | "saved";
 
