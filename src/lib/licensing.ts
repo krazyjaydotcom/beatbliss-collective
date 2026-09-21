@@ -1,20 +1,24 @@
 /**
  * License tiers offered on the storefront.
  *
- * - Non-Exclusive: the cheaper entry tier. Price comes from the beat when the
- *   producer has set one, otherwise the shared default below.
- * - Unlimited: the existing $49.99 license, unchanged wording and terms.
- * - Exclusive: per-beat price set in admin. When no price is set the beat is
- *   inquiry-only — we never invent a number.
+ * - Non-Exclusive MP3: the cheaper entry tier. Price comes from the beat when
+ *   the producer has set one, otherwise the shared default below.
+ * - Unlimited License (WAV+MP3): the existing $49.99 license, unchanged wording
+ *   and terms.
+ * - Trackout/STEMS Access: per-beat price set in admin. When no price is set
+ *   the tier is inquiry-only — we never invent a number.
+ * - Exclusive Rights: per-beat price set in admin. When no price is set the beat
+ *   is inquiry-only — we never invent a number.
  */
 
-export type LicenseTier = "nonexclusive" | "unlimited" | "exclusive";
+export type LicenseTier = "nonexclusive" | "unlimited" | "trackout" | "exclusive";
 
 export const DEFAULT_NONEXCLUSIVE_CENTS = 2499;
 
 export type LicensableBeat = {
   priceCents: number;
   nonExclusivePriceCents?: number | null;
+  trackoutPriceCents?: number | null;
   exclusivePriceCents?: number | null;
 };
 
@@ -23,9 +27,9 @@ export const TIER_META: Record<
   { label: string; short: string; blurb: string; bullets: string[] }
 > = {
   nonexclusive: {
-    label: "Non-Exclusive",
-    short: "Non-Exclusive",
-    blurb: "Release and monetize one song. The beat stays available to others.",
+    label: "Non-Exclusive MP3",
+    short: "MP3",
+    blurb: "Release and monetize one song with the tagged-free MP3. The beat stays available to others.",
     bullets: [
       "Tagged-free MP3 for one song",
       "Streaming, social and live use",
@@ -33,13 +37,23 @@ export const TIER_META: Record<
     ],
   },
   unlimited: {
-    label: "Unlimited",
+    label: "Unlimited License (WAV+MP3)",
     short: "Unlimited",
     blurb: "Unlimited songs, unlimited streams, you keep 100% of your masters.",
     bullets: [
-      "Unlimited MP3 · unlimited songs",
+      "Unlimited MP3 + WAV · unlimited songs",
       "Streams, sales and monetization",
       "Keep 100% of your master royalties",
+    ],
+  },
+  trackout: {
+    label: "Trackout/STEMS Access",
+    short: "Trackout",
+    blurb: "Get the full song files broken out by instrument so you can mix, rearrange, or perform live.",
+    bullets: [
+      "Individual WAV stems for each instrument",
+      "Use with MP3 + WAV versions of the beat",
+      "Full mixing and arrangement control",
     ],
   },
   exclusive: {
@@ -54,7 +68,7 @@ export const TIER_META: Record<
   },
 };
 
-export const TIER_ORDER: LicenseTier[] = ["nonexclusive", "unlimited", "exclusive"];
+export const TIER_ORDER: LicenseTier[] = ["nonexclusive", "unlimited", "trackout", "exclusive"];
 
 /** Price in cents for a tier, or null when the tier is inquiry-only. */
 export function tierPriceCents(beat: LicensableBeat, tier: LicenseTier): number | null {
@@ -63,10 +77,14 @@ export function tierPriceCents(beat: LicensableBeat, tier: LicenseTier): number 
     const v = beat.nonExclusivePriceCents;
     return typeof v === "number" && v > 0 ? v : DEFAULT_NONEXCLUSIVE_CENTS;
   }
+  if (tier === "trackout") {
+    const v = beat.trackoutPriceCents;
+    return typeof v === "number" && v > 0 ? v : null;
+  }
   const x = beat.exclusivePriceCents;
   return typeof x === "number" && x > 0 ? x : null;
 }
 
 export function isLicenseTier(value: unknown): value is LicenseTier {
-  return value === "nonexclusive" || value === "unlimited" || value === "exclusive";
+  return value === "nonexclusive" || value === "unlimited" || value === "trackout" || value === "exclusive";
 }

@@ -205,6 +205,7 @@ export const recordLeaseIntent = createServerFn({ method: "POST" })
       beat_id: data.beatId,
       amount_cents: amount,
       used_first_time_discount: useDiscount,
+      license_tier: "unlimited",
     });
     if (error) {
       // If discount uniqueness clashed, fall back to full price silently
@@ -214,6 +215,7 @@ export const recordLeaseIntent = createServerFn({ method: "POST" })
           beat_id: data.beatId,
           amount_cents: b.price_cents,
           used_first_time_discount: false,
+          license_tier: "unlimited",
         });
         return { ok: true, amountCents: b.price_cents, checkoutUrl: b.checkout_url };
       }
@@ -260,7 +262,7 @@ export const adminListBeats = createServerFn({ method: "GET" })
       }
     }
     const { data } = await sb.from("beats")
-      .select("id,title,landing_slug,landing_visibility,is_landing_published,is_active,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,audio_url_tagged,audio_url,nonexclusive_price_cents,exclusive_price_cents")
+      .select("id,title,landing_slug,landing_visibility,is_landing_published,is_active,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,audio_url_tagged,audio_url,nonexclusive_price_cents,trackout_price_cents,exclusive_price_cents")
       // show all beats so admin can assign slugs
       .order("title", { ascending: true });
     return { beats: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
@@ -284,6 +286,7 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
     landing_visibility?: LandingVisibility;
     producer_name?: string | null;
     nonexclusive_price_cents?: number | null;
+    trackout_price_cents?: number | null;
     exclusive_price_cents?: number | null;
   }) => z.object({
     id: z.string().uuid(),
@@ -300,6 +303,7 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
     landing_visibility: z.enum(["public", "unlisted", "private"]).optional(),
     producer_name: z.string().max(160).nullable().optional(),
     nonexclusive_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
+    trackout_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
     exclusive_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
   }).parse(input))
   .handler(async ({ data, context }) => {
@@ -428,7 +432,7 @@ export const adminListLeaseOrders = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const sb = adminClient() as any;
     const { data } = await sb.from("lease_orders")
-      .select("id,beat_id,email,amount_cents,used_first_time_discount,stripe_session_id,created_at")
+      .select("id,beat_id,email,amount_cents,license_tier,used_first_time_discount,stripe_session_id,created_at")
       .order("created_at", { ascending: false })
       .limit(500);
     return { orders: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
@@ -490,6 +494,7 @@ export const createBeatLeaseCheckoutSession = createServerFn({ method: "POST" })
         beat_id: b.id,
         amount_cents: amount,
         used_first_time_discount: useDiscount,
+        license_tier: "unlimited",
       });
     } catch { /* ignore */ }
 

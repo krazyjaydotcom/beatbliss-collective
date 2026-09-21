@@ -48,6 +48,7 @@ type BeatRow = {
   audio_url_tagged: string | null;
   audio_url: string | null;
   nonexclusive_price_cents: number | null;
+  trackout_price_cents: number | null;
   exclusive_price_cents: number | null;
 };
 
@@ -615,6 +616,8 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
     producer_name: beat.producer_name || "",
     nonexclusive_price_cents:
       beat.nonexclusive_price_cents == null ? "" : String(beat.nonexclusive_price_cents),
+    trackout_price_cents:
+      beat.trackout_price_cents == null ? "" : String(beat.trackout_price_cents),
     exclusive_price_cents:
       beat.exclusive_price_cents == null ? "" : String(beat.exclusive_price_cents),
   });
@@ -640,6 +643,8 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           form.nonexclusive_price_cents.trim() === ""
             ? null
             : Number(form.nonexclusive_price_cents),
+        trackout_price_cents:
+          form.trackout_price_cents.trim() === "" ? null : Number(form.trackout_price_cents),
         exclusive_price_cents:
           form.exclusive_price_cents.trim() === "" ? null : Number(form.exclusive_price_cents),
       },
@@ -711,6 +716,19 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
               value={form.nonexclusive_price_cents}
               onChange={(e) => setForm({ ...form, nonexclusive_price_cents: e.target.value })}
               placeholder="2499"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold">
+              Trackout price (cents){" "}
+              <span className="font-normal text-muted-foreground">(blank = not offered)</span>
+            </label>
+            <input
+              type="number"
+              className={inp}
+              value={form.trackout_price_cents}
+              onChange={(e) => setForm({ ...form, trackout_price_cents: e.target.value })}
+              placeholder="4999"
             />
           </div>
           <div>
@@ -870,6 +888,7 @@ function OrdersCard() {
     id: string;
     email: string;
     amount_cents: number;
+    license_tier: string | null;
     used_first_time_discount: boolean;
     created_at: string;
   }>;
@@ -881,6 +900,7 @@ function OrdersCard() {
           <thead>
             <tr className="text-xs text-muted-foreground text-left border-b border-border/60">
               <th className="py-1.5">Email</th>
+              <th>Tier</th>
               <th>Amount</th>
               <th>Discount</th>
               <th>When</th>
@@ -890,6 +910,7 @@ function OrdersCard() {
             {orders.map((o) => (
               <tr key={o.id} className="border-b border-border/40">
                 <td className="py-1.5">{o.email}</td>
+                <td className="text-xs capitalize">{o.license_tier ?? "—"}</td>
                 <td>${(o.amount_cents / 100).toFixed(2)}</td>
                 <td>{o.used_first_time_discount ? <span className="text-orange-600 text-xs">First-time</span> : ""}</td>
                 <td className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</td>

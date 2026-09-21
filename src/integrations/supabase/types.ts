@@ -743,6 +743,7 @@ export type Database = {
           single_sale_enabled: boolean
           single_sale_price_cents: number | null
           title: string
+          trackout_price_cents: number | null
         }
         Insert: {
           application_url?: string | null
@@ -778,6 +779,7 @@ export type Database = {
           single_sale_enabled?: boolean
           single_sale_price_cents?: number | null
           title: string
+          trackout_price_cents?: number | null
         }
         Update: {
           application_url?: string | null
@@ -813,6 +815,7 @@ export type Database = {
           single_sale_enabled?: boolean
           single_sale_price_cents?: number | null
           title?: string
+          trackout_price_cents?: number | null
         }
         Relationships: []
       }
@@ -1469,6 +1472,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          license_tier: string | null
           stripe_session_id: string | null
           used_first_time_discount: boolean
         }
@@ -1478,6 +1482,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          license_tier?: string | null
           stripe_session_id?: string | null
           used_first_time_discount?: boolean
         }
@@ -1487,6 +1492,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          license_tier?: string | null
           stripe_session_id?: string | null
           used_first_time_discount?: boolean
         }

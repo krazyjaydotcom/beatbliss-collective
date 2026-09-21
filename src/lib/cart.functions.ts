@@ -23,6 +23,10 @@ function resolvePrice(beat: Record<string, any>, tier: LicenseTier): number | nu
     const v = beat.nonexclusive_price_cents;
     return typeof v === "number" && v > 0 ? v : DEFAULT_NONEXCLUSIVE_CENTS;
   }
+  if (tier === "trackout") {
+    const v = beat.trackout_price_cents;
+    return typeof v === "number" && v > 0 ? v : null;
+  }
   const x = beat.exclusive_price_cents;
   return typeof x === "number" && x > 0 ? x : null;
 }
@@ -41,7 +45,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
             .array(
               z.object({
                 beatId: z.string().uuid(),
-                tier: z.enum(["nonexclusive", "unlimited", "exclusive"]),
+                tier: z.enum(["nonexclusive", "unlimited", "trackout", "exclusive"]),
               }),
             )
             .min(1)
@@ -61,7 +65,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       const { data: rows } = await sb
         .from("beats")
         .select(
-          "id,title,landing_slug,cover_url,price_cents,nonexclusive_price_cents,exclusive_price_cents,is_active,landing_visibility",
+          "id,title,landing_slug,cover_url,price_cents,nonexclusive_price_cents,trackout_price_cents,exclusive_price_cents,is_active,landing_visibility",
         )
         .in("id", ids);
 
