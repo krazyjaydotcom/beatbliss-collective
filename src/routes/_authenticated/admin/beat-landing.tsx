@@ -700,6 +700,32 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
               onChange={(e) => setForm({ ...form, discount_price_cents: Number(e.target.value) })}
             />
           </div>
+          <div>
+            <label className="text-xs font-semibold">
+              Non-exclusive price (cents){" "}
+              <span className="font-normal text-muted-foreground">(blank = not offered)</span>
+            </label>
+            <input
+              type="number"
+              className={inp}
+              value={form.nonexclusive_price_cents}
+              onChange={(e) => setForm({ ...form, nonexclusive_price_cents: e.target.value })}
+              placeholder="2499"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold">
+              Exclusive price (cents){" "}
+              <span className="font-normal text-muted-foreground">(blank = inquiry only)</span>
+            </label>
+            <input
+              type="number"
+              className={inp}
+              value={form.exclusive_price_cents}
+              onChange={(e) => setForm({ ...form, exclusive_price_cents: e.target.value })}
+              placeholder="99900"
+            />
+          </div>
           <div className="sm:col-span-2">
             <label className="text-xs font-semibold">
               Legacy external checkout URL{" "}
