@@ -66,36 +66,63 @@ function toMono(buf: AudioBuffer): Float32Array {
 
 // ---------------------------------------------------------------- tempo
 
-// Energy-envelope autocorrelation. Robust for beat-driven music.
+// Spectral-flux onset envelope + autocorrelation. Robust for beat-driven music.
 export function detectBpm(buf: AudioBuffer): number | null {
   const data = toMono(buf);
   const sr = buf.sampleRate;
   const maxSamples = Math.min(data.length, sr * 60);
   if (maxSamples < sr * 4) return null;
 
-  // Onset envelope at ~400 Hz
-  const hop = Math.max(1, Math.round(sr / 400));
-  const frames = Math.floor(maxSamples / hop);
-  const env = new Float32Array(frames);
+  const win = 1024;
+  const hop = 256;
+  const frames = Math.floor((maxSamples - win) / hop);
+  if (frames < 64) return null;
+
+  const hann = new Float32Array(win);
+  for (let i = 0; i < win; i++) hann[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / win));
+
+  const bins = win / 2;
+  let prev = new Float32Array(bins);
+  const flux = new Float32Array(frames);
+  const re = new Float32Array(win);
+  const im = new Float32Array(win);
+
+  for (let f = 0; f < frames; f++) {
+    const start = f * hop;
+    for (let i = 0; i < win; i++) {
+      re[i] = data[start + i] * hann[i];
+      im[i] = 0;
+    }
+    fft(re, im);
+    const mag = new Float32Array(bins);
+    let sum = 0;
+    for (let k = 0; k < bins; k++) {
+      const m = Math.log1p(1000 * Math.sqrt(re[k] * re[k] + im[k] * im[k]));
+      mag[k] = m;
+      const diff = m - prev[k];
+      if (diff > 0) sum += diff;
+    }
+    flux[f] = sum;
+    prev = mag;
+  }
+
+  // Subtract a local moving average so sustained loudness doesn't dominate
+  const onset = new Float32Array(frames);
+  const half = 8;
   for (let f = 0; f < frames; f++) {
     let sum = 0;
-    const start = f * hop;
-    for (let i = start; i < start + hop; i++) sum += data[i] * data[i];
-    env[f] = Math.sqrt(sum / hop);
+    let n = 0;
+    for (let j = Math.max(0, f - half); j <= Math.min(frames - 1, f + half); j++) { sum += flux[j]; n++; }
+    onset[f] = Math.max(0, flux[f] - sum / n);
   }
-  // Half-wave rectified difference = onset strength
-  const onset = new Float32Array(frames);
-  for (let f = 1; f < frames; f++) onset[f] = Math.max(0, env[f] - env[f - 1]);
-
-  // Remove DC
   let mean = 0;
   for (let f = 0; f < frames; f++) mean += onset[f];
   mean /= frames || 1;
   for (let f = 0; f < frames; f++) onset[f] -= mean;
 
   const envRate = sr / hop;
-  const minLag = Math.floor((60 / 185) * envRate);
-  const maxLag = Math.ceil((60 / 60) * envRate);
+  const minLag = Math.floor((60 / 200) * envRate);
+  const maxLag = Math.ceil((60 / 55) * envRate);
   if (maxLag >= frames) return null;
 
   const scoreAt = (lag: number) => {
@@ -104,13 +131,15 @@ export function detectBpm(buf: AudioBuffer): number | null {
     if (n <= 0) return -Infinity;
     for (let f = 0; f < n; f++) sum += onset[f] * onset[f + lag];
     let score = sum / n;
-    // reinforce with the first harmonic (double-time consistency)
-    const lag2 = lag * 2;
-    if (lag2 < frames) {
-      let sum2 = 0;
-      const n2 = frames - lag2;
-      for (let f = 0; f < n2; f++) sum2 += onset[f] * onset[f + lag2];
-      score += (sum2 / n2) * 0.5;
+    // reinforce with multiples (a real tempo repeats at 2x and 4x the period)
+    for (const mult of [2, 4]) {
+      const lm = lag * mult;
+      if (lm < frames) {
+        let s2 = 0;
+        const n2 = frames - lm;
+        for (let f = 0; f < n2; f++) s2 += onset[f] * onset[f + lm];
+        score += (s2 / n2) * (mult === 2 ? 0.5 : 0.25);
+      }
     }
     return score;
   };
@@ -118,7 +147,7 @@ export function detectBpm(buf: AudioBuffer): number | null {
   // Log-Gaussian tempo prior centred on 125 BPM — resolves half/double-time ties
   const prior = (lag: number) => {
     const bpmAt = (60 * envRate) / lag;
-    const x = Math.log2(bpmAt / 125) / 0.75;
+    const x = Math.log2(bpmAt / 125) / 0.9;
     return Math.exp(-0.5 * x * x);
   };
 
@@ -130,13 +159,11 @@ export function detectBpm(buf: AudioBuffer): number | null {
   }
   if (!(peakRaw > 0)) return null;
 
-  // Candidates are strong autocorrelation peaks only; the prior then settles
-  // half-time / double-time ambiguity between them.
   let bestLag = -1;
   let bestScore = -Infinity;
   for (let lag = minLag + 1; lag < maxLag; lag++) {
     if (scores[lag] < scores[lag - 1] || scores[lag] < scores[lag + 1]) continue;
-    if (scores[lag] < peakRaw * 0.88) continue;
+    if (scores[lag] < peakRaw * 0.5) continue;
     const score = scores[lag] * prior(lag);
     if (score > bestScore) { bestScore = score; bestLag = lag; }
   }
@@ -144,19 +171,16 @@ export function detectBpm(buf: AudioBuffer): number | null {
 
   // Sub-sample refinement (parabolic fit around the peak)
   let refined = bestLag;
-  if (bestLag > minLag && bestLag < maxLag) {
-    const a = scores[bestLag - 1];
-    const b = scores[bestLag];
-    const c = scores[bestLag + 1];
-    const den = a - 2 * b + c;
-    if (den !== 0) {
-      const delta = (0.5 * (a - c)) / den;
-      if (Math.abs(delta) <= 1) refined = bestLag + delta;
-    }
+  const a = scores[bestLag - 1];
+  const b = scores[bestLag];
+  const c = scores[bestLag + 1];
+  const den = a - 2 * b + c;
+  if (den !== 0) {
+    const delta = (0.5 * (a - c)) / den;
+    if (Math.abs(delta) <= 1) refined = bestLag + delta;
   }
 
   let bpm = (60 * envRate) / refined;
-  // fold into the usual production range
   while (bpm < 70) bpm *= 2;
   while (bpm > 180) bpm /= 2;
   const rounded = Math.round(bpm);
