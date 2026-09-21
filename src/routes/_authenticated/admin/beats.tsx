@@ -237,6 +237,85 @@ function AdminBeatsPage() {
   );
 }
 
+// ---------------- Library key/BPM scanner ----------------
+
+function needsAnalysis(b: any): boolean {
+  const key = (b.music_key ?? "").trim();
+  return !b.bpm || b.bpm === 0 || !key || key === "C";
+}
+
+function LibraryScanner({ beats, onDone }: { beats: any[]; onDone: () => void }) {
+  const [running, setRunning] = useState(false);
+  const [onlyMissing, setOnlyMissing] = useState(true);
+  const [progress, setProgress] = useState({ done: 0, total: 0, updated: 0, failed: 0 });
+  const cancelRef = useRef(false);
+
+  const candidates = useMemo(
+    () => beats.filter((b) => b.audio_url && (!onlyMissing || needsAnalysis(b))),
+    [beats, onlyMissing],
+  );
+
+  async function scan() {
+    if (!candidates.length) return;
+    cancelRef.current = false;
+    setRunning(true);
+    let done = 0, updated = 0, failed = 0;
+    setProgress({ done: 0, total: candidates.length, updated: 0, failed: 0 });
+    for (const b of candidates) {
+      if (cancelRef.current) break;
+      try {
+        const { bpm, key } = await analyzeUrl(b.audio_url);
+        const patch: Record<string, any> = {};
+        if (bpm) patch.bpm = bpm;
+        if (key) patch.music_key = key;
+        if (Object.keys(patch).length) {
+          const { error } = await (supabase as any).from("beats").update(patch).eq("id", b.id);
+          if (error) throw error;
+          updated++;
+        }
+      } catch (e) {
+        console.error("scan failed", b.title, e);
+        failed++;
+      }
+      done++;
+      setProgress({ done, total: candidates.length, updated, failed });
+    }
+    setRunning(false);
+    toast.success(`Scan finished — ${updated} beats updated${failed ? `, ${failed} could not be read` : ""}`);
+    onDone();
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+      <div>
+        <h2 className="font-semibold flex items-center gap-2"><Gauge className="h-4 w-4 text-primary" /> Detect key &amp; tempo</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Listens to each beat in your library and fills in the BPM and musical key automatically.
+        </p>
+      </div>
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox checked={onlyMissing} onCheckedChange={(v) => setOnlyMissing(!!v)} disabled={running} />
+        Only beats missing key or tempo
+      </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="button" onClick={scan} disabled={running || !candidates.length}>
+          {running ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning {progress.done}/{progress.total}…</> : `Scan ${candidates.length} beat${candidates.length === 1 ? "" : "s"}`}
+        </Button>
+        {running && (
+          <Button type="button" variant="outline" onClick={() => { cancelRef.current = true; }}>Stop</Button>
+        )}
+        {progress.total > 0 && !running && (
+          <span className="text-sm text-muted-foreground">
+            {progress.updated} updated · {progress.failed} could not be read
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+
 function CatalogOptionsManager() {
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
