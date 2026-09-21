@@ -260,7 +260,7 @@ export const adminListBeats = createServerFn({ method: "GET" })
       }
     }
     const { data } = await sb.from("beats")
-      .select("id,title,landing_slug,landing_visibility,is_landing_published,is_active,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,audio_url_tagged,audio_url")
+      .select("id,title,landing_slug,landing_visibility,is_landing_published,is_active,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,audio_url_tagged,audio_url,nonexclusive_price_cents,exclusive_price_cents")
       // show all beats so admin can assign slugs
       .order("title", { ascending: true });
     return { beats: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
