@@ -71,6 +71,7 @@ import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminBeatRequestsRouteImport } from './routes/_authenticated/admin/beat-requests'
 import { Route as AuthenticatedAdminBeatLandingRouteImport } from './routes/_authenticated/admin/beat-landing'
 import { Route as AuthenticatedAdminBeatClaimsRouteImport } from './routes/_authenticated/admin/beat-claims'
+import { Route as AuthenticatedAdminAudioTagRouteImport } from './routes/_authenticated/admin/audio-tag'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin/analytics'
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as AuthenticatedAdminAccessQuestionsRouteImport } from './routes/_authenticated/admin/access-questions'
@@ -411,6 +412,12 @@ const AuthenticatedAdminBeatClaimsRoute =
     path: '/beat-claims',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAudioTagRoute =
+  AuthenticatedAdminAudioTagRouteImport.update({
+    id: '/audio-tag',
+    path: '/audio-tag',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAnalyticsRoute =
   AuthenticatedAdminAnalyticsRouteImport.update({
     id: '/analytics',
@@ -508,6 +515,7 @@ export interface FileRoutesByFullPath {
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/admin/audio-tag': typeof AuthenticatedAdminAudioTagRoute
   '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/admin/beat-landing': typeof AuthenticatedAdminBeatLandingRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -580,6 +588,7 @@ export interface FileRoutesByTo {
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/admin/audio-tag': typeof AuthenticatedAdminAudioTagRoute
   '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/admin/beat-landing': typeof AuthenticatedAdminBeatLandingRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -655,6 +664,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/_authenticated/admin/audio-tag': typeof AuthenticatedAdminAudioTagRoute
   '/_authenticated/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/_authenticated/admin/beat-landing': typeof AuthenticatedAdminBeatLandingRoute
   '/_authenticated/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -730,6 +740,7 @@ export interface FileRouteTypes {
     | '/admin/access-questions'
     | '/admin/agreements'
     | '/admin/analytics'
+    | '/admin/audio-tag'
     | '/admin/beat-claims'
     | '/admin/beat-landing'
     | '/admin/beat-requests'
@@ -802,6 +813,7 @@ export interface FileRouteTypes {
     | '/admin/access-questions'
     | '/admin/agreements'
     | '/admin/analytics'
+    | '/admin/audio-tag'
     | '/admin/beat-claims'
     | '/admin/beat-landing'
     | '/admin/beat-requests'
@@ -876,6 +888,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/access-questions'
     | '/_authenticated/admin/agreements'
     | '/_authenticated/admin/analytics'
+    | '/_authenticated/admin/audio-tag'
     | '/_authenticated/admin/beat-claims'
     | '/_authenticated/admin/beat-landing'
     | '/_authenticated/admin/beat-requests'
@@ -1380,6 +1393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBeatClaimsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/audio-tag': {
+      id: '/_authenticated/admin/audio-tag'
+      path: '/audio-tag'
+      fullPath: '/admin/audio-tag'
+      preLoaderRoute: typeof AuthenticatedAdminAudioTagRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/analytics': {
       id: '/_authenticated/admin/analytics'
       path: '/analytics'
@@ -1459,6 +1479,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAccessQuestionsRoute: typeof AuthenticatedAdminAccessQuestionsRoute
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
+  AuthenticatedAdminAudioTagRoute: typeof AuthenticatedAdminAudioTagRoute
   AuthenticatedAdminBeatClaimsRoute: typeof AuthenticatedAdminBeatClaimsRoute
   AuthenticatedAdminBeatLandingRoute: typeof AuthenticatedAdminBeatLandingRoute
   AuthenticatedAdminBeatRequestsRoute: typeof AuthenticatedAdminBeatRequestsRoute
@@ -1493,6 +1514,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminAccessQuestionsRoute,
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
   AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
+  AuthenticatedAdminAudioTagRoute: AuthenticatedAdminAudioTagRoute,
   AuthenticatedAdminBeatClaimsRoute: AuthenticatedAdminBeatClaimsRoute,
   AuthenticatedAdminBeatLandingRoute: AuthenticatedAdminBeatLandingRoute,
   AuthenticatedAdminBeatRequestsRoute: AuthenticatedAdminBeatRequestsRoute,
