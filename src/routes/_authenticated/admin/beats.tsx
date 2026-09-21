@@ -1025,6 +1025,11 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
             </Field>
             <Field label="BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
             <Field label="Key"><Input value={musicKey} onChange={(e) => setMusicKey(e.target.value)} /></Field>
+            <div className="sm:col-span-2">
+              <Button type="button" variant="outline" size="sm" onClick={autoDetect} disabled={detecting}>
+                {detecting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Listening…</> : <><Gauge className="h-4 w-4 mr-2" /> Auto-detect key &amp; tempo</>}
+              </Button>
+            </div>
             <Field label="Duration seconds"><Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} /></Field>
             <Field label="Release date"><Input type="datetime-local" value={releaseAt} onChange={(e) => setReleaseAt(e.target.value)} /></Field>
             <label className="flex items-center gap-2 pt-6 text-sm">
