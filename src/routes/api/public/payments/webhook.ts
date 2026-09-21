@@ -320,7 +320,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                       if (pending && pending.length > 0) {
                         await admin
                           .from("lease_orders")
-                          .update({ stripe_session_id: session.id })
+                          .update({ stripe_session_id: session.id, license_tier: licenseType })
                           .eq("id", (pending[0] as any).id);
                       } else if (buyerEmail) {
                         await admin.from("lease_orders").insert({
@@ -329,6 +329,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                           amount_cents: 0,
                           used_first_time_discount: false,
                           stripe_session_id: session.id,
+                          license_tier: licenseType,
                         });
                       }
                     } catch (err) {
