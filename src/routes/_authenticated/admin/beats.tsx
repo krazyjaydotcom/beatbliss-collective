@@ -563,6 +563,9 @@ function DropUploader({ onDone }: { onDone: () => void }) {
         cover: coverByBase.get(base),
         title: basename(a.name),
         status: "queued",
+        bpm: parseBpmFromName(a.name),
+        musicKey: parseKeyFromName(a.name),
+        analyzing: true,
       };
     });
 
@@ -577,11 +580,37 @@ function DropUploader({ onDone }: { onDone: () => void }) {
         cover: coverByBase.get(basename(t.name).toLowerCase()),
         title: basename(t.name).replace(/[\s_-]*(tagged|tag)[\s_-]*/gi, "").trim(),
         status: "queued",
+        bpm: parseBpmFromName(t.name),
+        musicKey: parseKeyFromName(t.name),
+        analyzing: true,
       });
     }
 
     setItems((cur) => [...cur, ...next]);
     if (audiosAll.length === 0 && files.length) toast.error("No audio files detected");
+    void analyzeQueue(next);
+  }
+
+  async function analyzeQueue(queue: Pending[]) {
+    for (const item of queue) {
+      if (item.bpm && item.musicKey) {
+        setItems((s) => s.map((x) => (x.id === item.id ? { ...x, analyzing: false } : x)));
+        continue;
+      }
+      try {
+        const buf = await decodeAudioFile(item.audio);
+        const detected = analyzeBuffer(buf);
+        setItems((s) =>
+          s.map((x) =>
+            x.id === item.id
+              ? { ...x, bpm: x.bpm ?? detected.bpm, musicKey: x.musicKey ?? detected.key, analyzing: false }
+              : x,
+          ),
+        );
+      } catch {
+        setItems((s) => s.map((x) => (x.id === item.id ? { ...x, analyzing: false } : x)));
+      }
+    }
   }
 
   function onDrop(e: React.DragEvent) {
