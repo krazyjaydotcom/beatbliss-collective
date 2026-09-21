@@ -158,8 +158,19 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
             </Link>
           ) : null}
         </div>
+      ) : paying ? (
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => setPaying(false)}
+            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back
+          </button>
+          <InlineCheckout items={checkoutItems} />
+        </div>
       ) : (
-        <form onSubmit={submit} className="space-y-3">
+        <div className="space-y-3">
           <button
             type="button"
             onClick={addToCart}
@@ -176,29 +187,21 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
               </>
             )}
           </button>
-          <input
-            required
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email for your license and files"
-            className="h-11 w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/60"
-          />
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            type="button"
+            onClick={() => setPaying(true)}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            {loading ? "Opening checkout…" : `Buy now · ${formatPrice(price)}`}
-            {loading ? null : <ArrowRight className="h-4 w-4" />}
+            {`Buy now · ${formatPrice(price)}`}
+            <ArrowRight className="h-4 w-4" />
           </button>
           <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5" /> Secure payment · license document issued on
-            purchase
+            <ShieldCheck className="h-3.5 w-3.5" /> Secure payment right here · your music keeps
+            playing
           </p>
-        </form>
+        </div>
       )}
+
     </div>
   );
 }
