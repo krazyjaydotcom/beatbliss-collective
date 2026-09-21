@@ -735,7 +735,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
         <Field label="Default mood">
           <OptionInput value={mood} onChange={setMood} options={moods.map((option) => option.value)} placeholder="Hard, Chill, Uplifting..." />
         </Field>
-        <Field label="Default BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
+        <Field label="Fallback BPM (used only if detection fails)"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
         <Field label="Release Date">
           <Input type="datetime-local" value={releaseAt} onChange={(e) => setReleaseAt(e.target.value)} />
         </Field>
