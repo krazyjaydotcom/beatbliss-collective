@@ -58,81 +58,89 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       const email = data.email ? data.email.toLowerCase() : null;
       const ids = Array.from(new Set(data.items.map((i) => i.beatId)));
 
+      const { data: rows } = await sb
+        .from("beats")
+        .select(
+          "id,title,landing_slug,cover_url,price_cents,nonexclusive_price_cents,exclusive_price_cents,is_active,landing_visibility",
+        )
+        .in("id", ids);
 
-    const { data: rows } = await sb
-      .from("beats")
-      .select(
-        "id,title,landing_slug,cover_url,price_cents,nonexclusive_price_cents,exclusive_price_cents,is_active,landing_visibility",
-      )
-      .in("id", ids);
+      const byId = new Map<string, Record<string, any>>(
+        ((rows ?? []) as Record<string, any>[]).map((b) => [b.id as string, b]),
+      );
 
-    const byId = new Map<string, Record<string, any>>(
-      ((rows ?? []) as Record<string, any>[]).map((b) => [b.id as string, b]),
-    );
+      const lineItems: any[] = [];
+      const orders: { beat_id: string; amount_cents: number }[] = [];
 
-    const lineItems: any[] = [];
-    const orders: { beat_id: string; amount_cents: number }[] = [];
+      for (const item of data.items) {
+        const beat = byId.get(item.beatId);
+        if (!beat || !beat.is_active)
+          return { clientSecret: null, error: "One of these beats is no longer available." };
+        const amount = resolvePrice(beat, item.tier);
+        if (!amount || amount < 50) {
+          return {
+            clientSecret: null,
+            error: `${beat.title}: the ${TIER_META[item.tier].label} price isn't set up yet.`,
+          };
+        }
+        lineItems.push({
+          price_data: {
+            currency: "usd",
+            unit_amount: amount,
+            product_data: {
+              name: `${beat.title} — ${TIER_META[item.tier].label} License`,
+              ...(beat.cover_url ? { images: [beat.cover_url] } : {}),
+            },
+          },
+          quantity: 1,
+        });
+        orders.push({ beat_id: beat.id, amount_cents: amount });
+      }
 
-    for (const item of data.items) {
-      const beat = byId.get(item.beatId);
-      if (!beat || !beat.is_active) return { url: null, error: "One of these beats is no longer available." };
-      const amount = resolvePrice(beat, item.tier);
-      if (!amount || amount < 50) {
+      // Record intent (best-effort) only when we already know the buyer's
+      // email. Otherwise the webhook creates the order from Stripe's own
+      // customer details after payment. Never block checkout on this.
+      if (email) {
+        try {
+          await sb.from("lease_orders").insert(
+            orders.map((o) => ({
+              email,
+              beat_id: o.beat_id,
+              amount_cents: o.amount_cents,
+              used_first_time_discount: false,
+            })),
+          );
+        } catch {
+          /* ignore */
+        }
+      }
+
+      try {
+        const stripe = createStripeClient(data.environment);
+        const session = await stripe.checkout.sessions.create({
+          mode: "payment",
+          line_items: lineItems,
+          ui_mode: "embedded_page",
+          return_url: data.returnUrl,
+          ...(email ? { customer_email: email } : {}),
+          payment_intent_data: {
+            description: `MYBEATCATALOG — ${lineItems.length} license(s)`,
+          },
+          metadata: {
+            source: "beat_cart",
+            ...(email ? { buyer_email: email } : {}),
+            beat_ids: data.items.map((i) => i.beatId).join(","),
+            tiers: data.items.map((i) => i.tier).join(","),
+            item_count: String(data.items.length),
+          },
+        });
+        return { clientSecret: session.client_secret ?? null, error: null };
+      } catch (err) {
         return {
-          url: null,
-          error: `${beat.title}: the ${TIER_META[item.tier].label} price isn't set up yet.`,
+          clientSecret: null,
+          error: err instanceof Error ? err.message : "Checkout is unavailable right now.",
         };
       }
-      lineItems.push({
-        price_data: {
-          currency: "usd",
-          unit_amount: amount,
-          product_data: {
-            name: `${beat.title} — ${TIER_META[item.tier].label} License`,
-            ...(beat.cover_url ? { images: [beat.cover_url] } : {}),
-          },
-        },
-        quantity: 1,
-      });
-      orders.push({ beat_id: beat.id, amount_cents: amount });
-    }
+    },
+  );
 
-    // Record intent (best-effort). Never block checkout on this.
-    try {
-      await sb.from("lease_orders").insert(
-        orders.map((o) => ({
-          email,
-          beat_id: o.beat_id,
-          amount_cents: o.amount_cents,
-          used_first_time_discount: false,
-        })),
-      );
-    } catch {
-      /* ignore */
-    }
-
-    try {
-      const stripe = createStripeClient(data.environment);
-      const session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        line_items: lineItems,
-        customer_email: email,
-        success_url: data.successUrl,
-        cancel_url: data.cancelUrl,
-        payment_intent_data: { description: `MYBEATCATALOG — ${lineItems.length} license(s)` },
-        metadata: {
-          source: "beat_cart",
-          buyer_email: email,
-          beat_ids: data.items.map((i) => i.beatId).join(","),
-          tiers: data.items.map((i) => i.tier).join(","),
-          item_count: String(data.items.length),
-        },
-      });
-      return { url: session.url ?? null, error: null };
-    } catch (err) {
-      return {
-        url: null,
-        error: err instanceof Error ? err.message : "Checkout is unavailable right now.",
-      };
-    }
-  });
