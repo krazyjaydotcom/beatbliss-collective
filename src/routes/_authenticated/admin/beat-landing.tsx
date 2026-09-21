@@ -888,6 +888,7 @@ function OrdersCard() {
     id: string;
     email: string;
     amount_cents: number;
+    license_tier: string | null;
     used_first_time_discount: boolean;
     created_at: string;
   }>;
@@ -899,6 +900,7 @@ function OrdersCard() {
           <thead>
             <tr className="text-xs text-muted-foreground text-left border-b border-border/60">
               <th className="py-1.5">Email</th>
+              <th>Tier</th>
               <th>Amount</th>
               <th>Discount</th>
               <th>When</th>
@@ -908,6 +910,7 @@ function OrdersCard() {
             {orders.map((o) => (
               <tr key={o.id} className="border-b border-border/40">
                 <td className="py-1.5">{o.email}</td>
+                <td className="text-xs capitalize">{o.license_tier ?? "—"}</td>
                 <td>${(o.amount_cents / 100).toFixed(2)}</td>
                 <td>{o.used_first_time_discount ? <span className="text-orange-600 text-xs">First-time</span> : ""}</td>
                 <td className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</td>
