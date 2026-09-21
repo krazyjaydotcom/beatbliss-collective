@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Check, FileText, Plus, ShieldCheck } from "lucide-react";
-import { createCartCheckoutSession } from "@/lib/cart.functions";
-import { getStripeEnvironment } from "@/lib/stripe";
+import { ArrowLeft, ArrowRight, Check, FileText, Plus, ShieldCheck } from "lucide-react";
 import { formatPrice } from "@/components/store/player-provider";
 import { useCart } from "@/components/store/cart-provider";
+import { InlineCheckout } from "@/components/store/inline-checkout";
 import { TIER_META, TIER_ORDER, tierPriceCents, type LicenseTier } from "@/lib/licensing";
 import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
+
 
 /** The exact license terms already used on the public beat pages. */
 export function LicenseTerms() {
