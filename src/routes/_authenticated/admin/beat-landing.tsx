@@ -47,6 +47,8 @@ type BeatRow = {
   custom_video_recorded_at: string | null;
   audio_url_tagged: string | null;
   audio_url: string | null;
+  nonexclusive_price_cents: number | null;
+  exclusive_price_cents: number | null;
 };
 
 function BeatLandingAdmin() {
