@@ -73,8 +73,8 @@ export function detectBpm(buf: AudioBuffer): number | null {
   const maxSamples = Math.min(data.length, sr * 60);
   if (maxSamples < sr * 4) return null;
 
-  // Onset envelope at ~200 Hz
-  const hop = Math.max(1, Math.round(sr / 200));
+  // Onset envelope at ~400 Hz
+  const hop = Math.max(1, Math.round(sr / 400));
   const frames = Math.floor(maxSamples / hop);
   const env = new Float32Array(frames);
   for (let f = 0; f < frames; f++) {
@@ -98,26 +98,47 @@ export function detectBpm(buf: AudioBuffer): number | null {
   const maxLag = Math.ceil((60 / 60) * envRate);
   if (maxLag >= frames) return null;
 
-  let bestLag = -1;
-  let bestScore = -Infinity;
-  for (let lag = minLag; lag <= maxLag; lag++) {
+  const scoreAt = (lag: number) => {
     let sum = 0;
     const n = frames - lag;
+    if (n <= 0) return -Infinity;
     for (let f = 0; f < n; f++) sum += onset[f] * onset[f + lag];
+    let score = sum / n;
     // reinforce with the first harmonic (double-time consistency)
     const lag2 = lag * 2;
     if (lag2 < frames) {
       let sum2 = 0;
       const n2 = frames - lag2;
       for (let f = 0; f < n2; f++) sum2 += onset[f] * onset[f + lag2];
-      sum += sum2 * 0.5;
+      score += (sum2 / n2) * 0.5;
     }
-    const score = sum / n;
+    return score;
+  };
+
+  const scores = new Float64Array(maxLag + 1);
+  let bestLag = -1;
+  let bestScore = -Infinity;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    const score = scoreAt(lag);
+    scores[lag] = score;
     if (score > bestScore) { bestScore = score; bestLag = lag; }
   }
   if (bestLag <= 0) return null;
 
-  let bpm = (60 * envRate) / bestLag;
+  // Sub-sample refinement (parabolic fit around the peak)
+  let refined = bestLag;
+  if (bestLag > minLag && bestLag < maxLag) {
+    const a = scores[bestLag - 1];
+    const b = scores[bestLag];
+    const c = scores[bestLag + 1];
+    const den = a - 2 * b + c;
+    if (den !== 0) {
+      const delta = (0.5 * (a - c)) / den;
+      if (Math.abs(delta) <= 1) refined = bestLag + delta;
+    }
+  }
+
+  let bpm = (60 * envRate) / refined;
   // fold into the usual production range
   while (bpm < 70) bpm *= 2;
   while (bpm > 180) bpm /= 2;
