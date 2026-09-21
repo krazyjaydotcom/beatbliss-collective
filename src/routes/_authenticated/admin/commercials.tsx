@@ -197,8 +197,12 @@ function CommercialsAdmin() {
                 <div className="min-w-0">
                   <p className="truncate font-medium">{r.title}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {r.media_type === "video" ? "Video" : "Audio"} · shown {r.impressions} ·
-                    skipped {r.skips}
+                    {r.media_type === "video"
+                      ? "Video"
+                      : r.media_type === "embed"
+                        ? "Linked video"
+                        : "Audio"}{" "}
+                    · shown {r.impressions} · skipped {r.skips} · button clicks {r.clicks ?? 0}
                     {r.cta_url ? ` · links to ${r.cta_url}` : ""}
                   </p>
                 </div>
