@@ -205,6 +205,7 @@ export const recordLeaseIntent = createServerFn({ method: "POST" })
       beat_id: data.beatId,
       amount_cents: amount,
       used_first_time_discount: useDiscount,
+      license_tier: "unlimited",
     });
     if (error) {
       // If discount uniqueness clashed, fall back to full price silently
@@ -214,6 +215,7 @@ export const recordLeaseIntent = createServerFn({ method: "POST" })
           beat_id: data.beatId,
           amount_cents: b.price_cents,
           used_first_time_discount: false,
+          license_tier: "unlimited",
         });
         return { ok: true, amountCents: b.price_cents, checkoutUrl: b.checkout_url };
       }
