@@ -5,15 +5,13 @@
  *   the producer has set one, otherwise the shared default below.
  * - Unlimited License (WAV+MP3): the existing $49.99 license, unchanged wording
  *   and terms.
- * - Trackout/STEMS Access: per-beat price set in admin. When no price is set
- *   the tier is inquiry-only — we never invent a number.
- * - Exclusive Rights: per-beat price set in admin. When no price is set the beat
- *   is inquiry-only — we never invent a number.
+ * - Trackout/STEMS Access: $150 by default, or the per-beat price set in admin.
  */
 
-export type LicenseTier = "nonexclusive" | "unlimited" | "trackout" | "exclusive";
+export type LicenseTier = "nonexclusive" | "unlimited" | "trackout";
 
 export const DEFAULT_NONEXCLUSIVE_CENTS = 2499;
+export const DEFAULT_TRACKOUT_CENTS = 15000;
 
 export type LicensableBeat = {
   priceCents: number;
