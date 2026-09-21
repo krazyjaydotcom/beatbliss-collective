@@ -69,16 +69,14 @@ export function LicenseTerms() {
 }
 
 export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
-  const checkout = useServerFn(createCartCheckoutSession);
   const cart = useCart();
   const [tier, setTier] = useState<LicenseTier>("unlimited");
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [paying, setPaying] = useState(false);
 
   const price = useMemo(() => tierPriceCents(beat, tier), [beat, tier]);
   const inquiryOnly = price === null;
   const inCart = cart.has(beat.id, tier);
+  const checkoutItems = useMemo(() => [{ beatId: beat.id, tier }], [beat.id, tier]);
 
   const addToCart = () => {
     if (price === null) return;
@@ -93,40 +91,6 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
     });
   };
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (price === null) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const origin = window.location.origin;
-      let environment: "sandbox" | "live";
-      try {
-        environment = getStripeEnvironment();
-      } catch {
-        throw new Error("Payments are not configured. Please try again later or contact support.");
-      }
-      const r = await checkout({
-        data: {
-          items: [{ beatId: beat.id, tier }],
-          email,
-          environment,
-          successUrl: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: beat.slug ? `${origin}/beats/${beat.slug}` : origin,
-        },
-      });
-      if (r.error) throw new Error(r.error);
-      if (r.url) {
-        window.location.href = r.url;
-        return;
-      }
-      throw new Error("Checkout is unavailable right now.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-4">
