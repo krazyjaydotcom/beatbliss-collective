@@ -299,6 +299,8 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
     is_landing_published: z.boolean().optional(),
     landing_visibility: z.enum(["public", "unlisted", "private"]).optional(),
     producer_name: z.string().max(160).nullable().optional(),
+    nonexclusive_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
+    exclusive_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
   }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
