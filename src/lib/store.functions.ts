@@ -58,7 +58,7 @@ export const listStoreBeats = createServerFn({ method: "GET" }).handler(
     const { data, error } = await sb
       .from("beats")
       .select(
-        "id,title,landing_slug,producer_name,cover_url,audio_url,audio_url_tagged,price_cents,nonexclusive_price_cents,exclusive_price_cents,bpm,genre,mood,music_key,duration_seconds,created_at,release_at,is_featured",
+        "id,title,landing_slug,producer_name,cover_url,audio_url,audio_url_tagged,price_cents,nonexclusive_price_cents,trackout_price_cents,exclusive_price_cents,bpm,genre,mood,music_key,duration_seconds,created_at,release_at,is_featured",
       )
       .eq("is_active", true)
       .eq("landing_visibility", "public")
