@@ -123,13 +123,20 @@ export function detectBpm(buf: AudioBuffer): number | null {
   };
 
   const scores = new Float64Array(maxLag + 2);
-  for (let lag = minLag; lag <= maxLag; lag++) scores[lag] = scoreAt(lag);
+  let peakRaw = -Infinity;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    scores[lag] = scoreAt(lag);
+    if (scores[lag] > peakRaw) peakRaw = scores[lag];
+  }
+  if (!(peakRaw > 0)) return null;
 
-  // Only real autocorrelation peaks are tempo candidates; weight them by the prior.
+  // Candidates are strong autocorrelation peaks only; the prior then settles
+  // half-time / double-time ambiguity between them.
   let bestLag = -1;
   let bestScore = -Infinity;
   for (let lag = minLag + 1; lag < maxLag; lag++) {
     if (scores[lag] < scores[lag - 1] || scores[lag] < scores[lag + 1]) continue;
+    if (scores[lag] < peakRaw * 0.7) continue;
     const score = scores[lag] * prior(lag);
     if (score > bestScore) { bestScore = score; bestLag = lag; }
   }
