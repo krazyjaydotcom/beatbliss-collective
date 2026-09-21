@@ -47,6 +47,8 @@ type BeatRow = {
   custom_video_recorded_at: string | null;
   audio_url_tagged: string | null;
   audio_url: string | null;
+  nonexclusive_price_cents: number | null;
+  exclusive_price_cents: number | null;
 };
 
 function BeatLandingAdmin() {
@@ -611,6 +613,10 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
     custom_video_recorded_at: beat.custom_video_recorded_at ? beat.custom_video_recorded_at.slice(0, 16) : "",
     landing_visibility: beat.landing_visibility,
     producer_name: beat.producer_name || "",
+    nonexclusive_price_cents:
+      beat.nonexclusive_price_cents == null ? "" : String(beat.nonexclusive_price_cents),
+    exclusive_price_cents:
+      beat.exclusive_price_cents == null ? "" : String(beat.exclusive_price_cents),
   });
 
   const save = async () => {
@@ -630,6 +636,12 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           : null,
         landing_visibility: form.landing_visibility,
         producer_name: form.producer_name || null,
+        nonexclusive_price_cents:
+          form.nonexclusive_price_cents.trim() === ""
+            ? null
+            : Number(form.nonexclusive_price_cents),
+        exclusive_price_cents:
+          form.exclusive_price_cents.trim() === "" ? null : Number(form.exclusive_price_cents),
       },
     });
     if (r.ok) {
@@ -686,6 +698,32 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
               className={inp}
               value={form.discount_price_cents}
               onChange={(e) => setForm({ ...form, discount_price_cents: Number(e.target.value) })}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold">
+              Non-exclusive price (cents){" "}
+              <span className="font-normal text-muted-foreground">(blank = not offered)</span>
+            </label>
+            <input
+              type="number"
+              className={inp}
+              value={form.nonexclusive_price_cents}
+              onChange={(e) => setForm({ ...form, nonexclusive_price_cents: e.target.value })}
+              placeholder="2499"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold">
+              Exclusive price (cents){" "}
+              <span className="font-normal text-muted-foreground">(blank = inquiry only)</span>
+            </label>
+            <input
+              type="number"
+              className={inp}
+              value={form.exclusive_price_cents}
+              onChange={(e) => setForm({ ...form, exclusive_price_cents: e.target.value })}
+              placeholder="99900"
             />
           </div>
           <div className="sm:col-span-2">

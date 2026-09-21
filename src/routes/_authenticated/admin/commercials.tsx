@@ -96,6 +96,7 @@ function CommercialsAdmin() {
 
       toast.success("Commercial added");
       setTitle("");
+      setEmbedUrl("");
       setCtaLabel("");
       setCtaUrl("");
       if (mediaRef.current) mediaRef.current.value = "";
