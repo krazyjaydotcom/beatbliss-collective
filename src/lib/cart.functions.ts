@@ -23,12 +23,8 @@ function resolvePrice(beat: Record<string, any>, tier: LicenseTier): number | nu
     const v = beat.nonexclusive_price_cents;
     return typeof v === "number" && v > 0 ? v : DEFAULT_NONEXCLUSIVE_CENTS;
   }
-  if (tier === "trackout") {
-    const v = beat.trackout_price_cents;
-    return typeof v === "number" && v > 0 ? v : null;
-  }
-  const x = beat.exclusive_price_cents;
-  return typeof x === "number" && x > 0 ? x : null;
+  const v = beat.trackout_price_cents;
+  return typeof v === "number" && v > 0 ? v : DEFAULT_TRACKOUT_CENTS;
 }
 
 export const createCartCheckoutSession = createServerFn({ method: "POST" })
