@@ -928,6 +928,27 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
     setSaleDescription(beat.single_sale_description ?? "");
   }, [beat?.id]);
 
+  const [detecting, setDetecting] = useState(false);
+
+  async function autoDetect() {
+    const url = beat?.audio_url || beat?.audio_url_tagged;
+    if (!url) return toast.error("This beat has no audio file to analyze");
+    setDetecting(true);
+    try {
+      const { bpm: detectedBpm, key } = await analyzeUrl(url);
+      if (detectedBpm) setBpm(String(detectedBpm));
+      if (key) setMusicKey(key);
+      if (!detectedBpm && !key) toast.error("Could not detect key or tempo for this beat");
+      else toast.success("Detected — review, then save");
+    } catch (e: any) {
+      toast.error(e.message ?? "Could not analyze this beat");
+    } finally {
+      setDetecting(false);
+    }
+  }
+
+
+
 
   async function save() {
     if (!beat) return;
