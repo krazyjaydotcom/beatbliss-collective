@@ -147,7 +147,7 @@ export function detectBpm(buf: AudioBuffer): number | null {
   // Log-Gaussian tempo prior centred on 125 BPM — resolves half/double-time ties
   const prior = (lag: number) => {
     const bpmAt = (60 * envRate) / lag;
-    const x = Math.log2(bpmAt / 125) / 1.1;
+    const x = Math.log2(bpmAt / 125) / 0.9;
     return Math.exp(-0.5 * x * x);
   };
 
