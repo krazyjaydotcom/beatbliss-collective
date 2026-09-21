@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, ShoppingBag, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShoppingBag, Trash2, X } from "lucide-react";
 import { useCart } from "@/components/store/cart-provider";
-import { createCartCheckoutSession } from "@/lib/cart.functions";
-import { getStripeEnvironment } from "@/lib/stripe";
 import { formatPrice } from "@/components/store/player-provider";
 import { TIER_META } from "@/lib/licensing";
 import { CoverArt } from "@/components/store/cover-art";
+import { InlineCheckout } from "@/components/store/inline-checkout";
 
 export function CartButton() {
   const { count, open } = useCart();
@@ -30,46 +28,10 @@ export function CartButton() {
 
 export function CartSheet() {
   const cart = useCart();
-  const checkout = useServerFn(createCartCheckoutSession);
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [paying, setPaying] = useState(false);
 
   if (!cart.isOpen) return null;
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      let environment: "sandbox" | "live";
-      try {
-        environment = getStripeEnvironment();
-      } catch {
-        throw new Error("Payments are not configured. Please try again later or contact support.");
-      }
-      const origin = window.location.origin;
-      const r = await checkout({
-        data: {
-          items: cart.items.map((i) => ({ beatId: i.beatId, tier: i.tier })),
-          email,
-          environment,
-          successUrl: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: origin,
-        },
-      });
-      if (r.error) throw new Error(r.error);
-      if (r.url) {
-        window.location.href = r.url;
-        return;
-      }
-      throw new Error("Checkout is unavailable right now.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-[95] flex justify-end">
