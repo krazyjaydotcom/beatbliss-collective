@@ -6,6 +6,7 @@ import type { StoreBeat } from "@/lib/store.functions";
 import { formatTime } from "@/components/store/player-provider";
 import { LicenseCheckout, LicenseTerms } from "@/components/store/license-panel";
 import { CoverArt } from "@/components/store/cover-art";
+import { ShareBeatButton } from "@/components/store/share-beat-button";
 
 export function BeatDetail({
   beat,
@@ -101,6 +102,8 @@ export function BeatDetail({
           <Heart className={cn("h-4 w-4", isSaved && "fill-primary text-primary")} />
         </button>
       </div>
+
+      <ShareBeatButton beatRef={beat.slug ?? beat.id} title={beat.title} className="h-11 w-full" />
 
       <div className="h-px bg-white/[0.08]" />
 

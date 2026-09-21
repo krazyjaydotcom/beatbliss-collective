@@ -35,6 +35,7 @@ import {
   type InquiryQuestion,
 } from "@/lib/beat-landing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { ShareBeatButton } from "@/components/store/share-beat-button";
 
 const SITE = "https://mybeatcatalog.com";
 
@@ -215,6 +216,13 @@ function BeatLandingPage() {
               <div className="text-[10px] sm:text-[11px] text-slate-500">Let's work directly</div>
             </div>
           </button>
+
+          <ShareBeatButton
+            beatRef={params.slug}
+            title={beat!.title}
+            label="Share this beat"
+            className="w-full rounded-xl border-slate-200 bg-white px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-slate-700 hover:border-blue-300 hover:text-blue-700"
+          />
         </div>
 
         {/* TRUST BADGES */}
