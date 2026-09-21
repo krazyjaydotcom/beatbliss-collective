@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Check, FileText, Plus, ShieldCheck } from "lucide-react";
-import { createCartCheckoutSession } from "@/lib/cart.functions";
-import { getStripeEnvironment } from "@/lib/stripe";
+import { ArrowLeft, ArrowRight, Check, FileText, Plus, ShieldCheck } from "lucide-react";
 import { formatPrice } from "@/components/store/player-provider";
 import { useCart } from "@/components/store/cart-provider";
+import { InlineCheckout } from "@/components/store/inline-checkout";
 import { TIER_META, TIER_ORDER, tierPriceCents, type LicenseTier } from "@/lib/licensing";
 import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
+
 
 /** The exact license terms already used on the public beat pages. */
 export function LicenseTerms() {
@@ -69,16 +68,14 @@ export function LicenseTerms() {
 }
 
 export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
-  const checkout = useServerFn(createCartCheckoutSession);
   const cart = useCart();
   const [tier, setTier] = useState<LicenseTier>("unlimited");
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [paying, setPaying] = useState(false);
 
   const price = useMemo(() => tierPriceCents(beat, tier), [beat, tier]);
   const inquiryOnly = price === null;
   const inCart = cart.has(beat.id, tier);
+  const checkoutItems = useMemo(() => [{ beatId: beat.id, tier }], [beat.id, tier]);
 
   const addToCart = () => {
     if (price === null) return;
@@ -93,40 +90,6 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
     });
   };
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (price === null) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const origin = window.location.origin;
-      let environment: "sandbox" | "live";
-      try {
-        environment = getStripeEnvironment();
-      } catch {
-        throw new Error("Payments are not configured. Please try again later or contact support.");
-      }
-      const r = await checkout({
-        data: {
-          items: [{ beatId: beat.id, tier }],
-          email,
-          environment,
-          successUrl: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: beat.slug ? `${origin}/beats/${beat.slug}` : origin,
-        },
-      });
-      if (r.error) throw new Error(r.error);
-      if (r.url) {
-        window.location.href = r.url;
-        return;
-      }
-      throw new Error("Checkout is unavailable right now.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -194,8 +157,19 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
             </Link>
           ) : null}
         </div>
+      ) : paying ? (
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => setPaying(false)}
+            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back
+          </button>
+          <InlineCheckout items={checkoutItems} />
+        </div>
       ) : (
-        <form onSubmit={submit} className="space-y-3">
+        <div className="space-y-3">
           <button
             type="button"
             onClick={addToCart}
@@ -212,29 +186,21 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
               </>
             )}
           </button>
-          <input
-            required
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email for your license and files"
-            className="h-11 w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/60"
-          />
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            type="button"
+            onClick={() => setPaying(true)}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            {loading ? "Opening checkout…" : `Buy now · ${formatPrice(price)}`}
-            {loading ? null : <ArrowRight className="h-4 w-4" />}
+            {`Buy now · ${formatPrice(price)}`}
+            <ArrowRight className="h-4 w-4" />
           </button>
           <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5" /> Secure payment · license document issued on
-            purchase
+            <ShieldCheck className="h-3.5 w-3.5" /> Secure payment right here · your music keeps
+            playing
           </p>
-        </form>
+        </div>
       )}
+
     </div>
   );
 }

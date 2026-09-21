@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, ShoppingBag, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShoppingBag, Trash2, X } from "lucide-react";
 import { useCart } from "@/components/store/cart-provider";
-import { createCartCheckoutSession } from "@/lib/cart.functions";
-import { getStripeEnvironment } from "@/lib/stripe";
 import { formatPrice } from "@/components/store/player-provider";
 import { TIER_META } from "@/lib/licensing";
 import { CoverArt } from "@/components/store/cover-art";
+import { InlineCheckout } from "@/components/store/inline-checkout";
 
 export function CartButton() {
   const { count, open } = useCart();
@@ -30,46 +28,10 @@ export function CartButton() {
 
 export function CartSheet() {
   const cart = useCart();
-  const checkout = useServerFn(createCartCheckoutSession);
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [paying, setPaying] = useState(false);
 
   if (!cart.isOpen) return null;
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      let environment: "sandbox" | "live";
-      try {
-        environment = getStripeEnvironment();
-      } catch {
-        throw new Error("Payments are not configured. Please try again later or contact support.");
-      }
-      const origin = window.location.origin;
-      const r = await checkout({
-        data: {
-          items: cart.items.map((i) => ({ beatId: i.beatId, tier: i.tier })),
-          email,
-          environment,
-          successUrl: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: origin,
-        },
-      });
-      if (r.error) throw new Error(r.error);
-      if (r.url) {
-        window.location.href = r.url;
-        return;
-      }
-      throw new Error("Checkout is unavailable right now.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-[95] flex justify-end">
@@ -89,7 +51,17 @@ export function CartSheet() {
         }}
       >
         <header className="flex items-center justify-between border-b border-white/[0.08] px-5 py-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide">Your cart</h2>
+          {paying ? (
+            <button
+              type="button"
+              onClick={() => setPaying(false)}
+              className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to cart
+            </button>
+          ) : (
+            <h2 className="text-sm font-semibold uppercase tracking-wide">Your cart</h2>
+          )}
           <button
             type="button"
             onClick={cart.close}
@@ -102,7 +74,12 @@ export function CartSheet() {
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          {cart.items.length === 0 ? (
+          {paying && cart.items.length > 0 ? (
+            <InlineCheckout
+              items={cart.items.map((i) => ({ beatId: i.beatId, tier: i.tier }))}
+              onComplete={cart.clear}
+            />
+          ) : cart.items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Your cart is empty. Open any beat and add a license to buy several at once.
             </p>
@@ -142,11 +119,8 @@ export function CartSheet() {
           )}
         </div>
 
-        {cart.items.length > 0 ? (
-          <form
-            onSubmit={submit}
-            className="shrink-0 space-y-3 border-t border-white/[0.08] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
-          >
+        {cart.items.length > 0 && !paying ? (
+          <div className="shrink-0 space-y-3 border-t border-white/[0.08] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <div className="flex items-baseline justify-between">
               <span className="text-sm text-muted-foreground">
                 {cart.count} license{cart.count === 1 ? "" : "s"}
@@ -155,23 +129,17 @@ export function CartSheet() {
                 {formatPrice(cart.totalCents)}
               </span>
             </div>
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email for your licenses and files"
-              className="h-11 w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-primary/60"
-            />
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              type="button"
+              onClick={() => setPaying(true)}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:bg-primary/90"
             >
-              {loading ? "Opening checkout…" : "Checkout"}
-              {loading ? null : <ArrowRight className="h-4 w-4" />}
+              Checkout
+              <ArrowRight className="h-4 w-4" />
             </button>
+            <p className="text-center text-[11px] text-muted-foreground">
+              Pay right here — your music keeps playing.
+            </p>
             <button
               type="button"
               onClick={cart.clear}
@@ -179,8 +147,9 @@ export function CartSheet() {
             >
               Empty cart
             </button>
-          </form>
+          </div>
         ) : null}
+
       </aside>
     </div>
   );
