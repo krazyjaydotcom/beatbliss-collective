@@ -38,8 +38,15 @@ export function pickNextAd(ads: AdSpot[]): AdSpot | null {
   return ads[idx % ads.length] ?? null;
 }
 
+/**
+ * Supabase query builders are lazy: nothing is sent until the promise is
+ * awaited or `.then()` is attached. Calling `.then()` here is what actually
+ * fires the request. Failures never interrupt playback.
+ */
 function recordEvent(adId: string, event: "impression" | "skip" | "click") {
-  void supabase.rpc("record_ad_event", { _ad_id: adId, _event: event });
+  void supabase
+    .rpc("record_ad_event", { _ad_id: adId, _event: event })
+    .then(() => undefined, () => undefined);
 }
 
 /**
@@ -76,9 +83,14 @@ export function toEmbedUrl(raw: string): string {
 export function AdOverlay({ ad, onDone }: { ad: AdSpot; onDone: () => void }) {
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
   const [skipped, setSkipped] = useState(false);
+  const countedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    recordEvent(ad.id, "impression");
+    // Guard against a remount recording the same showing twice.
+    if (countedRef.current !== ad.id) {
+      countedRef.current = ad.id;
+      recordEvent(ad.id, "impression");
+    }
     const el = mediaRef.current;
     if (el) void el.play().catch(() => undefined);
   }, [ad.id]);

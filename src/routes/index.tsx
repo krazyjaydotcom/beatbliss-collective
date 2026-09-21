@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
@@ -28,6 +28,9 @@ const searchSchema = z.object({
   sort: fallback(z.string(), "newest").default("newest"),
   beat: fallback(z.string().optional(), undefined),
   b: fallback(z.string().optional(), undefined),
+  // Shared links carry play=1: open that beat and start it as soon as we can.
+  // Numeric-looking search values arrive parsed as numbers, so coerce to string.
+  play: fallback(z.coerce.string(), "").default(""),
 });
 
 const SITE = "https://mybeatcatalog.com";
@@ -147,12 +150,27 @@ function StorePage() {
   }, [beats, search.beat, search.b]);
 
   const openBeat = (b: StoreBeat) => setSearch({ beat: b.slug ?? b.id, b: undefined });
-  const closeBeat = () => setSearch({ beat: undefined, b: undefined });
+  const closeBeat = () => setSearch({ beat: undefined, b: undefined, play: "" });
 
   const playBeat = (b: StoreBeat) => {
     if (player.current?.id === b.id) player.toggle();
     else player.play(b, results);
   };
+
+  // A shared link (?beat=…&play=1) starts that beat once, as soon as the
+  // catalog is on screen. If the browser blocks unprompted audio the beat stays
+  // loaded in the player and the visitor just presses play.
+  const autoPlayedRef = useRef(false);
+  useEffect(() => {
+    if (autoPlayedRef.current || !selected) return;
+    const wants =
+      search.play === "1" ||
+      (typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("play") === "1");
+    if (!wants) return;
+    autoPlayedRef.current = true;
+    player.play(selected, [selected, ...results.filter((b) => b.id !== selected.id)]);
+  }, [search.play, selected, results, player]);
 
   const resetFilters = () => setSearch({ genre: "all", bpm: "all", q: "" });
 
