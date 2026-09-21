@@ -283,6 +283,8 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
     is_landing_published?: boolean;
     landing_visibility?: LandingVisibility;
     producer_name?: string | null;
+    nonexclusive_price_cents?: number | null;
+    exclusive_price_cents?: number | null;
   }) => z.object({
     id: z.string().uuid(),
     landing_slug: z.string().max(120).optional(),
