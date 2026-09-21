@@ -721,27 +721,14 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           <div>
             <label className="text-xs font-semibold">
               Trackout price (cents){" "}
-              <span className="font-normal text-muted-foreground">(blank = not offered)</span>
+              <span className="font-normal text-muted-foreground">(blank = $150 default)</span>
             </label>
             <input
               type="number"
               className={inp}
               value={form.trackout_price_cents}
               onChange={(e) => setForm({ ...form, trackout_price_cents: e.target.value })}
-              placeholder="4999"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-semibold">
-              Exclusive price (cents){" "}
-              <span className="font-normal text-muted-foreground">(blank = inquiry only)</span>
-            </label>
-            <input
-              type="number"
-              className={inp}
-              value={form.exclusive_price_cents}
-              onChange={(e) => setForm({ ...form, exclusive_price_cents: e.target.value })}
-              placeholder="99900"
+              placeholder="15000"
             />
           </div>
           <div className="sm:col-span-2">

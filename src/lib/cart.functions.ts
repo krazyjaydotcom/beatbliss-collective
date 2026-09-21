@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { createStripeClient, type StripeEnv } from "@/lib/stripe.server";
-import { DEFAULT_NONEXCLUSIVE_CENTS, TIER_META, type LicenseTier } from "@/lib/licensing";
+import { DEFAULT_NONEXCLUSIVE_CENTS, DEFAULT_TRACKOUT_CENTS, TIER_META, type LicenseTier } from "@/lib/licensing";
 
 /**
  * Multi-beat checkout. Prices are ALWAYS resolved server-side from the beat
@@ -23,12 +23,8 @@ function resolvePrice(beat: Record<string, any>, tier: LicenseTier): number | nu
     const v = beat.nonexclusive_price_cents;
     return typeof v === "number" && v > 0 ? v : DEFAULT_NONEXCLUSIVE_CENTS;
   }
-  if (tier === "trackout") {
-    const v = beat.trackout_price_cents;
-    return typeof v === "number" && v > 0 ? v : null;
-  }
-  const x = beat.exclusive_price_cents;
-  return typeof x === "number" && x > 0 ? x : null;
+  const v = beat.trackout_price_cents;
+  return typeof v === "number" && v > 0 ? v : DEFAULT_TRACKOUT_CENTS;
 }
 
 export const createCartCheckoutSession = createServerFn({ method: "POST" })
@@ -45,7 +41,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
             .array(
               z.object({
                 beatId: z.string().uuid(),
-                tier: z.enum(["nonexclusive", "unlimited", "trackout", "exclusive"]),
+                tier: z.enum(["nonexclusive", "unlimited", "trackout"]),
               }),
             )
             .min(1)

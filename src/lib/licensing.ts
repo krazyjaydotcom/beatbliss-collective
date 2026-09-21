@@ -5,15 +5,13 @@
  *   the producer has set one, otherwise the shared default below.
  * - Unlimited License (WAV+MP3): the existing $49.99 license, unchanged wording
  *   and terms.
- * - Trackout/STEMS Access: per-beat price set in admin. When no price is set
- *   the tier is inquiry-only — we never invent a number.
- * - Exclusive Rights: per-beat price set in admin. When no price is set the beat
- *   is inquiry-only — we never invent a number.
+ * - Trackout/STEMS Access: $150 by default, or the per-beat price set in admin.
  */
 
-export type LicenseTier = "nonexclusive" | "unlimited" | "trackout" | "exclusive";
+export type LicenseTier = "nonexclusive" | "unlimited" | "trackout";
 
 export const DEFAULT_NONEXCLUSIVE_CENTS = 2499;
+export const DEFAULT_TRACKOUT_CENTS = 15000;
 
 export type LicensableBeat = {
   priceCents: number;
@@ -56,19 +54,9 @@ export const TIER_META: Record<
       "Full mixing and arrangement control",
     ],
   },
-  exclusive: {
-    label: "Exclusive Rights",
-    short: "Exclusive",
-    blurb: "The beat is taken off the store and licensed to you alone.",
-    bullets: [
-      "Beat removed from the catalog after purchase",
-      "All non-exclusive rights, plus exclusivity",
-      "Producer credit and splits still required",
-    ],
-  },
 };
 
-export const TIER_ORDER: LicenseTier[] = ["nonexclusive", "unlimited", "trackout", "exclusive"];
+export const TIER_ORDER: LicenseTier[] = ["nonexclusive", "unlimited", "trackout"];
 
 /** Price in cents for a tier, or null when the tier is inquiry-only. */
 export function tierPriceCents(beat: LicensableBeat, tier: LicenseTier): number | null {
@@ -77,14 +65,10 @@ export function tierPriceCents(beat: LicensableBeat, tier: LicenseTier): number 
     const v = beat.nonExclusivePriceCents;
     return typeof v === "number" && v > 0 ? v : DEFAULT_NONEXCLUSIVE_CENTS;
   }
-  if (tier === "trackout") {
-    const v = beat.trackoutPriceCents;
-    return typeof v === "number" && v > 0 ? v : null;
-  }
-  const x = beat.exclusivePriceCents;
-  return typeof x === "number" && x > 0 ? x : null;
+  const v = beat.trackoutPriceCents;
+  return typeof v === "number" && v > 0 ? v : DEFAULT_TRACKOUT_CENTS;
 }
 
 export function isLicenseTier(value: unknown): value is LicenseTier {
-  return value === "nonexclusive" || value === "unlimited" || value === "trackout" || value === "exclusive";
+  return value === "nonexclusive" || value === "unlimited" || value === "trackout";
 }
