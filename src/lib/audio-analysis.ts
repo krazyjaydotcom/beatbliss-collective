@@ -169,15 +169,26 @@ export function detectBpm(buf: AudioBuffer): number | null {
   }
   if (bestLag <= 0) return null;
 
-  // Sub-sample refinement (parabolic fit around the peak)
+  // Fractional refinement: correlate at the 4th multiple of the period, where a
+  // small period error is magnified, using linear interpolation between frames.
+  const fracScore = (lag: number) => {
+    const L = lag * 4;
+    const n = frames - Math.ceil(L) - 1;
+    if (n <= 0) return -Infinity;
+    const base = Math.floor(L);
+    const frac = L - base;
+    let sum = 0;
+    for (let f = 0; f < n; f++) {
+      const i = f + base;
+      sum += onset[f] * (onset[i] * (1 - frac) + onset[i + 1] * frac);
+    }
+    return sum / n;
+  };
   let refined = bestLag;
-  const a = scores[bestLag - 1];
-  const b = scores[bestLag];
-  const c = scores[bestLag + 1];
-  const den = a - 2 * b + c;
-  if (den !== 0) {
-    const delta = (0.5 * (a - c)) / den;
-    if (Math.abs(delta) <= 1) refined = bestLag + delta;
+  let refinedScore = -Infinity;
+  for (let lag = bestLag - 1; lag <= bestLag + 1; lag += 0.02) {
+    const s = fracScore(lag);
+    if (s > refinedScore) { refinedScore = s; refined = lag; }
   }
 
   let bpm = (60 * envRate) / refined;
