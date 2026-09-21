@@ -37,6 +37,9 @@ type Pending = {
   title: string;
   status: "queued" | "decoding" | "uploading" | "done" | "error";
   message?: string;
+  bpm?: number | null;
+  musicKey?: string | null;
+  analyzing?: boolean;
 };
 
 function stripTagTokens(name: string): string {
