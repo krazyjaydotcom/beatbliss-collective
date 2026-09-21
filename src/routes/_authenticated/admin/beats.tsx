@@ -127,6 +127,8 @@ function AdminBeatsPage() {
 
       <DropUploader onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
 
+      <LibraryScanner beats={beats} onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
+
       <CatalogOptionsManager />
 
       <ExclusiveRightsAdminPanel />
