@@ -74,16 +74,20 @@ export const listStoreBeats = createServerFn({ method: "GET" }).handler(
       producerName: clean(b.producer_name) ?? "KRAZYJAYDOTCOM",
       coverUrl: b.cover_url ?? null,
       previewUrl: b.audio_url_tagged ?? b.audio_url ?? null,
-      priceCents: b.price_cents ?? 0,
-      nonExclusivePriceCents:
-        typeof b.nonexclusive_price_cents === "number" && b.nonexclusive_price_cents > 0
-          ? b.nonexclusive_price_cents
-          : null,
-      exclusivePriceCents:
-        typeof b.exclusive_price_cents === "number" && b.exclusive_price_cents > 0
-          ? b.exclusive_price_cents
-          : null,
-      bpm: typeof b.bpm === "number" && b.bpm > 0 ? b.bpm : null,
+    priceCents: b.price_cents ?? 0,
+    nonExclusivePriceCents:
+      typeof b.nonexclusive_price_cents === "number" && b.nonexclusive_price_cents > 0
+        ? b.nonexclusive_price_cents
+        : null,
+    trackoutPriceCents:
+      typeof b.trackout_price_cents === "number" && b.trackout_price_cents > 0
+        ? b.trackout_price_cents
+        : null,
+    exclusivePriceCents:
+      typeof b.exclusive_price_cents === "number" && b.exclusive_price_cents > 0
+        ? b.exclusive_price_cents
+        : null,
+    bpm: typeof b.bpm === "number" && b.bpm > 0 ? b.bpm : null,
       genre: clean(b.genre),
       mood: clean(b.mood),
       musicKey: clean(b.music_key),
