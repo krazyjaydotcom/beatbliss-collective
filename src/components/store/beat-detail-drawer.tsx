@@ -25,6 +25,7 @@ export function BeatDetail({
   onClose?: () => void;
 }) {
   const [termsOpen, setTermsOpen] = useState(false);
+  const [paying, setPaying] = useState(false);
   const meta = [
     beat.genre,
     beat.bpm ? `${beat.bpm} BPM` : null,
@@ -32,8 +33,16 @@ export function BeatDetail({
     beat.durationSeconds ? formatTime(beat.durationSeconds) : null,
   ].filter(Boolean) as string[];
 
+  if (paying) {
+    return (
+      <div className="animate-in fade-in duration-300 motion-reduce:animate-none">
+        <LicenseCheckout beat={beat} paying onPayingChange={setPaying} />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-5">
+    <div className="animate-in fade-in duration-300 motion-reduce:animate-none space-y-5">
       {onClose ? (
         <div className="flex justify-end">
           <button
@@ -95,7 +104,7 @@ export function BeatDetail({
 
       <div className="h-px bg-white/[0.08]" />
 
-      <LicenseCheckout beat={beat} />
+      <LicenseCheckout beat={beat} paying={false} onPayingChange={setPaying} />
 
       <button
         type="button"
@@ -155,7 +164,7 @@ export function BeatDetailDrawer({
         onClick={onClose}
         className="absolute inset-0 h-full w-full bg-black/70 backdrop-blur-sm"
       />
-      <div className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-2xl border-t border-white/10 bg-card p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-[420px] sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0">
+      <div className="absolute inset-x-0 top-0 h-[100dvh] overflow-y-auto border-t border-white/10 bg-card p-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:h-auto sm:max-h-none sm:w-[420px] sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0">
         <div className="mb-4 flex justify-end">
           <button
             type="button"

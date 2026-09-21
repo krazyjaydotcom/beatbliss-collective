@@ -67,10 +67,23 @@ export function LicenseTerms() {
   );
 }
 
-export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
+export function LicenseCheckout({
+  beat,
+  paying,
+  onPayingChange,
+}: {
+  beat: StoreBeat;
+  paying?: boolean;
+  onPayingChange?: (paying: boolean) => void;
+}) {
   const cart = useCart();
   const [tier, setTier] = useState<LicenseTier>("unlimited");
-  const [paying, setPaying] = useState(false);
+  const [localPaying, setLocalPaying] = useState(false);
+  const isPaying = paying ?? localPaying;
+  const setPaying = (next: boolean) => {
+    setLocalPaying(next);
+    onPayingChange?.(next);
+  };
 
   const price = useMemo(() => tierPriceCents(beat, tier), [beat, tier]);
   const inquiryOnly = price === null;
@@ -91,8 +104,23 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
   };
 
 
+  if (isPaying) {
+    return (
+      <div className="animate-in fade-in duration-300 motion-reduce:animate-none">
+        <button
+          type="button"
+          onClick={() => setPaying(false)}
+          className="mb-3 inline-flex h-10 items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to licensing
+        </button>
+        <InlineCheckout items={checkoutItems} />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="animate-in fade-in duration-300 motion-reduce:animate-none space-y-4">
       <div className="grid gap-2" role="radiogroup" aria-label="License type">
         {TIER_ORDER.map((t) => {
           const p = tierPriceCents(beat, t);
@@ -156,17 +184,6 @@ export function LicenseCheckout({ beat }: { beat: StoreBeat }) {
               Send exclusive inquiry
             </Link>
           ) : null}
-        </div>
-      ) : paying ? (
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => setPaying(false)}
-            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </button>
-          <InlineCheckout items={checkoutItems} />
         </div>
       ) : (
         <div className="space-y-3">
