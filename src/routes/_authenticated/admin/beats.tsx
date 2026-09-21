@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Image, Loader2, Music, Save, Trash2, FolderUp, FileAudio, FileMusic, Pencil, X, Sparkles, Copy, DollarSign } from "lucide-react";
+import { Image, Loader2, Music, Save, Trash2, FolderUp, FileAudio, FileMusic, Pencil, X, Sparkles, Copy, DollarSign, Gauge } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { decodeAudioFile, encodeMp3, encodeWav, isMp3, isWav } from "@/lib/audio-convert";
+import { analyzeBuffer, analyzeUrl, parseBpmFromName, parseKeyFromName } from "@/lib/audio-analysis";
 import { slugifyTitle } from "@/lib/slug";
 
 export const Route = createFileRoute("/_authenticated/admin/beats")({
@@ -37,6 +38,9 @@ type Pending = {
   title: string;
   status: "queued" | "decoding" | "uploading" | "done" | "error";
   message?: string;
+  bpm?: number | null;
+  musicKey?: string | null;
+  analyzing?: boolean;
 };
 
 function stripTagTokens(name: string): string {
@@ -122,6 +126,8 @@ function AdminBeatsPage() {
       </div>
 
       <DropUploader onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
+
+      <LibraryScanner beats={beats} onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
 
       <CatalogOptionsManager />
 
@@ -230,6 +236,85 @@ function AdminBeatsPage() {
     </div>
   );
 }
+
+// ---------------- Library key/BPM scanner ----------------
+
+function needsAnalysis(b: any): boolean {
+  const key = (b.music_key ?? "").trim();
+  return !b.bpm || b.bpm === 0 || !key || key === "C";
+}
+
+function LibraryScanner({ beats, onDone }: { beats: any[]; onDone: () => void }) {
+  const [running, setRunning] = useState(false);
+  const [onlyMissing, setOnlyMissing] = useState(true);
+  const [progress, setProgress] = useState({ done: 0, total: 0, updated: 0, failed: 0 });
+  const cancelRef = useRef(false);
+
+  const candidates = useMemo(
+    () => beats.filter((b) => b.audio_url && (!onlyMissing || needsAnalysis(b))),
+    [beats, onlyMissing],
+  );
+
+  async function scan() {
+    if (!candidates.length) return;
+    cancelRef.current = false;
+    setRunning(true);
+    let done = 0, updated = 0, failed = 0;
+    setProgress({ done: 0, total: candidates.length, updated: 0, failed: 0 });
+    for (const b of candidates) {
+      if (cancelRef.current) break;
+      try {
+        const { bpm, key } = await analyzeUrl(b.audio_url);
+        const patch: Record<string, any> = {};
+        if (bpm) patch.bpm = bpm;
+        if (key) patch.music_key = key;
+        if (Object.keys(patch).length) {
+          const { error } = await (supabase as any).from("beats").update(patch).eq("id", b.id);
+          if (error) throw error;
+          updated++;
+        }
+      } catch (e) {
+        console.error("scan failed", b.title, e);
+        failed++;
+      }
+      done++;
+      setProgress({ done, total: candidates.length, updated, failed });
+    }
+    setRunning(false);
+    toast.success(`Scan finished — ${updated} beats updated${failed ? `, ${failed} could not be read` : ""}`);
+    onDone();
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+      <div>
+        <h2 className="font-semibold flex items-center gap-2"><Gauge className="h-4 w-4 text-primary" /> Detect key &amp; tempo</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Listens to each beat in your library and fills in the BPM and musical key automatically.
+        </p>
+      </div>
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox checked={onlyMissing} onCheckedChange={(v) => setOnlyMissing(!!v)} disabled={running} />
+        Only beats missing key or tempo
+      </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="button" onClick={scan} disabled={running || !candidates.length}>
+          {running ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning {progress.done}/{progress.total}…</> : `Scan ${candidates.length} beat${candidates.length === 1 ? "" : "s"}`}
+        </Button>
+        {running && (
+          <Button type="button" variant="outline" onClick={() => { cancelRef.current = true; }}>Stop</Button>
+        )}
+        {progress.total > 0 && !running && (
+          <span className="text-sm text-muted-foreground">
+            {progress.updated} updated · {progress.failed} could not be read
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 
 function CatalogOptionsManager() {
   return (
@@ -559,6 +644,9 @@ function DropUploader({ onDone }: { onDone: () => void }) {
         cover: coverByBase.get(base),
         title: basename(a.name),
         status: "queued",
+        bpm: parseBpmFromName(a.name),
+        musicKey: parseKeyFromName(a.name),
+        analyzing: true,
       };
     });
 
@@ -573,11 +661,37 @@ function DropUploader({ onDone }: { onDone: () => void }) {
         cover: coverByBase.get(basename(t.name).toLowerCase()),
         title: basename(t.name).replace(/[\s_-]*(tagged|tag)[\s_-]*/gi, "").trim(),
         status: "queued",
+        bpm: parseBpmFromName(t.name),
+        musicKey: parseKeyFromName(t.name),
+        analyzing: true,
       });
     }
 
     setItems((cur) => [...cur, ...next]);
     if (audiosAll.length === 0 && files.length) toast.error("No audio files detected");
+    void analyzeQueue(next);
+  }
+
+  async function analyzeQueue(queue: Pending[]) {
+    for (const item of queue) {
+      if (item.bpm && item.musicKey) {
+        setItems((s) => s.map((x) => (x.id === item.id ? { ...x, analyzing: false } : x)));
+        continue;
+      }
+      try {
+        const buf = await decodeAudioFile(item.audio);
+        const detected = analyzeBuffer(buf);
+        setItems((s) =>
+          s.map((x) =>
+            x.id === item.id
+              ? { ...x, bpm: x.bpm ?? detected.bpm, musicKey: x.musicKey ?? detected.key, analyzing: false }
+              : x,
+          ),
+        );
+      } catch {
+        setItems((s) => s.map((x) => (x.id === item.id ? { ...x, analyzing: false } : x)));
+      }
+    }
   }
 
   function onDrop(e: React.DragEvent) {
@@ -634,9 +748,10 @@ function DropUploader({ onDone }: { onDone: () => void }) {
 
       const duration_seconds = Math.round(buf.duration);
 
+      const detectedBpm = p.bpm ?? analyzeBuffer(buf).bpm;
       const { error: insErr } = await (supabase as any).from("beats").insert({
-        title: p.title, genre, mood, bpm: parseInt(bpm) || 0,
-        music_key: "C", producer_name: "KRAZYJAY",
+        title: p.title, genre, mood, bpm: detectedBpm || parseInt(bpm) || 0,
+        music_key: p.musicKey || "C", producer_name: "KRAZYJAY",
         duration_seconds, audio_url, audio_url_wav, audio_url_tagged, cover_url,
         is_member_only: memberOnly,
         release_at: releaseAt ? new Date(releaseAt).toISOString() : null,
@@ -701,7 +816,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
         <Field label="Default mood">
           <OptionInput value={mood} onChange={setMood} options={moods.map((option) => option.value)} placeholder="Hard, Chill, Uplifting..." />
         </Field>
-        <Field label="Default BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
+        <Field label="Fallback BPM (used only if detection fails)"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
         <Field label="Release Date">
           <Input type="datetime-local" value={releaseAt} onChange={(e) => setReleaseAt(e.target.value)} />
         </Field>
@@ -714,13 +829,34 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       {items.length > 0 && (
         <div className="rounded-xl border border-border divide-y divide-border max-h-72 overflow-auto">
           {items.map((i) => (
-            <div key={i.id} className="px-3 py-2 flex items-center gap-3 text-sm">
+            <div key={i.id} className="px-3 py-2 flex flex-wrap items-center gap-3 text-sm">
               <FileMusic className="h-4 w-4 text-muted-foreground" />
               <Input
                 className="h-8 max-w-xs"
                 value={i.title}
                 onChange={(e) => setItems((s) => s.map((x) => x.id === i.id ? { ...x, title: e.target.value } : x))}
               />
+              <div className="flex items-center gap-2">
+                {i.analyzing ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> detecting…</span>
+                ) : (
+                  <>
+                    <Input
+                      className="h-8 w-20"
+                      type="number"
+                      placeholder="BPM"
+                      value={i.bpm ?? ""}
+                      onChange={(e) => setItems((s) => s.map((x) => x.id === i.id ? { ...x, bpm: e.target.value ? parseInt(e.target.value, 10) : null } : x))}
+                    />
+                    <Input
+                      className="h-8 w-28"
+                      placeholder="Key"
+                      value={i.musicKey ?? ""}
+                      onChange={(e) => setItems((s) => s.map((x) => x.id === i.id ? { ...x, musicKey: e.target.value } : x))}
+                    />
+                  </>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground truncate flex-1">
                 {i.audio.name}
                 {i.tagged && i.tagged !== i.audio ? ` · tagged: ${i.tagged.name}` : i.tagged === i.audio ? " · (tagged-only)" : <span className="text-amber-500"> · no tagged file</span>}
@@ -791,6 +927,27 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
     setSalePrice(beat.single_sale_price_cents ? (beat.single_sale_price_cents / 100).toFixed(2) : "");
     setSaleDescription(beat.single_sale_description ?? "");
   }, [beat?.id]);
+
+  const [detecting, setDetecting] = useState(false);
+
+  async function autoDetect() {
+    const url = beat?.audio_url || beat?.audio_url_tagged;
+    if (!url) return toast.error("This beat has no audio file to analyze");
+    setDetecting(true);
+    try {
+      const { bpm: detectedBpm, key } = await analyzeUrl(url);
+      if (detectedBpm) setBpm(String(detectedBpm));
+      if (key) setMusicKey(key);
+      if (!detectedBpm && !key) toast.error("Could not detect key or tempo for this beat");
+      else toast.success("Detected — review, then save");
+    } catch (e: any) {
+      toast.error(e.message ?? "Could not analyze this beat");
+    } finally {
+      setDetecting(false);
+    }
+  }
+
+
 
 
   async function save() {
@@ -868,6 +1025,11 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
             </Field>
             <Field label="BPM"><Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} /></Field>
             <Field label="Key"><Input value={musicKey} onChange={(e) => setMusicKey(e.target.value)} /></Field>
+            <div className="sm:col-span-2">
+              <Button type="button" variant="outline" size="sm" onClick={autoDetect} disabled={detecting}>
+                {detecting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Listening…</> : <><Gauge className="h-4 w-4 mr-2" /> Auto-detect key &amp; tempo</>}
+              </Button>
+            </div>
             <Field label="Duration seconds"><Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} /></Field>
             <Field label="Release date"><Input type="datetime-local" value={releaseAt} onChange={(e) => setReleaseAt(e.target.value)} /></Field>
             <label className="flex items-center gap-2 pt-6 text-sm">
