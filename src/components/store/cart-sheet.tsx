@@ -29,6 +29,10 @@ export function CartButton() {
 export function CartSheet() {
   const cart = useCart();
   const [paying, setPaying] = useState(false);
+  const closeCart = () => {
+    setPaying(false);
+    cart.close();
+  };
 
   if (!cart.isOpen) return null;
 
@@ -38,7 +42,7 @@ export function CartSheet() {
       <button
         type="button"
         aria-label="Close cart"
-        onClick={cart.close}
+        onClick={closeCart}
         className="absolute inset-0 bg-black/70"
       />
       <aside
@@ -47,7 +51,7 @@ export function CartSheet() {
         aria-label="Your cart"
         className="relative flex h-full w-full max-w-md flex-col border-l border-white/[0.08] bg-card"
         onKeyDown={(e) => {
-          if (e.key === "Escape") cart.close();
+          if (e.key === "Escape") closeCart();
         }}
       >
         <header className="flex items-center justify-between border-b border-white/[0.08] px-5 py-4">
@@ -64,7 +68,7 @@ export function CartSheet() {
           )}
           <button
             type="button"
-            onClick={cart.close}
+            onClick={closeCart}
             aria-label="Close cart"
             autoFocus
             className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
@@ -136,6 +140,14 @@ export function CartSheet() {
             >
               Checkout
               <ArrowRight className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={closeCart}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-medium text-foreground transition-colors hover:border-primary/60 hover:text-primary"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Continue shopping
             </button>
             <p className="text-center text-[11px] text-muted-foreground">
               Pay right here — your music keeps playing.

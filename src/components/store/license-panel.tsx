@@ -78,6 +78,7 @@ export function LicenseCheckout({
 }) {
   const cart = useCart();
   const [tier, setTier] = useState<LicenseTier>("unlimited");
+  const [detailsTier, setDetailsTier] = useState<LicenseTier | null>(null);
   const [localPaying, setLocalPaying] = useState(false);
   const isPaying = paying ?? localPaying;
   const setPaying = (next: boolean) => {
@@ -125,49 +126,65 @@ export function LicenseCheckout({
         {TIER_ORDER.map((t) => {
           const p = tierPriceCents(beat, t);
           const active = t === tier;
+          const detailsOpen = detailsTier === t;
           return (
-            <button
+            <div
               key={t}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => setTier(t)}
               className={cn(
-                "flex items-start gap-3 rounded-xl border p-3 text-left transition-colors",
+                "rounded-xl border transition-colors",
                 active
                   ? "border-primary/60 bg-primary/[0.08]"
                   : "border-white/10 bg-white/[0.02] hover:border-white/25",
               )}
             >
-              <span
-                className={cn(
-                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-                  active ? "border-primary bg-primary text-primary-foreground" : "border-white/30",
-                )}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => setTier(t)}
+                className="flex w-full items-center gap-3 px-3 pb-1 pt-3 text-left"
               >
-                {active ? <Check className="h-3 w-3" /> : null}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-baseline justify-between gap-2">
+                <span
+                  className={cn(
+                    "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+                    active ? "border-primary bg-primary text-primary-foreground" : "border-white/30",
+                  )}
+                >
+                  {active ? <Check className="h-3 w-3" /> : null}
+                </span>
+                <span className="flex min-w-0 flex-1 items-baseline justify-between gap-2">
                   <span className="text-sm font-semibold text-foreground">{TIER_META[t].label}</span>
                   <span className="text-sm font-semibold tabular-nums text-foreground">
                     {p === null ? "Inquire" : formatPrice(p)}
                   </span>
                 </span>
-                <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                  {TIER_META[t].blurb}
-                </span>
-              </span>
-            </button>
+              </button>
+              <button
+                type="button"
+                aria-expanded={detailsOpen}
+                aria-controls={`license-details-${t}`}
+                onClick={() => setDetailsTier(detailsOpen ? null : t)}
+                className="ml-10 mb-2 px-3 text-left text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+              >
+                {detailsOpen ? "Hide details" : "License details"}
+              </button>
+              {detailsOpen ? (
+                <div
+                  id={`license-details-${t}`}
+                  className="animate-in fade-in border-t border-white/10 px-3 py-3 text-xs leading-relaxed text-muted-foreground duration-200 motion-reduce:animate-none"
+                >
+                  <p>{TIER_META[t].blurb}</p>
+                  <ul className="mt-2 space-y-1">
+                    {TIER_META[t].bullets.map((bullet) => (
+                      <li key={bullet}>{bullet}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </div>
-
-      <ul className="space-y-1 text-sm text-muted-foreground">
-        {TIER_META[tier].bullets.map((b) => (
-          <li key={b}>{b}</li>
-        ))}
-      </ul>
 
       {inquiryOnly ? (
         <div className="space-y-2">
