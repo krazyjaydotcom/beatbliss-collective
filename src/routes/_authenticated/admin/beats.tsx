@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { decodeAudioFile, encodeMp3, encodeWav, isMp3, isWav } from "@/lib/audio-convert";
+import { analyzeBuffer, analyzeUrl, parseBpmFromName, parseKeyFromName } from "@/lib/audio-analysis";
 import { slugifyTitle } from "@/lib/slug";
 
 export const Route = createFileRoute("/_authenticated/admin/beats")({
