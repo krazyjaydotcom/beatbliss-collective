@@ -432,7 +432,7 @@ export const adminListLeaseOrders = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const sb = adminClient() as any;
     const { data } = await sb.from("lease_orders")
-      .select("id,beat_id,email,amount_cents,used_first_time_discount,stripe_session_id,created_at")
+      .select("id,beat_id,email,amount_cents,license_tier,used_first_time_discount,stripe_session_id,created_at")
       .order("created_at", { ascending: false })
       .limit(500);
     return { orders: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
@@ -494,6 +494,7 @@ export const createBeatLeaseCheckoutSession = createServerFn({ method: "POST" })
         beat_id: b.id,
         amount_cents: amount,
         used_first_time_discount: useDiscount,
+        license_tier: "unlimited",
       });
     } catch { /* ignore */ }
 
