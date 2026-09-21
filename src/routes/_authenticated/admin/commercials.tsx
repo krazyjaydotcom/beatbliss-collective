@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { toEmbedUrl } from "@/components/store/ad-overlay";
 
 export const Route = createFileRoute("/_authenticated/admin/commercials")({
   component: CommercialsAdmin,
@@ -150,6 +151,18 @@ function CommercialsAdmin() {
             <Label htmlFor="ad-media">Audio or video file</Label>
             <Input id="ad-media" type="file" accept="audio/*,video/*" ref={mediaRef} />
           </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="ad-embed">Or paste a YouTube / Vimeo link (no upload needed)</Label>
+            <Input
+              id="ad-embed"
+              value={embedUrl}
+              onChange={(e) => setEmbedUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+            <p className="text-xs text-muted-foreground">
+              If you paste a link, the file above is ignored.
+            </p>
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="ad-cover">Cover image (audio ads only, optional)</Label>
             <Input id="ad-cover" type="file" accept="image/*" ref={coverRef} />
@@ -185,8 +198,12 @@ function CommercialsAdmin() {
                 <div className="min-w-0">
                   <p className="truncate font-medium">{r.title}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {r.media_type === "video" ? "Video" : "Audio"} · shown {r.impressions} ·
-                    skipped {r.skips}
+                    {r.media_type === "video"
+                      ? "Video"
+                      : r.media_type === "embed"
+                        ? "Linked video"
+                        : "Audio"}{" "}
+                    · shown {r.impressions} · skipped {r.skips} · button clicks {r.clicks ?? 0}
                     {r.cta_url ? ` · links to ${r.cta_url}` : ""}
                   </p>
                 </div>
@@ -216,7 +233,15 @@ function CommercialsAdmin() {
 
               {preview?.id === r.id ? (
                 <div className="mt-3">
-                  {r.media_type === "video" ? (
+                  {r.media_type === "embed" ? (
+                    <iframe
+                      src={toEmbedUrl(r.media_url)}
+                      title={r.title}
+                      allow="autoplay; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      className="aspect-video w-full rounded-lg border-0 bg-black"
+                    />
+                  ) : r.media_type === "video" ? (
                     <video src={r.media_url} controls className="max-h-72 w-full rounded-lg bg-black" />
                   ) : (
                     <audio src={r.media_url} controls className="w-full" />
