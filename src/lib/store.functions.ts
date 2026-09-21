@@ -21,6 +21,7 @@ export type StoreBeat = {
   previewUrl: string | null;
   priceCents: number;
   nonExclusivePriceCents: number | null;
+  trackoutPriceCents: number | null;
   exclusivePriceCents: number | null;
   bpm: number | null;
   genre: string | null;
