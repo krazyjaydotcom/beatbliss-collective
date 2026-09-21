@@ -136,7 +136,7 @@ export function detectBpm(buf: AudioBuffer): number | null {
   let bestScore = -Infinity;
   for (let lag = minLag + 1; lag < maxLag; lag++) {
     if (scores[lag] < scores[lag - 1] || scores[lag] < scores[lag + 1]) continue;
-    if (scores[lag] < peakRaw * 0.7) continue;
+    if (scores[lag] < peakRaw * 0.88) continue;
     const score = scores[lag] * prior(lag);
     if (score > bestScore) { bestScore = score; bestLag = lag; }
   }
