@@ -115,32 +115,48 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
         }
       }
 
+      const base = {
+        mode: "payment" as const,
+        line_items: lineItems,
+        ui_mode: "embedded_page" as const,
+        ...(email ? { customer_email: email } : {}),
+        payment_intent_data: {
+          description: `MYBEATCATALOG — ${lineItems.length} license(s)`,
+        },
+        metadata: {
+          source: "beat_cart",
+          ...(email ? { buyer_email: email } : {}),
+          beat_ids: data.items.map((i) => i.beatId).join(","),
+          tiers: data.items.map((i) => i.tier).join(","),
+          item_count: String(data.items.length),
+        },
+      };
+
       try {
         const stripe = createStripeClient(data.environment);
-        const session = await stripe.checkout.sessions.create({
-          mode: "payment",
-          line_items: lineItems,
-          ui_mode: "embedded_page",
-          return_url: data.returnUrl,
-          ...(email ? { customer_email: email } : {}),
-          payment_intent_data: {
-            description: `MYBEATCATALOG — ${lineItems.length} license(s)`,
-          },
-          metadata: {
-            source: "beat_cart",
-            ...(email ? { buyer_email: email } : {}),
-            beat_ids: data.items.map((i) => i.beatId).join(","),
-            tiers: data.items.map((i) => i.tier).join(","),
-            item_count: String(data.items.length),
-          },
-        });
-        return { clientSecret: session.client_secret ?? null, error: null };
+        try {
+          // Preferred: payment completes inside the drawer, so the visitor
+          // never navigates away and the beat keeps playing.
+          const session = await stripe.checkout.sessions.create({
+            ...base,
+            redirect_on_completion: "never",
+          });
+          return { clientSecret: session.client_secret ?? null, error: null };
+        } catch {
+          // Fallback for accounts where in-place completion isn't allowed.
+          const session = await stripe.checkout.sessions.create({
+            ...base,
+            return_url: data.returnUrl,
+          });
+          return { clientSecret: session.client_secret ?? null, error: null };
+        }
       } catch (err) {
         return {
           clientSecret: null,
           error: err instanceof Error ? err.message : "Checkout is unavailable right now.",
         };
       }
+
     },
   );
 
