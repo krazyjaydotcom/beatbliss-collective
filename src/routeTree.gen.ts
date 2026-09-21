@@ -71,6 +71,7 @@ import { Route as AuthenticatedAdminBeatsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminBeatRequestsRouteImport } from './routes/_authenticated/admin/beat-requests'
 import { Route as AuthenticatedAdminBeatLandingRouteImport } from './routes/_authenticated/admin/beat-landing'
 import { Route as AuthenticatedAdminBeatClaimsRouteImport } from './routes/_authenticated/admin/beat-claims'
+import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin/analytics'
 import { Route as AuthenticatedAdminAgreementsRouteImport } from './routes/_authenticated/admin/agreements'
 import { Route as AuthenticatedAdminAccessQuestionsRouteImport } from './routes/_authenticated/admin/access-questions'
 import { Route as AuthenticatedAdminAccessApplicationsRouteImport } from './routes/_authenticated/admin/access-applications'
@@ -410,6 +411,12 @@ const AuthenticatedAdminBeatClaimsRoute =
     path: '/beat-claims',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAnalyticsRoute =
+  AuthenticatedAdminAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAgreementsRoute =
   AuthenticatedAdminAgreementsRouteImport.update({
     id: '/agreements',
@@ -500,6 +507,7 @@ export interface FileRoutesByFullPath {
   '/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
+  '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/admin/beat-landing': typeof AuthenticatedAdminBeatLandingRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -571,6 +579,7 @@ export interface FileRoutesByTo {
   '/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
+  '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/admin/beat-landing': typeof AuthenticatedAdminBeatLandingRoute
   '/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -645,6 +654,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/_authenticated/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
   '/_authenticated/admin/agreements': typeof AuthenticatedAdminAgreementsRoute
+  '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/beat-claims': typeof AuthenticatedAdminBeatClaimsRoute
   '/_authenticated/admin/beat-landing': typeof AuthenticatedAdminBeatLandingRoute
   '/_authenticated/admin/beat-requests': typeof AuthenticatedAdminBeatRequestsRoute
@@ -719,6 +729,7 @@ export interface FileRouteTypes {
     | '/admin/access-applications'
     | '/admin/access-questions'
     | '/admin/agreements'
+    | '/admin/analytics'
     | '/admin/beat-claims'
     | '/admin/beat-landing'
     | '/admin/beat-requests'
@@ -790,6 +801,7 @@ export interface FileRouteTypes {
     | '/admin/access-applications'
     | '/admin/access-questions'
     | '/admin/agreements'
+    | '/admin/analytics'
     | '/admin/beat-claims'
     | '/admin/beat-landing'
     | '/admin/beat-requests'
@@ -863,6 +875,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/access-applications'
     | '/_authenticated/admin/access-questions'
     | '/_authenticated/admin/agreements'
+    | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/beat-claims'
     | '/_authenticated/admin/beat-landing'
     | '/_authenticated/admin/beat-requests'
@@ -1367,6 +1380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBeatClaimsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/analytics': {
+      id: '/_authenticated/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AuthenticatedAdminAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/agreements': {
       id: '/_authenticated/admin/agreements'
       path: '/agreements'
@@ -1438,6 +1458,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAccessApplicationsRoute: typeof AuthenticatedAdminAccessApplicationsRoute
   AuthenticatedAdminAccessQuestionsRoute: typeof AuthenticatedAdminAccessQuestionsRoute
   AuthenticatedAdminAgreementsRoute: typeof AuthenticatedAdminAgreementsRoute
+  AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
   AuthenticatedAdminBeatClaimsRoute: typeof AuthenticatedAdminBeatClaimsRoute
   AuthenticatedAdminBeatLandingRoute: typeof AuthenticatedAdminBeatLandingRoute
   AuthenticatedAdminBeatRequestsRoute: typeof AuthenticatedAdminBeatRequestsRoute
@@ -1471,6 +1492,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAccessQuestionsRoute:
     AuthenticatedAdminAccessQuestionsRoute,
   AuthenticatedAdminAgreementsRoute: AuthenticatedAdminAgreementsRoute,
+  AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
   AuthenticatedAdminBeatClaimsRoute: AuthenticatedAdminBeatClaimsRoute,
   AuthenticatedAdminBeatLandingRoute: AuthenticatedAdminBeatLandingRoute,
   AuthenticatedAdminBeatRequestsRoute: AuthenticatedAdminBeatRequestsRoute,

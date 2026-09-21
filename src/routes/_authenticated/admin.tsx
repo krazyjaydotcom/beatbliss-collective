@@ -77,6 +77,8 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { to: "/admin/seo-pages", label: "SEO Pages", icon: FileText },
       { to: "/admin/home-gallery", label: "Home Gallery", icon: ImageIcon },
       { to: "/admin/commercials", label: "Commercials", icon: Megaphone },
+      { to: "/admin/analytics", label: "Plays & Ads", icon: BarChart3 },
+      { to: "/admin/audio-tag", label: "Audio Tag", icon: Tag },
     ],
   },
   {
