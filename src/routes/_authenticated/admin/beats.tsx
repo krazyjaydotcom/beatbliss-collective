@@ -748,13 +748,34 @@ function DropUploader({ onDone }: { onDone: () => void }) {
       {items.length > 0 && (
         <div className="rounded-xl border border-border divide-y divide-border max-h-72 overflow-auto">
           {items.map((i) => (
-            <div key={i.id} className="px-3 py-2 flex items-center gap-3 text-sm">
+            <div key={i.id} className="px-3 py-2 flex flex-wrap items-center gap-3 text-sm">
               <FileMusic className="h-4 w-4 text-muted-foreground" />
               <Input
                 className="h-8 max-w-xs"
                 value={i.title}
                 onChange={(e) => setItems((s) => s.map((x) => x.id === i.id ? { ...x, title: e.target.value } : x))}
               />
+              <div className="flex items-center gap-2">
+                {i.analyzing ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> detecting…</span>
+                ) : (
+                  <>
+                    <Input
+                      className="h-8 w-20"
+                      type="number"
+                      placeholder="BPM"
+                      value={i.bpm ?? ""}
+                      onChange={(e) => setItems((s) => s.map((x) => x.id === i.id ? { ...x, bpm: e.target.value ? parseInt(e.target.value, 10) : null } : x))}
+                    />
+                    <Input
+                      className="h-8 w-28"
+                      placeholder="Key"
+                      value={i.musicKey ?? ""}
+                      onChange={(e) => setItems((s) => s.map((x) => x.id === i.id ? { ...x, musicKey: e.target.value } : x))}
+                    />
+                  </>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground truncate flex-1">
                 {i.audio.name}
                 {i.tagged && i.tagged !== i.audio ? ` · tagged: ${i.tagged.name}` : i.tagged === i.audio ? " · (tagged-only)" : <span className="text-amber-500"> · no tagged file</span>}
