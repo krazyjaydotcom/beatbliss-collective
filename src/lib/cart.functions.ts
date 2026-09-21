@@ -31,10 +31,9 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
   .inputValidator(
     (input: {
       items: { beatId: string; tier: LicenseTier }[];
-      email: string;
+      email?: string;
       environment: StripeEnv;
-      successUrl: string;
-      cancelUrl: string;
+      returnUrl: string;
     }) =>
       z
         .object({
@@ -47,17 +46,18 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
             )
             .min(1)
             .max(20),
-          email: z.string().trim().email().max(255),
+          email: z.string().trim().email().max(255).optional().or(z.literal("")),
           environment: z.enum(["sandbox", "live"]),
-          successUrl: z.string().max(2048),
-          cancelUrl: z.string().max(2048),
+          returnUrl: z.string().max(2048),
         })
         .parse(input),
   )
-  .handler(async ({ data }): Promise<{ url: string | null; error: string | null }> => {
-    const sb = adminClient() as any;
-    const email = data.email.toLowerCase();
-    const ids = Array.from(new Set(data.items.map((i) => i.beatId)));
+  .handler(
+    async ({ data }): Promise<{ clientSecret: string | null; error: string | null }> => {
+      const sb = adminClient() as any;
+      const email = data.email ? data.email.toLowerCase() : null;
+      const ids = Array.from(new Set(data.items.map((i) => i.beatId)));
+
 
     const { data: rows } = await sb
       .from("beats")
