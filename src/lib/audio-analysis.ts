@@ -122,13 +122,15 @@ export function detectBpm(buf: AudioBuffer): number | null {
     return Math.exp(-0.5 * x * x);
   };
 
-  const scores = new Float64Array(maxLag + 1);
+  const scores = new Float64Array(maxLag + 2);
+  for (let lag = minLag; lag <= maxLag; lag++) scores[lag] = scoreAt(lag);
+
+  // Only real autocorrelation peaks are tempo candidates; weight them by the prior.
   let bestLag = -1;
   let bestScore = -Infinity;
-  for (let lag = minLag; lag <= maxLag; lag++) {
-    const raw = scoreAt(lag);
-    scores[lag] = raw;
-    const score = raw * prior(lag);
+  for (let lag = minLag + 1; lag < maxLag; lag++) {
+    if (scores[lag] < scores[lag - 1] || scores[lag] < scores[lag + 1]) continue;
+    const score = scores[lag] * prior(lag);
     if (score > bestScore) { bestScore = score; bestLag = lag; }
   }
   if (bestLag <= 0) return null;
