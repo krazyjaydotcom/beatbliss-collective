@@ -150,6 +150,18 @@ function CommercialsAdmin() {
             <Label htmlFor="ad-media">Audio or video file</Label>
             <Input id="ad-media" type="file" accept="audio/*,video/*" ref={mediaRef} />
           </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="ad-embed">Or paste a YouTube / Vimeo link (no upload needed)</Label>
+            <Input
+              id="ad-embed"
+              value={embedUrl}
+              onChange={(e) => setEmbedUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+            <p className="text-xs text-muted-foreground">
+              If you paste a link, the file above is ignored.
+            </p>
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="ad-cover">Cover image (audio ads only, optional)</Label>
             <Input id="ad-cover" type="file" accept="image/*" ref={coverRef} />
