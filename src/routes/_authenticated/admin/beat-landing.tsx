@@ -613,6 +613,10 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
     custom_video_recorded_at: beat.custom_video_recorded_at ? beat.custom_video_recorded_at.slice(0, 16) : "",
     landing_visibility: beat.landing_visibility,
     producer_name: beat.producer_name || "",
+    nonexclusive_price_cents:
+      beat.nonexclusive_price_cents == null ? "" : String(beat.nonexclusive_price_cents),
+    exclusive_price_cents:
+      beat.exclusive_price_cents == null ? "" : String(beat.exclusive_price_cents),
   });
 
   const save = async () => {
