@@ -636,6 +636,12 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           : null,
         landing_visibility: form.landing_visibility,
         producer_name: form.producer_name || null,
+        nonexclusive_price_cents:
+          form.nonexclusive_price_cents.trim() === ""
+            ? null
+            : Number(form.nonexclusive_price_cents),
+        exclusive_price_cents:
+          form.exclusive_price_cents.trim() === "" ? null : Number(form.exclusive_price_cents),
       },
     });
     if (r.ok) {
