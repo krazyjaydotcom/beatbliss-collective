@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { toEmbedUrl } from "@/components/store/ad-overlay";
 
 export const Route = createFileRoute("/_authenticated/admin/commercials")({
   component: CommercialsAdmin,
@@ -232,7 +233,15 @@ function CommercialsAdmin() {
 
               {preview?.id === r.id ? (
                 <div className="mt-3">
-                  {r.media_type === "video" ? (
+                  {r.media_type === "embed" ? (
+                    <iframe
+                      src={toEmbedUrl(r.media_url)}
+                      title={r.title}
+                      allow="autoplay; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      className="aspect-video w-full rounded-lg border-0 bg-black"
+                    />
+                  ) : r.media_type === "video" ? (
                     <video src={r.media_url} controls className="max-h-72 w-full rounded-lg bg-black" />
                   ) : (
                     <audio src={r.media_url} controls className="w-full" />
