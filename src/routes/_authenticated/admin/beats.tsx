@@ -667,9 +667,10 @@ function DropUploader({ onDone }: { onDone: () => void }) {
 
       const duration_seconds = Math.round(buf.duration);
 
+      const detectedBpm = p.bpm ?? analyzeBuffer(buf).bpm;
       const { error: insErr } = await (supabase as any).from("beats").insert({
-        title: p.title, genre, mood, bpm: parseInt(bpm) || 0,
-        music_key: "C", producer_name: "KRAZYJAY",
+        title: p.title, genre, mood, bpm: detectedBpm || parseInt(bpm) || 0,
+        music_key: p.musicKey || "C", producer_name: "KRAZYJAY",
         duration_seconds, audio_url, audio_url_wav, audio_url_tagged, cover_url,
         is_member_only: memberOnly,
         release_at: releaseAt ? new Date(releaseAt).toISOString() : null,
