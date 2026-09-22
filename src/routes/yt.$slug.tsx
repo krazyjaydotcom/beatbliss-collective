@@ -9,23 +9,15 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/yt/$slug")({
   validateSearch: zodValidator(searchSchema),
   beforeLoad: ({ params, search }) => {
-    throw redirect({
-      to: "/",
-      search: {
-        beat: params.slug,
-        play: "1",
-        purchase: "1",
-        utm_source: "youtube",
-        utm_medium: "shorts",
-        utm_campaign: params.slug,
-        utm_content: search.s,
-        view: "browse",
-        q: "",
-        genre: "all",
-        bpm: "all",
-        sort: "newest",
-      },
-      replace: true,
+    const target = new URLSearchParams({
+      beat: params.slug,
+      play: "1",
+      purchase: "1",
+      utm_source: "youtube",
+      utm_medium: "shorts",
+      utm_campaign: params.slug,
     });
+    if (search.s) target.set("utm_content", search.s);
+    throw redirect({ href: `/?${target.toString()}`, replace: true });
   },
 });
