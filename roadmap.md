@@ -6,3 +6,4 @@
 - [x] Add admin campaign reporting
 - [x] Verify build and responsive purchase/share flows without payment or publishing
 - [x] Add compact YouTube links that preserve purchase and campaign tracking
+- [x] Add compact Instagram links that preserve purchase and campaign tracking
