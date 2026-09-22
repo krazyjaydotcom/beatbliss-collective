@@ -34,7 +34,7 @@ export function BeatDetail({
 
   if (paying) {
     return (
-      <div className="animate-in fade-in duration-300 motion-reduce:animate-none">
+      <div className="flex h-full min-h-0 flex-col animate-in fade-in duration-300 motion-reduce:animate-none">
         <LicenseCheckout beat={beat} paying onPayingChange={setPaying} />
       </div>
     );
