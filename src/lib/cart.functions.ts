@@ -34,6 +34,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       email?: string;
       environment: StripeEnv;
       returnUrl: string;
+      attribution?: { source?: string | null; medium?: string | null; campaign?: string | null; content?: string | null; sessionKey?: string | null };
     }) =>
       z
         .object({
@@ -49,6 +50,13 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
           email: z.string().trim().email().max(255).optional().or(z.literal("")),
           environment: z.enum(["sandbox", "live"]),
           returnUrl: z.string().max(2048),
+          attribution: z.object({
+            source: z.string().max(100).nullable().optional(),
+            medium: z.string().max(100).nullable().optional(),
+            campaign: z.string().max(160).nullable().optional(),
+            content: z.string().max(160).nullable().optional(),
+            sessionKey: z.string().max(64).nullable().optional(),
+          }).optional(),
         })
         .parse(input),
   )
@@ -129,6 +137,11 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
           beat_ids: data.items.map((i) => i.beatId).join(","),
           tiers: data.items.map((i) => i.tier).join(","),
           item_count: String(data.items.length),
+          utm_source: data.attribution?.source ?? "",
+          utm_medium: data.attribution?.medium ?? "",
+          utm_campaign: data.attribution?.campaign ?? "",
+          utm_content: data.attribution?.content ?? "",
+          attribution_session: data.attribution?.sessionKey ?? "",
         },
       };
 
@@ -141,6 +154,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
             ...base,
             redirect_on_completion: "never",
           });
+          await sb.from("purchase_funnel_events").insert(data.items.map((item) => ({ event_type: "checkout_started", beat_id: item.beatId, license_tier: item.tier, utm_source: data.attribution?.source ?? null, utm_medium: data.attribution?.medium ?? null, utm_campaign: data.attribution?.campaign ?? null, utm_content: data.attribution?.content ?? null, session_key: data.attribution?.sessionKey ?? null, stripe_session_id: session.id, payment_environment: data.environment })));
           return { clientSecret: session.client_secret ?? null, error: null };
         } catch {
           // Fallback for accounts where in-place completion isn't allowed.
@@ -148,6 +162,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
             ...base,
             return_url: data.returnUrl,
           });
+          await sb.from("purchase_funnel_events").insert(data.items.map((item) => ({ event_type: "checkout_started", beat_id: item.beatId, license_tier: item.tier, utm_source: data.attribution?.source ?? null, utm_medium: data.attribution?.medium ?? null, utm_campaign: data.attribution?.campaign ?? null, utm_content: data.attribution?.content ?? null, session_key: data.attribution?.sessionKey ?? null, stripe_session_id: session.id, payment_environment: data.environment })));
           return { clientSecret: session.client_secret ?? null, error: null };
         }
       } catch (err) {

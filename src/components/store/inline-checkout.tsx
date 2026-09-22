@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createCartCheckoutSession } from "@/lib/cart.functions";
 import type { LicenseTier } from "@/lib/licensing";
+import { getPurchaseAttribution } from "@/lib/purchase-attribution";
 
 export interface InlineCheckoutItem {
   beatId: string;
@@ -49,6 +50,7 @@ export function InlineCheckout({
         items: payload,
         environment,
         returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+        attribution: getPurchaseAttribution(),
       },
     });
     if (r.error || !r.clientSecret) {
