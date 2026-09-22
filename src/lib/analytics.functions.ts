@@ -27,7 +27,9 @@ export type AnalyticsSummary = {
   topBeats: TopBeat[];
   ads: AdStat[];
   adTotals: { impressions: number; skips: number; clicks: number };
+  funnel: FunnelStat[];
 };
+export type FunnelStat = { campaign: string; beat: string; shortId: string | null; landings: number; plays: number; selections: number; buyClicks: number; checkouts: number; purchases: number; revenueCents: number };
 
 function dayKey(iso: string) {
   return iso.slice(0, 10);
@@ -48,7 +50,7 @@ export const getStoreAnalytics = createServerFn({ method: "GET" })
 
     const since = new Date(Date.now() - data.days * 86_400_000).toISOString();
 
-    const [playsRes, eventsRes, adsRes] = await Promise.all([
+    const [playsRes, eventsRes, adsRes, funnelRes] = await Promise.all([
       sb
         .from("beat_plays")
         .select("beat_id,is_member,created_at")
@@ -56,6 +58,7 @@ export const getStoreAnalytics = createServerFn({ method: "GET" })
         .limit(50_000),
       sb.from("ad_events").select("ad_id,event,created_at").gte("created_at", since).limit(50_000),
       sb.from("ad_spots").select("id,title"),
+      sb.from("purchase_funnel_events").select("event_type,beat_id,utm_campaign,utm_content,amount_cents").gte("created_at", since).limit(50_000),
     ]);
 
     const plays = (playsRes.data ?? []) as {
@@ -114,6 +117,28 @@ export const getStoreAnalytics = createServerFn({ method: "GET" })
     }
     const ads = [...adMap.values()].sort((a, b) => b.impressions - a.impressions);
 
+    const funnelRows = (funnelRes.data ?? []) as { event_type: string; beat_id: string | null; utm_campaign: string | null; utm_content: string | null; amount_cents: number | null }[];
+    const funnelBeatIds = [...new Set(funnelRows.flatMap((r) => r.beat_id ? [r.beat_id] : []))];
+    let funnelTitles = new Map<string, string>();
+    if (funnelBeatIds.length) {
+      const { data: beatRows } = await sb.from("beats").select("id,title").in("id", funnelBeatIds);
+      funnelTitles = new Map(((beatRows ?? []) as { id: string; title: string }[]).map((b) => [b.id, b.title]));
+    }
+    const funnelMap = new Map<string, FunnelStat>();
+    for (const row of funnelRows) {
+      const campaign = row.utm_campaign || "Unattributed";
+      const shortId = row.utm_content || null;
+      const key = `${campaign}|${row.beat_id ?? ""}|${shortId ?? ""}`;
+      const stat = funnelMap.get(key) ?? { campaign, beat: row.beat_id ? funnelTitles.get(row.beat_id) ?? "Removed beat" : "Unknown beat", shortId, landings: 0, plays: 0, selections: 0, buyClicks: 0, checkouts: 0, purchases: 0, revenueCents: 0 };
+      if (row.event_type === "attributed_landing") stat.landings += 1;
+      else if (row.event_type === "preview_play") stat.plays += 1;
+      else if (row.event_type === "license_selected") stat.selections += 1;
+      else if (row.event_type === "buy_now_clicked") stat.buyClicks += 1;
+      else if (row.event_type === "checkout_started") stat.checkouts += 1;
+      else if (row.event_type === "purchase_confirmed") { stat.purchases += 1; stat.revenueCents += row.amount_cents ?? 0; }
+      funnelMap.set(key, stat);
+    }
+
     return {
       days: data.days,
       totalPlays: plays.length,
@@ -134,5 +159,6 @@ export const getStoreAnalytics = createServerFn({ method: "GET" })
         }),
         { impressions: 0, skips: 0, clicks: 0 },
       ),
+      funnel: [...funnelMap.values()].sort((a, b) => b.landings - a.landings || b.purchases - a.purchases),
     };
   });

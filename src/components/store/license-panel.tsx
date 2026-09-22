@@ -81,6 +81,7 @@ export function LicenseCheckout({
   const cart = useCart();
   const [tier, setTier] = useState<LicenseTier>("nonexclusive");
   const [detailsTier, setDetailsTier] = useState<LicenseTier | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [localPaying, setLocalPaying] = useState(false);
   const isPaying = paying ?? localPaying;
   const setPaying = (next: boolean) => {
@@ -207,6 +208,10 @@ export function LicenseCheckout({
           );
         })}
       </div>
+      <button type="button" onClick={() => setTermsOpen((v) => !v)} className="my-2 min-h-8 text-left text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground" aria-expanded={termsOpen}>
+        {termsOpen ? "Hide full license terms" : "Read full license terms"}
+      </button>
+      {termsOpen ? <LicenseTerms /> : null}
       </div>
 
       {!inquiryOnly ? (

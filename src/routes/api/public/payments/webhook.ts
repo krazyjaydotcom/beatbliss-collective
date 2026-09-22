@@ -289,6 +289,14 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                     .map((s) => s.trim())
                     .filter(Boolean);
                   const tiers = (session.metadata?.tiers ?? "").split(",").map((s) => s.trim());
+                  const amounts = (session.metadata?.amounts ?? "").split(",").map((s) => Number(s) || 0);
+
+                  const { data: alreadyHandled } = await admin
+                    .from("lease_orders")
+                    .select("id")
+                    .eq("stripe_session_id", session.id)
+                    .limit(1);
+                  if (alreadyHandled && alreadyHandled.length > 0) break;
 
                   const { data: beats } = await admin
                     .from("beats")
@@ -320,13 +328,13 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                       if (pending && pending.length > 0) {
                         await admin
                           .from("lease_orders")
-                          .update({ stripe_session_id: session.id, license_tier: licenseType })
+                           .update({ stripe_session_id: session.id, license_tier: licenseType, amount_cents: amounts[i] ?? 0 })
                           .eq("id", (pending[0] as any).id);
                       } else if (buyerEmail) {
                         await admin.from("lease_orders").insert({
                           email: buyerEmail,
                           beat_id: beatId,
-                          amount_cents: 0,
+                           amount_cents: amounts[i] ?? 0,
                           used_first_time_discount: false,
                           stripe_session_id: session.id,
                           license_tier: licenseType,
@@ -341,7 +349,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                         to: buyerEmail,
                         beatTitle: `${beatTitle} (${licenseType})`,
                         downloadUrl: beat?.audio_url ?? beat?.audio_url_tagged ?? null,
-                        amountCents: 0,
+                        amountCents: amounts[i] ?? 0,
                         sessionId: `${session.id}:${beatId}`,
                         beatSlug: beat?.landing_slug ?? null,
                       });
@@ -355,6 +363,27 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                     sessionId: session.id,
                     beatSlug: null,
                   });
+
+                  try {
+                    await admin.from("purchase_funnel_events").upsert(
+                      beatIds.map((beatId, i) => ({
+                        event_type: "purchase_confirmed",
+                        beat_id: beatId,
+                        license_tier: tiers[i] || null,
+                        utm_source: session.metadata?.utm_source || null,
+                        utm_medium: session.metadata?.utm_medium || null,
+                        utm_campaign: session.metadata?.utm_campaign || null,
+                        utm_content: session.metadata?.utm_content || null,
+                        session_key: session.metadata?.attribution_session || null,
+                        stripe_session_id: session.id,
+                        amount_cents: amounts[i] ?? 0,
+                        payment_environment: env,
+                      })),
+                      { onConflict: "payment_environment,stripe_session_id,beat_id", ignoreDuplicates: true },
+                    );
+                  } catch (err) {
+                    console.error("[webhook] paid funnel event failed", err);
+                  }
                 } catch (err) {
                   console.error("[webhook] beat_cart handling failed", err);
                 }

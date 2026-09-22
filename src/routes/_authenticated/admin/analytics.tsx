@@ -77,6 +77,17 @@ function AdminAnalyticsPage() {
           </div>
 
           <section className="rounded-xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold">YouTube purchase funnel</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Paid purchases are recorded only by Stripe&apos;s verified webhook. Missing Short IDs remain unattributed.</p>
+            {data.funnel.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">No attributed purchase activity in this period.</p> : (
+              <div className="mt-3 overflow-x-auto"><table className="w-full text-left text-xs">
+                <thead className="uppercase tracking-wide text-muted-foreground"><tr><th className="py-2 pr-3">Campaign / beat</th><th className="py-2 pr-3">Short ID</th><th className="py-2 text-right">Land</th><th className="py-2 text-right">Play</th><th className="py-2 text-right">Select</th><th className="py-2 text-right">Buy</th><th className="py-2 text-right">Checkout</th><th className="py-2 text-right">Paid</th></tr></thead>
+                <tbody>{data.funnel.map((f) => <tr key={`${f.campaign}-${f.beat}-${f.shortId ?? ""}`} className="border-t border-border"><td className="py-2 pr-3"><span className="block font-medium">{f.campaign}</span><span className="text-muted-foreground">{f.beat}</span></td><td className="py-2 pr-3 text-muted-foreground">{f.shortId ?? "—"}</td><td className="py-2 text-right tabular-nums">{f.landings}</td><td className="py-2 text-right tabular-nums">{f.plays}</td><td className="py-2 text-right tabular-nums">{f.selections}</td><td className="py-2 text-right tabular-nums">{f.buyClicks}</td><td className="py-2 text-right tabular-nums">{f.checkouts}</td><td className="py-2 text-right tabular-nums">{f.purchases}</td></tr>)}</tbody>
+              </table></div>
+            )}
+          </section>
+
+          <section className="rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold">Plays per day</h2>
             {data.totalPlays === 0 ? (
               <p className="mt-6 pb-6 text-center text-sm text-muted-foreground">
