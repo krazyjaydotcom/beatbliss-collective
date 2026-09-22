@@ -101,9 +101,13 @@ export function BeatDetail({
         >
           <Heart className={cn("h-4 w-4", isSaved && "fill-primary text-primary")} />
         </button>
+        <ShareBeatButton
+          beatRef={beat.slug ?? beat.id}
+          title={beat.title}
+          label="Share"
+          className="h-11 shrink-0"
+        />
       </div>
-
-      <ShareBeatButton beatRef={beat.slug ?? beat.id} title={beat.title} className="h-11 w-full" />
 
       <div className="h-px bg-white/[0.08]" />
 

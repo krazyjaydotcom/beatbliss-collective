@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
 import { formatPrice, formatTime } from "@/components/store/player-provider";
 import { CoverArt } from "@/components/store/cover-art";
+import { tierPriceCents } from "@/lib/licensing";
 
 type Props = {
   beat: StoreBeat;
@@ -111,7 +112,7 @@ export function BeatRow({
           onClick={onOpen}
           className="h-9 shrink-0 rounded-full border border-white/12 px-3 text-xs font-semibold tabular-nums text-foreground transition-colors hover:border-primary/60 hover:text-primary sm:px-4"
         >
-          {formatPrice(beat.priceCents)}
+          {formatPrice(tierPriceCents(beat, "nonexclusive") ?? beat.priceCents)}
         </button>
       </div>
     </div>

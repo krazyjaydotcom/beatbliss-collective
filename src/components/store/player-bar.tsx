@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPrice, formatTime, usePlayer } from "@/components/store/player-provider";
+import { tierPriceCents } from "@/lib/licensing";
 import { CoverArt } from "@/components/store/cover-art";
 
 export function PlayerBar() {
@@ -330,7 +331,7 @@ export function PlayerBar() {
               onClick={openLicense}
               className="h-12 w-full rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground"
             >
-              License this beat · {formatPrice(current.priceCents)}
+              License this beat · {formatPrice(tierPriceCents(current, "nonexclusive") ?? current.priceCents)}
             </button>
 
             {queueOpen ? (

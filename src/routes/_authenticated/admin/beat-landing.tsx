@@ -720,7 +720,7 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           </div>
           <div>
             <label className="text-xs font-semibold">
-              Trackout price (cents){" "}
+              Unlimited w/ STEMs price (cents){" "}
               <span className="font-normal text-muted-foreground">(blank = $150 default)</span>
             </label>
             <input
