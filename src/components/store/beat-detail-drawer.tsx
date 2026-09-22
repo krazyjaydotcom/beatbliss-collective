@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { ExternalLink, Heart, Pause, Play, X } from "lucide-react";
+import { Heart, Pause, Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
 import { formatTime } from "@/components/store/player-provider";
-import { LicenseCheckout, LicenseTerms } from "@/components/store/license-panel";
+import { LicenseCheckout } from "@/components/store/license-panel";
 import { CoverArt } from "@/components/store/cover-art";
 import { ShareBeatButton } from "@/components/store/share-beat-button";
 
@@ -25,7 +24,6 @@ export function BeatDetail({
   onSave: () => void;
   onClose?: () => void;
 }) {
-  const [termsOpen, setTermsOpen] = useState(false);
   const [paying, setPaying] = useState(false);
   const meta = [
     beat.genre,
@@ -111,30 +109,6 @@ export function BeatDetail({
 
       <LicenseCheckout beat={beat} paying={false} onPayingChange={setPaying} compact />
 
-      <div className="hidden">
-      <button
-        type="button"
-        onClick={() => setTermsOpen((v) => !v)}
-        className="text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
-      >
-        {termsOpen ? "Hide license terms" : "Read the full license terms"}
-      </button>
-      {termsOpen ? <LicenseTerms /> : null}
-
-      {beat.slug ? (
-        <>
-          <div className="h-px bg-white/[0.08]" />
-          <Link
-            to="/beats/$slug"
-            params={{ slug: beat.slug }}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-          >
-            Open full beat page · exclusive &amp; custom work inquiry
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
-        </>
-      ) : null}
-      </div>
     </div>
   );
 }
@@ -182,7 +156,7 @@ export function BeatDetailDrawer({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <BeatDetail beat={beat} {...rest} />
+        <div className="min-h-0 flex-1"><BeatDetail beat={beat} {...rest} /></div>
       </div>
     </div>
   );

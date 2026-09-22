@@ -167,6 +167,15 @@ function StorePage() {
   // catalog is on screen. If the browser blocks unprompted audio the beat stays
   // loaded in the player and the visitor just presses play.
   const autoPlayedRef = useRef(false);
+  const attributedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selected || !search.utm_source) return;
+    const key = `${selected.id}:${search.utm_campaign ?? ""}:${search.utm_content ?? ""}`;
+    if (attributedRef.current === key) return;
+    attributedRef.current = key;
+    trackPurchaseFunnel("attributed_landing", selected.id);
+  }, [selected, search.utm_source, search.utm_campaign, search.utm_content]);
+
   useEffect(() => {
     if (autoPlayedRef.current || !selected) return;
     const wants =

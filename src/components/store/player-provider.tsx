@@ -17,6 +17,7 @@ import {
   type AudioTagSettings,
 } from "@/lib/audio-tag";
 import { AdOverlay, fetchActiveAds, pickNextAd, type AdSpot } from "./ad-overlay";
+import { trackPurchaseFunnel } from "@/lib/purchase-attribution";
 
 type Status = "idle" | "loading" | "ready" | "error";
 
@@ -102,6 +103,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   // Stable per-browser key so repeated plays can be grouped without identifying anyone.
   const sessionKeyRef = useRef<string>("");
+  const countedSrcRef = useRef("");
 
   useEffect(() => {
     meterRef.current = readMeter();
@@ -139,6 +141,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setDuration(beat.durationSeconds ?? 0);
     setStatus("loading");
     audio.src = beat.previewUrl;
+    countedSrcRef.current = "";
     audio.load();
     void audio
       .play()
@@ -151,11 +154,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const tag = tagSettingsRef.current;
     nextTagAtRef.current =
       tag.isEnabled && tag.tagUrl ? tag.startOffsetSeconds : Number.POSITIVE_INFINITY;
-
-    // Play counter (admin analytics). Never blocks playback.
-    void (supabase as any)
-      .rpc("record_beat_play", { _beat_id: beat.id, _session_key: sessionKeyRef.current || null })
-      .then(() => undefined, () => undefined);
 
     if (isGuestRef.current) {
       meterRef.current = { ...meterRef.current, beats: meterRef.current.beats + 1 };
@@ -317,6 +315,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         onPlaying={() => {
           setStatus("ready");
           setIsPlaying(true);
+          if (current && countedSrcRef.current !== current.previewUrl) {
+            countedSrcRef.current = current.previewUrl;
+            void (supabase as any)
+              .rpc("record_beat_play", { _beat_id: current.id, _session_key: sessionKeyRef.current || null })
+              .then(() => undefined, () => undefined);
+            trackPurchaseFunnel("preview_play", current.id);
+          }
         }}
         onWaiting={() => setStatus("loading")}
         onPause={() => {
