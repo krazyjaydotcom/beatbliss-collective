@@ -19,6 +19,7 @@ import {
 import { BeatDetail, BeatDetailDrawer } from "@/components/store/beat-detail-drawer";
 import { usePlayer } from "@/components/store/player-provider";
 import { useSavedBeats } from "@/hooks/use-saved-beats";
+import { trackPurchaseFunnel } from "@/lib/purchase-attribution";
 
 const searchSchema = z.object({
   view: fallback(z.string(), "browse").default("browse"),
@@ -31,6 +32,11 @@ const searchSchema = z.object({
   // Shared links carry play=1: open that beat and start it as soon as we can.
   // Numeric-looking search values arrive parsed as numbers, so coerce to string.
   play: fallback(z.coerce.string(), "").default(""),
+  purchase: fallback(z.coerce.string(), "").default(""),
+  utm_source: fallback(z.string().optional(), undefined),
+  utm_medium: fallback(z.string().optional(), undefined),
+  utm_campaign: fallback(z.string().optional(), undefined),
+  utm_content: fallback(z.string().optional(), undefined),
 });
 
 const SITE = "https://mybeatcatalog.com";
