@@ -316,7 +316,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           setStatus("ready");
           setIsPlaying(true);
           if (current && countedSrcRef.current !== current.previewUrl) {
-            countedSrcRef.current = current.previewUrl;
+            countedSrcRef.current = current.previewUrl ?? "";
             void (supabase as any)
               .rpc("record_beat_play", { _beat_id: current.id, _session_key: sessionKeyRef.current || null })
               .then(() => undefined, () => undefined);

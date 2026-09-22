@@ -296,7 +296,15 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                     .select("id")
                     .eq("stripe_session_id", session.id)
                     .limit(1);
-                  if (alreadyHandled && alreadyHandled.length > 0) break;
+                  if (alreadyHandled && alreadyHandled.length > 0) {
+                    if (session.payment_status === "paid") {
+                      await admin.from("purchase_funnel_events").upsert(
+                        beatIds.map((beatId, i) => ({ event_type: "purchase_confirmed", beat_id: beatId, license_tier: tiers[i] || null, utm_source: session.metadata?.utm_source || null, utm_medium: session.metadata?.utm_medium || null, utm_campaign: session.metadata?.utm_campaign || null, utm_content: session.metadata?.utm_content || null, session_key: session.metadata?.attribution_session || null, stripe_session_id: session.id, amount_cents: amounts[i] ?? 0, payment_environment: env })),
+                        { onConflict: "payment_environment,stripe_session_id,beat_id", ignoreDuplicates: true },
+                      );
+                    }
+                    break;
+                  }
 
                   const { data: beats } = await admin
                     .from("beats")
@@ -364,7 +372,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                     beatSlug: null,
                   });
 
-                  try {
+                  if (session.payment_status === "paid") try {
                     await admin.from("purchase_funnel_events").upsert(
                       beatIds.map((beatId, i) => ({
                         event_type: "purchase_confirmed",
