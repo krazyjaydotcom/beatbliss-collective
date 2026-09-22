@@ -1,0 +1,1 @@
+DELETE FROM public.beats WHERE audio_url LIKE '%cfvvxvohecqviflbwoxl%' OR cover_url LIKE '%cfvvxvohecqviflbwoxl%';
