@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { ExternalLink, Heart, Pause, Play, X } from "lucide-react";
+import { Heart, Pause, Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
 import { formatTime } from "@/components/store/player-provider";
-import { LicenseCheckout, LicenseTerms } from "@/components/store/license-panel";
+import { LicenseCheckout } from "@/components/store/license-panel";
 import { CoverArt } from "@/components/store/cover-art";
 import { ShareBeatButton } from "@/components/store/share-beat-button";
 
@@ -25,7 +24,6 @@ export function BeatDetail({
   onSave: () => void;
   onClose?: () => void;
 }) {
-  const [termsOpen, setTermsOpen] = useState(false);
   const [paying, setPaying] = useState(false);
   const meta = [
     beat.genre,
@@ -36,14 +34,14 @@ export function BeatDetail({
 
   if (paying) {
     return (
-      <div className="animate-in fade-in duration-300 motion-reduce:animate-none">
+      <div className="flex h-full min-h-0 flex-col animate-in fade-in duration-300 motion-reduce:animate-none">
         <LicenseCheckout beat={beat} paying onPayingChange={setPaying} />
       </div>
     );
   }
 
   return (
-    <div className="animate-in fade-in duration-300 motion-reduce:animate-none space-y-5">
+    <div className="flex h-full min-h-0 flex-col animate-in fade-in duration-300 motion-reduce:animate-none">
       {onClose ? (
         <div className="flex justify-end">
           <button
@@ -56,8 +54,8 @@ export function BeatDetail({
           </button>
         </div>
       ) : null}
-      <div className="flex gap-4">
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-white/[0.06]">
+      <div className="flex shrink-0 gap-3">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-white/[0.06] sm:h-20 sm:w-20">
           <CoverArt
             title={beat.title}
             seed={beat.id}
@@ -70,11 +68,11 @@ export function BeatDetail({
             {beat.title}
           </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">{beat.producerName}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+           <div className="mt-1 flex flex-wrap gap-1">
             {meta.map((m) => (
               <span
                 key={m}
-                className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-muted-foreground"
+                 className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-muted-foreground"
               >
                 {m}
               </span>
@@ -83,7 +81,7 @@ export function BeatDetail({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="my-2 flex shrink-0 items-center gap-2">
         <button
           type="button"
           onClick={onPlay}
@@ -109,32 +107,8 @@ export function BeatDetail({
         />
       </div>
 
-      <div className="h-px bg-white/[0.08]" />
+      <LicenseCheckout beat={beat} paying={false} onPayingChange={setPaying} compact />
 
-      <LicenseCheckout beat={beat} paying={false} onPayingChange={setPaying} />
-
-      <button
-        type="button"
-        onClick={() => setTermsOpen((v) => !v)}
-        className="text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
-      >
-        {termsOpen ? "Hide license terms" : "Read the full license terms"}
-      </button>
-      {termsOpen ? <LicenseTerms /> : null}
-
-      {beat.slug ? (
-        <>
-          <div className="h-px bg-white/[0.08]" />
-          <Link
-            to="/beats/$slug"
-            params={{ slug: beat.slug }}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-          >
-            Open full beat page · exclusive &amp; custom work inquiry
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
-        </>
-      ) : null}
     </div>
   );
 }
@@ -171,8 +145,8 @@ export function BeatDetailDrawer({
         onClick={onClose}
         className="absolute inset-0 h-full w-full bg-black/70 backdrop-blur-sm"
       />
-      <div className="absolute inset-x-0 top-0 h-[100dvh] overflow-y-auto border-t border-white/10 bg-card p-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:h-auto sm:max-h-none sm:w-[420px] sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0">
-        <div className="mb-4 flex justify-end">
+       <div className="absolute inset-x-0 top-0 flex h-[100dvh] min-h-0 flex-col overflow-hidden border-t border-white/10 bg-card px-4 pb-2 pt-[max(.5rem,env(safe-area-inset-top))] shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[420px] sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0">
+         <div className="flex h-10 shrink-0 justify-end">
           <button
             type="button"
             onClick={onClose}
@@ -182,7 +156,7 @@ export function BeatDetailDrawer({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <BeatDetail beat={beat} {...rest} />
+        <div className="min-h-0 flex-1"><BeatDetail beat={beat} {...rest} /></div>
       </div>
     </div>
   );

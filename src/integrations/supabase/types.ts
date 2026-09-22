@@ -1732,6 +1732,62 @@ export type Database = {
           },
         ]
       }
+      purchase_funnel_events: {
+        Row: {
+          amount_cents: number | null
+          beat_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          license_tier: string | null
+          payment_environment: string | null
+          session_key: string | null
+          stripe_session_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          beat_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          license_tier?: string | null
+          payment_environment?: string | null
+          session_key?: string | null
+          stripe_session_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          beat_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          license_tier?: string | null
+          payment_environment?: string | null
+          session_key?: string | null
+          stripe_session_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_funnel_events_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_pages: {
         Row: {
           created_at: string

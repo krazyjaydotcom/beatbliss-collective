@@ -5,6 +5,7 @@ import { formatPrice } from "@/components/store/player-provider";
 import { TIER_META } from "@/lib/licensing";
 import { CoverArt } from "@/components/store/cover-art";
 import { InlineCheckout } from "@/components/store/inline-checkout";
+import { trackPurchaseFunnel } from "@/lib/purchase-attribution";
 
 export function CartButton() {
   const { count, open } = useCart();
@@ -135,7 +136,10 @@ export function CartSheet() {
             </div>
             <button
               type="button"
-              onClick={() => setPaying(true)}
+               onClick={() => {
+                 cart.items.forEach((item) => trackPurchaseFunnel("buy_now_clicked", item.beatId, item.tier));
+                 setPaying(true);
+               }}
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:bg-primary/90"
             >
               Checkout

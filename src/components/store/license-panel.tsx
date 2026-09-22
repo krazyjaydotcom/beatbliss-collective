@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check, FileText, Plus, ShieldCheck } from "lucide-react";
 import { formatPrice } from "@/components/store/player-provider";
 import { useCart } from "@/components/store/cart-provider";
@@ -7,6 +6,7 @@ import { InlineCheckout } from "@/components/store/inline-checkout";
 import { TIER_META, TIER_ORDER, tierPriceCents, type LicenseTier } from "@/lib/licensing";
 import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
+import { trackPurchaseFunnel } from "@/lib/purchase-attribution";
 
 
 /** The exact license terms already used on the public beat pages. */
@@ -71,14 +71,17 @@ export function LicenseCheckout({
   beat,
   paying,
   onPayingChange,
+  compact = false,
 }: {
   beat: StoreBeat;
   paying?: boolean;
   onPayingChange?: (paying: boolean) => void;
+  compact?: boolean;
 }) {
   const cart = useCart();
   const [tier, setTier] = useState<LicenseTier>("nonexclusive");
   const [detailsTier, setDetailsTier] = useState<LicenseTier | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [localPaying, setLocalPaying] = useState(false);
   const isPaying = paying ?? localPaying;
   const setPaying = (next: boolean) => {
@@ -104,10 +107,27 @@ export function LicenseCheckout({
     });
   };
 
+  const selectTier = (next: LicenseTier) => {
+    setTier(next);
+    trackPurchaseFunnel("license_selected", beat.id, next);
+  };
+
+  const beginCheckout = () => {
+    trackPurchaseFunnel("buy_now_clicked", beat.id, tier);
+    setPaying(true);
+  };
+
+  const essential =
+    tier === "nonexclusive"
+      ? "Physical sales + promotional performances. No streaming rights."
+      : tier === "trackout"
+        ? "Unlimited rights. STEMs may take up to 24 hours for delivery."
+        : "Unlimited streaming and monetization rights. Delivery details are emailed after payment.";
+
 
   if (isPaying) {
     return (
-      <div className="animate-in fade-in duration-300 motion-reduce:animate-none">
+      <div className="flex min-h-0 flex-1 flex-col animate-in fade-in duration-300 motion-reduce:animate-none">
         <button
           type="button"
           onClick={() => setPaying(false)}
@@ -115,14 +135,16 @@ export function LicenseCheckout({
         >
           <ArrowLeft className="h-4 w-4" /> Back to licensing
         </button>
-        <InlineCheckout items={checkoutItems} />
+        <div className="min-h-0 flex-1 overflow-y-auto"><InlineCheckout items={checkoutItems} /></div>
       </div>
     );
   }
 
   return (
-    <div className="animate-in fade-in duration-300 motion-reduce:animate-none space-y-4">
-      <div className="grid gap-2" role="radiogroup" aria-label="License type">
+    <div className={cn("flex min-h-0 flex-1 flex-col animate-in fade-in duration-300 motion-reduce:animate-none", !compact && "gap-4")}>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+        <h3 className="mb-2 text-sm font-semibold tracking-tight text-foreground">License this beat</h3>
+      <div className="grid gap-1.5" role="radiogroup" aria-label="License type">
         {TIER_ORDER.map((t) => {
           const p = tierPriceCents(beat, t);
           const active = t === tier;
@@ -131,7 +153,7 @@ export function LicenseCheckout({
             <div
               key={t}
               className={cn(
-                "rounded-xl border transition-colors",
+                 "rounded-lg border transition-colors",
                 active
                   ? "border-primary/60 bg-primary/[0.08]"
                   : "border-white/10 bg-white/[0.02] hover:border-white/25",
@@ -141,8 +163,8 @@ export function LicenseCheckout({
                 type="button"
                 role="radio"
                 aria-checked={active}
-                onClick={() => setTier(t)}
-                className="flex w-full items-center gap-3 px-3 pb-1 pt-3 text-left"
+                 onClick={() => selectTier(t)}
+                 className="flex min-h-11 w-full items-center gap-2.5 px-3 py-2 text-left"
               >
                 <span
                   className={cn(
@@ -159,19 +181,20 @@ export function LicenseCheckout({
                   </span>
                 </span>
               </button>
-              <button
+               {active ? <p className="px-3 pb-1 pl-10 text-[11px] leading-snug text-foreground/80">{t === "nonexclusive" ? "Physical sales + promotional performances. No streaming rights." : t === "trackout" ? "STEMs may take up to 24 hours for delivery." : "Unlimited streaming and monetization rights."}</p> : null}
+               <button
                 type="button"
                 aria-expanded={detailsOpen}
                 aria-controls={`license-details-${t}`}
                 onClick={() => setDetailsTier(detailsOpen ? null : t)}
-                className="ml-10 mb-2 px-3 text-left text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+                 className="ml-10 mb-1.5 min-h-7 px-3 text-left text-[11px] font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
               >
                 {detailsOpen ? "Hide details" : "License details"}
               </button>
               {detailsOpen ? (
                 <div
                   id={`license-details-${t}`}
-                  className="animate-in fade-in border-t border-white/10 px-3 py-3 text-xs leading-relaxed text-muted-foreground duration-200 motion-reduce:animate-none"
+                   className="animate-in fade-in max-h-40 overflow-y-auto border-t border-white/10 px-3 py-2 text-xs leading-relaxed text-muted-foreground duration-200 motion-reduce:animate-none"
                 >
                   <p>{TIER_META[t].blurb}</p>
                   <ul className="mt-2 space-y-1">
@@ -185,30 +208,21 @@ export function LicenseCheckout({
           );
         })}
       </div>
+      <button type="button" onClick={() => setTermsOpen((v) => !v)} className="my-2 min-h-8 text-left text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground" aria-expanded={termsOpen}>
+        {termsOpen ? "Hide full license terms" : "Read full license terms"}
+      </button>
+      {termsOpen ? <LicenseTerms /> : null}
+      </div>
 
-      {inquiryOnly ? (
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">
-            Exclusive rights for this beat are priced case by case. Send an inquiry and you&apos;ll
-            get a reply with terms.
-          </p>
-          {beat.slug ? (
-            <Link
-              to="/beats/$slug"
-              params={{ slug: beat.slug }}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-primary/50 text-sm font-semibold uppercase tracking-wide text-primary"
-            >
-              Send exclusive inquiry
-            </Link>
-          ) : null}
-        </div>
-      ) : (
-        <div className="space-y-3">
+      {!inquiryOnly ? (
+        <div className="shrink-0 border-t border-white/10 bg-card pt-2 pb-[max(.25rem,env(safe-area-inset-bottom))]">
+          <p className="mb-2 line-clamp-2 text-[11px] leading-snug text-muted-foreground"><strong className="text-foreground">{TIER_META[tier].label}:</strong> {essential}</p>
+          <div className="grid grid-cols-[minmax(0,.72fr)_minmax(0,1.28fr)] gap-2">
           <button
             type="button"
             onClick={addToCart}
             disabled={inCart}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-medium text-foreground transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-white/15 px-2 text-xs font-medium text-foreground transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-60"
           >
             {inCart ? (
               <>
@@ -222,18 +236,18 @@ export function LicenseCheckout({
           </button>
           <button
             type="button"
-            onClick={() => setPaying(true)}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+            onClick={beginCheckout}
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-primary px-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {`Buy now · ${formatPrice(price)}`}
             <ArrowRight className="h-4 w-4" />
           </button>
+          </div>
           <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5" /> Secure payment right here · your music keeps
-            playing
+            <ShieldCheck className="h-3.5 w-3.5" /> Secure payment here · delivery details emailed after payment
           </p>
         </div>
-      )}
+      ) : null}
 
     </div>
   );

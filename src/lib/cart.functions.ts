@@ -34,6 +34,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       email?: string;
       environment: StripeEnv;
       returnUrl: string;
+      attribution?: { source?: string | null; medium?: string | null; campaign?: string | null; content?: string | null; sessionKey?: string | null };
     }) =>
       z
         .object({
@@ -49,6 +50,13 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
           email: z.string().trim().email().max(255).optional().or(z.literal("")),
           environment: z.enum(["sandbox", "live"]),
           returnUrl: z.string().max(2048),
+          attribution: z.object({
+            source: z.string().max(100).nullable().optional(),
+            medium: z.string().max(100).nullable().optional(),
+            campaign: z.string().max(160).nullable().optional(),
+            content: z.string().max(160).nullable().optional(),
+            sessionKey: z.string().max(64).nullable().optional(),
+          }).optional(),
         })
         .parse(input),
   )
@@ -128,28 +136,28 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
           ...(email ? { buyer_email: email } : {}),
           beat_ids: data.items.map((i) => i.beatId).join(","),
           tiers: data.items.map((i) => i.tier).join(","),
+          amounts: orders.map((o) => o.amount_cents).join(","),
           item_count: String(data.items.length),
+          utm_source: data.attribution?.source ?? "",
+          utm_medium: data.attribution?.medium ?? "",
+          utm_campaign: data.attribution?.campaign ?? "",
+          utm_content: data.attribution?.content ?? "",
+          attribution_session: data.attribution?.sessionKey ?? "",
         },
       };
 
       try {
         const stripe = createStripeClient(data.environment);
+        let session;
         try {
-          // Preferred: payment completes inside the drawer, so the visitor
-          // never navigates away and the beat keeps playing.
-          const session = await stripe.checkout.sessions.create({
-            ...base,
-            redirect_on_completion: "never",
-          });
-          return { clientSecret: session.client_secret ?? null, error: null };
+          session = await stripe.checkout.sessions.create({ ...base, redirect_on_completion: "never" });
         } catch {
-          // Fallback for accounts where in-place completion isn't allowed.
-          const session = await stripe.checkout.sessions.create({
-            ...base,
-            return_url: data.returnUrl,
-          });
-          return { clientSecret: session.client_secret ?? null, error: null };
+          session = await stripe.checkout.sessions.create({ ...base, return_url: data.returnUrl });
         }
+        try {
+          await sb.from("purchase_funnel_events").insert(data.items.map((item) => ({ event_type: "checkout_started", beat_id: item.beatId, license_tier: item.tier, utm_source: data.attribution?.source ?? null, utm_medium: data.attribution?.medium ?? null, utm_campaign: data.attribution?.campaign ?? null, utm_content: data.attribution?.content ?? null, session_key: data.attribution?.sessionKey ?? null, stripe_session_id: session.id, payment_environment: data.environment })));
+        } catch { /* analytics never blocks checkout */ }
+        return { clientSecret: session.client_secret ?? null, error: null };
       } catch (err) {
         return {
           clientSecret: null,
