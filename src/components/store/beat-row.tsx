@@ -1,4 +1,4 @@
-import { Heart, Pause, Play } from "lucide-react";
+import { Heart, Pause, Play, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StoreBeat } from "@/lib/store.functions";
 import { formatPrice, formatTime } from "@/components/store/player-provider";
@@ -110,8 +110,9 @@ export function BeatRow({
         <button
           type="button"
           onClick={onOpen}
-          className="h-9 shrink-0 rounded-full border border-white/12 px-3 text-xs font-semibold tabular-nums text-foreground transition-colors hover:border-primary/60 hover:text-primary sm:px-4"
+          className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-white/12 px-3 text-xs font-semibold tabular-nums text-foreground transition-colors hover:border-primary/60 hover:text-primary sm:px-4"
         >
+          <Tag className="h-3.5 w-3.5 opacity-70" aria-hidden />
           {formatPrice(tierPriceCents(beat, "nonexclusive") ?? beat.priceCents)}
         </button>
       </div>
