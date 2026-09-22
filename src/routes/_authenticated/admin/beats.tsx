@@ -58,7 +58,7 @@ type CatalogOption = {
   sort_order: number | null;
 };
 
-const FALLBACK_SIGNATURE_SOUNDS = ["Trap", "R&B", "Melodic", "Drill", "Gospel", "Cinematic", "Emotional", "Motivational"];
+const FALLBACK_SIGNATURE_SOUNDS = ["DARK MATTER", "SWAC DREAMS", "STAR STATUS"];
 const FALLBACK_MOODS = ["Unknown", "Hard", "Chill", "Dark", "Pain", "Uplifting", "Inspirational", "Motivational"];
 
 function fallbackOptions(type: CatalogOptionType): CatalogOption[] {
@@ -607,7 +607,7 @@ function ExclusiveRequestAdminRow({
 function DropUploader({ onDone }: { onDone: () => void }) {
   const [dragOver, setDragOver] = useState(false);
   const [items, setItems] = useState<Pending[]>([]);
-  const [genre, setGenre] = useState("Trap");
+  const [genre, setGenre] = useState("");
   const [mood, setMood] = useState("Unknown");
   const [bpm, setBpm] = useState("140");
   const [memberOnly, setMemberOnly] = useState(false);
@@ -811,7 +811,7 @@ function DropUploader({ onDone }: { onDone: () => void }) {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
         <Field label="Default vibe">
-          <OptionInput value={genre} onChange={setGenre} options={signatureSounds.map((option) => option.value)} placeholder="Trap, R&B, Cinematic..." />
+          <OptionInput value={genre} onChange={setGenre} options={signatureSounds.map((option) => option.value)} placeholder="DARK MATTER, SWAC DREAMS, STAR STATUS" />
         </Field>
         <Field label="Default mood">
           <OptionInput value={mood} onChange={setMood} options={moods.map((option) => option.value)} placeholder="Hard, Chill, Uplifting..." />
