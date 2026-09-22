@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Copy, Share2, Youtube, X } from "lucide-react";
+import { Check, ChevronDown, Copy, Instagram, Share2, Youtube, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,6 +18,12 @@ export function beatYouTubeUrl(ref: string, shortId?: string): string {
   return url.toString();
 }
 
+export function beatInstagramUrl(ref: string, postId?: string): string {
+  const url = new URL(`/ig/${encodeURIComponent(ref)}`, "https://mybeatcatalog.com");
+  if (postId?.trim()) url.searchParams.set("s", postId.trim().slice(0, 160));
+  return url.toString();
+}
+
 export function ShareBeatButton({
   beatRef,
   title,
@@ -33,7 +39,7 @@ export function ShareBeatButton({
   const [open, setOpen] = useState(false);
   const [more, setMore] = useState(false);
   const [shortId, setShortId] = useState("");
-  const [copiedKind, setCopiedKind] = useState<"youtube" | "cta" | null>(null);
+  const [copiedKind, setCopiedKind] = useState<"youtube" | "instagram" | "cta" | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -63,7 +69,7 @@ export function ShareBeatButton({
     }
   };
 
-  const copy = async (value: string, kind: "youtube" | "cta") => {
+  const copy = async (value: string, kind: "youtube" | "instagram" | "cta") => {
     try {
       await navigator.clipboard.writeText(value);
     } catch {
@@ -101,17 +107,20 @@ export function ShareBeatButton({
           <button type="button" onClick={() => void copy(beatYouTubeUrl(beatRef, shortId), "youtube")} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
             {copiedKind === "youtube" ? <Check className="h-4 w-4" /> : <Youtube className="h-4 w-4" />} {copiedKind === "youtube" ? "YouTube link copied" : "Copy YouTube link"}
           </button>
-          <button type="button" onClick={() => setMore((v) => !v)} className="mt-2 flex h-9 items-center gap-1 text-xs text-muted-foreground underline underline-offset-4" aria-expanded={more}>
-            Optional Short ID <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", more && "rotate-180")} />
+          <button type="button" onClick={() => void copy(beatInstagramUrl(beatRef, shortId), "instagram")} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary/50 text-sm font-semibold text-primary">
+            {copiedKind === "instagram" ? <Check className="h-4 w-4" /> : <Instagram className="h-4 w-4" />} {copiedKind === "instagram" ? "Instagram link copied" : "Copy Instagram link"}
           </button>
-          {more ? <input value={shortId} onChange={(e) => setShortId(e.target.value)} maxLength={160} placeholder="Short ID (optional)" className="h-10 w-full rounded-lg border border-white/12 bg-background px-3 text-sm outline-none focus:border-primary/60" /> : null}
+          <button type="button" onClick={() => setMore((v) => !v)} className="mt-2 flex h-9 items-center gap-1 text-xs text-muted-foreground underline underline-offset-4" aria-expanded={more}>
+            Optional post, Reel, or Short ID <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", more && "rotate-180")} />
+          </button>
+          {more ? <input value={shortId} onChange={(e) => setShortId(e.target.value)} maxLength={160} placeholder="Content ID (optional)" className="h-10 w-full rounded-lg border border-white/12 bg-background px-3 text-sm outline-none focus:border-primary/60" /> : null}
           <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
             <p className="text-xs leading-relaxed text-muted-foreground">{cta}</p>
             <button type="button" onClick={() => void copy(cta, "cta")} className="mt-2 inline-flex h-9 items-center gap-2 text-xs font-semibold text-primary">
               {copiedKind === "cta" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copiedKind === "cta" ? "CTA copied" : "Copy CTA text"}
             </button>
           </div>
-          <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">Links in ordinary Shorts descriptions and comments are not clickable. Use your channel profile link, or link the Short to a related full-length video with the purchase link in its description.</p>
+          <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">On YouTube, ordinary Shorts description and comment links are not clickable. On Instagram, use your profile link or a Story link sticker.</p>
         </div>
       ) : null}
     </div>
