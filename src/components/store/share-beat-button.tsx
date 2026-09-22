@@ -13,14 +13,8 @@ export function beatShareUrl(ref: string, origin?: string): string {
 }
 
 export function beatYouTubeUrl(ref: string, shortId?: string): string {
-  const url = new URL("https://mybeatcatalog.com/");
-  url.searchParams.set("beat", ref);
-  url.searchParams.set("play", "1");
-  url.searchParams.set("purchase", "1");
-  url.searchParams.set("utm_source", "youtube");
-  url.searchParams.set("utm_medium", "shorts");
-  url.searchParams.set("utm_campaign", ref);
-  if (shortId?.trim()) url.searchParams.set("utm_content", shortId.trim().slice(0, 160));
+  const url = new URL(`/yt/${encodeURIComponent(ref)}`, "https://mybeatcatalog.com");
+  if (shortId?.trim()) url.searchParams.set("s", shortId.trim().slice(0, 160));
   return url.toString();
 }
 

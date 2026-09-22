@@ -19,6 +19,7 @@ import { Route as BeatClaimRouteImport } from './routes/beat-claim'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as YtSlugRouteImport } from './routes/yt.$slug'
 import { Route as TagsSlugRouteImport } from './routes/tags.$slug'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
@@ -130,6 +131,11 @@ const SlugRoute = SlugRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const YtSlugRoute = YtSlugRouteImport.update({
+  id: '/yt/$slug',
+  path: '/yt/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TagsSlugRoute = TagsSlugRouteImport.update({
@@ -510,6 +516,7 @@ export interface FileRoutesByFullPath {
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
   '/tags/$slug': typeof TagsSlugRoute
+  '/yt/$slug': typeof YtSlugRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
@@ -583,6 +590,7 @@ export interface FileRoutesByTo {
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
   '/tags/$slug': typeof TagsSlugRoute
+  '/yt/$slug': typeof YtSlugRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
   '/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
@@ -659,6 +667,7 @@ export interface FileRoutesById {
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
   '/tags/$slug': typeof TagsSlugRoute
+  '/yt/$slug': typeof YtSlugRoute
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
   '/_authenticated/admin/access-applications': typeof AuthenticatedAdminAccessApplicationsRoute
   '/_authenticated/admin/access-questions': typeof AuthenticatedAdminAccessQuestionsRoute
@@ -735,6 +744,7 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/offer/$token'
     | '/tags/$slug'
+    | '/yt/$slug'
     | '/admin/access'
     | '/admin/access-applications'
     | '/admin/access-questions'
@@ -808,6 +818,7 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/offer/$token'
     | '/tags/$slug'
+    | '/yt/$slug'
     | '/admin/access'
     | '/admin/access-applications'
     | '/admin/access-questions'
@@ -883,6 +894,7 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/offer/$token'
     | '/tags/$slug'
+    | '/yt/$slug'
     | '/_authenticated/admin/access'
     | '/_authenticated/admin/access-applications'
     | '/_authenticated/admin/access-questions'
@@ -946,6 +958,7 @@ export interface RootRouteChildren {
   JoinTokenRoute: typeof JoinTokenRoute
   OfferTokenRoute: typeof OfferTokenRoute
   TagsSlugRoute: typeof TagsSlugRoute
+  YtSlugRoute: typeof YtSlugRoute
   ApiPublicBeatAttachmentRoute: typeof ApiPublicBeatAttachmentRoute
   ApiPublicBeatClaimRoute: typeof ApiPublicBeatClaimRoute
   ApiPublicBeatFreeDownloadRoute: typeof ApiPublicBeatFreeDownloadRoute
@@ -1027,6 +1040,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/yt/$slug': {
+      id: '/yt/$slug'
+      path: '/yt/$slug'
+      fullPath: '/yt/$slug'
+      preLoaderRoute: typeof YtSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tags/$slug': {
@@ -1621,6 +1641,7 @@ const rootRouteChildren: RootRouteChildren = {
   JoinTokenRoute: JoinTokenRoute,
   OfferTokenRoute: OfferTokenRoute,
   TagsSlugRoute: TagsSlugRoute,
+  YtSlugRoute: YtSlugRoute,
   ApiPublicBeatAttachmentRoute: ApiPublicBeatAttachmentRoute,
   ApiPublicBeatClaimRoute: ApiPublicBeatClaimRoute,
   ApiPublicBeatFreeDownloadRoute: ApiPublicBeatFreeDownloadRoute,
