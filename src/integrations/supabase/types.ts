@@ -2193,19 +2193,6 @@ export type Database = {
         Args: { _beat_id: string; _session_key?: string }
         Returns: undefined
       }
-      record_purchase_funnel_event: {
-        Args: {
-          _beat_id?: string
-          _event_type: string
-          _license_tier?: string
-          _session_key?: string
-          _utm_campaign?: string
-          _utm_content?: string
-          _utm_medium?: string
-          _utm_source?: string
-        }
-        Returns: undefined
-      }
     }
     Enums: {
       app_role: "admin" | "user"
