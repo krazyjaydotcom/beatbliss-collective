@@ -77,7 +77,7 @@ export function LicenseCheckout({
   onPayingChange?: (paying: boolean) => void;
 }) {
   const cart = useCart();
-  const [tier, setTier] = useState<LicenseTier>("unlimited");
+  const [tier, setTier] = useState<LicenseTier>("nonexclusive");
   const [detailsTier, setDetailsTier] = useState<LicenseTier | null>(null);
   const [localPaying, setLocalPaying] = useState(false);
   const isPaying = paying ?? localPaying;
