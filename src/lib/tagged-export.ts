@@ -94,10 +94,18 @@ export async function renderTaggedBeatBuffer(
       src.start(t);
     }
 
-    return encodeWav(await offline.startRendering());
+    return await offline.startRendering();
   } finally {
     void decodeCtx.close();
   }
+}
+
+export async function renderTaggedBeat(
+  beatUrl: string,
+  tagUrl: string,
+  options: TagMixOptions,
+): Promise<Blob> {
+  return encodeWav(await renderTaggedBeatBuffer(beatUrl, tagUrl, options));
 }
 
 export function downloadBlob(blob: Blob, filename: string) {
