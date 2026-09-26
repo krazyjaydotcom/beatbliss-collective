@@ -51,7 +51,14 @@ export function getPurchaseAttribution(): PurchaseAttribution {
 }
 
 export function trackPurchaseFunnel(
-  eventType: "attributed_landing" | "preview_play" | "license_selected" | "buy_now_clicked",
+  eventType:
+    | "attributed_landing"
+    | "preview_play"
+    | "license_selected"
+    | "buy_now_clicked"
+    | "free_landing_view"
+    | "free_lead_captured"
+    | "free_download",
   beatId: string,
   licenseTier?: LicenseTier,
 ) {
