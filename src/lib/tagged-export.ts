@@ -57,11 +57,12 @@ function encodeWav(buffer: AudioBuffer): Blob {
   return new Blob([view.buffer], { type: "audio/wav" });
 }
 
-export async function renderTaggedBeat(
+/** Mixes the producer tag over the beat and returns the raw rendered audio. */
+export async function renderTaggedBeatBuffer(
   beatUrl: string,
   tagUrl: string,
   options: TagMixOptions,
-): Promise<Blob> {
+): Promise<AudioBuffer> {
   const Ctx: typeof AudioContext =
     (window as any).AudioContext ?? (window as any).webkitAudioContext;
   const decodeCtx = new Ctx();
@@ -93,10 +94,18 @@ export async function renderTaggedBeat(
       src.start(t);
     }
 
-    return encodeWav(await offline.startRendering());
+    return await offline.startRendering();
   } finally {
     void decodeCtx.close();
   }
+}
+
+export async function renderTaggedBeat(
+  beatUrl: string,
+  tagUrl: string,
+  options: TagMixOptions,
+): Promise<Blob> {
+  return encodeWav(await renderTaggedBeatBuffer(beatUrl, tagUrl, options));
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

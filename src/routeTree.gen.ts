@@ -25,6 +25,7 @@ import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as IgSlugRouteImport } from './routes/ig.$slug'
+import { Route as FreeSlugRouteImport } from './routes/free.$slug'
 import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as BuyBeatIdRouteImport } from './routes/buy.$beatId'
@@ -162,6 +163,11 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
 const IgSlugRoute = IgSlugRouteImport.update({
   id: '/ig/$slug',
   path: '/ig/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreeSlugRoute = FreeSlugRouteImport.update({
+  id: '/free/$slug',
+  path: '/free/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClaimTokenRoute = ClaimTokenRouteImport.update({
@@ -518,6 +524,7 @@ export interface FileRoutesByFullPath {
   '/buy/$beatId': typeof BuyBeatIdRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
+  '/free/$slug': typeof FreeSlugRoute
   '/ig/$slug': typeof IgSlugRoute
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
@@ -593,6 +600,7 @@ export interface FileRoutesByTo {
   '/buy/$beatId': typeof BuyBeatIdRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
+  '/free/$slug': typeof FreeSlugRoute
   '/ig/$slug': typeof IgSlugRoute
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
@@ -671,6 +679,7 @@ export interface FileRoutesById {
   '/buy/$beatId': typeof BuyBeatIdRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
+  '/free/$slug': typeof FreeSlugRoute
   '/ig/$slug': typeof IgSlugRoute
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
@@ -749,6 +758,7 @@ export interface FileRouteTypes {
     | '/buy/$beatId'
     | '/checkout/return'
     | '/claim/$token'
+    | '/free/$slug'
     | '/ig/$slug'
     | '/invite/$token'
     | '/join/$token'
@@ -824,6 +834,7 @@ export interface FileRouteTypes {
     | '/buy/$beatId'
     | '/checkout/return'
     | '/claim/$token'
+    | '/free/$slug'
     | '/ig/$slug'
     | '/invite/$token'
     | '/join/$token'
@@ -901,6 +912,7 @@ export interface FileRouteTypes {
     | '/buy/$beatId'
     | '/checkout/return'
     | '/claim/$token'
+    | '/free/$slug'
     | '/ig/$slug'
     | '/invite/$token'
     | '/join/$token'
@@ -966,6 +978,7 @@ export interface RootRouteChildren {
   BeatsSlugRoute: typeof BeatsSlugRoute
   BuyBeatIdRoute: typeof BuyBeatIdRoute
   ClaimTokenRoute: typeof ClaimTokenRoute
+  FreeSlugRoute: typeof FreeSlugRoute
   IgSlugRoute: typeof IgSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
@@ -1095,6 +1108,13 @@ declare module '@tanstack/react-router' {
       path: '/ig/$slug'
       fullPath: '/ig/$slug'
       preLoaderRoute: typeof IgSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/free/$slug': {
+      id: '/free/$slug'
+      path: '/free/$slug'
+      fullPath: '/free/$slug'
+      preLoaderRoute: typeof FreeSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/claim/$token': {
@@ -1657,6 +1677,7 @@ const rootRouteChildren: RootRouteChildren = {
   BeatsSlugRoute: BeatsSlugRoute,
   BuyBeatIdRoute: BuyBeatIdRoute,
   ClaimTokenRoute: ClaimTokenRoute,
+  FreeSlugRoute: FreeSlugRoute,
   IgSlugRoute: IgSlugRoute,
   InviteTokenRoute: InviteTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
