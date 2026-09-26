@@ -24,6 +24,11 @@ export function beatInstagramUrl(ref: string, postId?: string): string {
   return url.toString();
 }
 
+/** Email-capture page that hands over the tagged MP3 and offers the licenses. */
+export function beatFreeDownloadUrl(ref: string): string {
+  return `https://mybeatcatalog.com/free/${encodeURIComponent(ref)}`;
+}
+
 export function ShareBeatButton({
   beatRef,
   title,
