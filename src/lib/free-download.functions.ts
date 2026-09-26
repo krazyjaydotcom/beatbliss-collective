@@ -120,11 +120,17 @@ export const captureFreeDownloadLead = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!beat) return { ok: false };
 
-    await sb.from("beat_lead_captures").insert({
+    // first_name is NOT NULL on this table and the free page only asks for an
+    // email, so store an empty string rather than failing the capture.
+    const { error: insertError } = await sb.from("beat_lead_captures").insert({
       beat_id: data.beatId,
-      first_name: data.firstName?.trim() || null,
+      first_name: data.firstName?.trim() || "",
       email,
     });
+    if (insertError) {
+      console.error("[captureFreeDownloadLead] insert failed", insertError);
+      return { ok: false };
+    }
 
     try {
       const { queueFreeDownloadEmail } = await import("@/lib/beat-landing-email.server");
