@@ -44,7 +44,9 @@ export function ShareBeatButton({
   const [open, setOpen] = useState(false);
   const [more, setMore] = useState(false);
   const [shortId, setShortId] = useState("");
-  const [copiedKind, setCopiedKind] = useState<"youtube" | "instagram" | "cta" | null>(null);
+  const [copiedKind, setCopiedKind] = useState<"youtube" | "instagram" | "free" | "cta" | null>(
+    null,
+  );
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export function ShareBeatButton({
     }
   };
 
-  const copy = async (value: string, kind: "youtube" | "instagram" | "cta") => {
+  const copy = async (value: string, kind: "youtube" | "instagram" | "free" | "cta") => {
     try {
       await navigator.clipboard.writeText(value);
     } catch {
