@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Copy, Instagram, Share2, Youtube, X } from "lucide-react";
+import { Check, ChevronDown, Copy, Download, Instagram, Share2, Youtube, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -116,6 +116,9 @@ export function ShareBeatButton({
           </button>
           <button type="button" onClick={() => void copy(beatInstagramUrl(beatRef, shortId), "instagram")} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary/50 text-sm font-semibold text-primary">
             {copiedKind === "instagram" ? <Check className="h-4 w-4" /> : <Instagram className="h-4 w-4" />} {copiedKind === "instagram" ? "Instagram link copied" : "Copy Instagram link"}
+          </button>
+          <button type="button" onClick={() => void copy(beatFreeDownloadUrl(beatRef), "free")} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/12 text-sm font-semibold">
+            {copiedKind === "free" ? <Check className="h-4 w-4" /> : <Download className="h-4 w-4" />} {copiedKind === "free" ? "Free download link copied" : "Copy free download link"}
           </button>
           <button type="button" onClick={() => setMore((v) => !v)} className="mt-2 flex h-9 items-center gap-1 text-xs text-muted-foreground underline underline-offset-4" aria-expanded={more}>
             Optional post, Reel, or Short ID <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", more && "rotate-180")} />
