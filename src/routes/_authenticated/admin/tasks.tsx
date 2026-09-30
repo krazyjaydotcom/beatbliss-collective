@@ -5,7 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { adminDeleteTask, adminListCrm, adminSaveTask, type Task } from "@/lib/crm.functions";
+import { adminListCrm, adminSaveTask, type Task } from "@/lib/crm.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +36,6 @@ function AdminTasksPage() {
   const qc = useQueryClient();
   const fetchCrm = useServerFn(adminListCrm);
   const saveTask = useServerFn(adminSaveTask);
-  const deleteTask = useServerFn(adminDeleteTask);
 
   const [filter, setFilter] = useState<FilterKey>("today");
   const [editing, setEditing] = useState<Partial<Task> | null>(null);
@@ -55,10 +55,18 @@ function AdminTasksPage() {
   });
 
   const remove = useMutation({
-    mutationFn: (id: string) => deleteTask({ data: { id } }),
+    mutationFn: async (id: string) => {
+      const { data, error } = await (supabase as any).rpc("admin_manage_records", {
+        p_action: "delete",
+        p_table: "crm_tasks",
+        p_ids: [id],
+      });
+      if (error) throw new Error(error.message);
+      return data;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-crm"] });
-      toast.success("Task removed");
+      toast.success("Task moved to Trash. You can restore it from Records & Trash.");
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not remove the task"),
   });
@@ -129,20 +137,35 @@ function AdminTasksPage() {
                   checked={t.status === "done"}
                   aria-label="Mark complete"
                   className="h-5 w-5"
-                  onCheckedChange={(v) =>
-                    save.mutate({ data: { id: t.id, status: v ? "done" : "open" } })
-                  }
+                  onCheckedChange={(v) => save.mutate({ data: { id: t.id, status: v ? "done" : "open" } })}
                 />
                 <button className="min-w-0 text-left" onClick={() => setEditing(t)}>
-                  <div className={cn("truncate text-sm font-medium", t.status === "done" && "text-muted-foreground line-through")}>
+                  <div
+                    className={cn(
+                      "truncate text-sm font-medium",
+                      t.status === "done" && "text-muted-foreground line-through",
+                    )}
+                  >
                     {t.title}
                   </div>
                   <div className="truncate text-xs text-muted-foreground">
-                    {t.due_date ? <span className={overdue ? "text-destructive" : ""}>Due {t.due_date}</span> : "No due date"}
+                    {t.due_date ? (
+                      <span className={overdue ? "text-destructive" : ""}>Due {t.due_date}</span>
+                    ) : (
+                      "No due date"
+                    )}
                     {t.customer_email ? ` · ${t.customer_email}` : ""}
                   </div>
                 </button>
-                <Button size="icon" variant="ghost" aria-label="Delete task" onClick={() => remove.mutate(t.id)}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Move task to Trash"
+                  onClick={() => {
+                    if (window.confirm("Move this task to Trash? You can restore it from Records & Trash."))
+                      remove.mutate(t.id);
+                  }}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </Surface>
@@ -186,9 +209,11 @@ function AdminTasksPage() {
                 onChange={(e) => setEditing((s) => ({ ...s, customer_email: e.target.value }))}
               />
               <datalist id="crm-prospect-emails">
-                {prospects.filter((p) => p.email).map((p) => (
-                  <option key={p.id} value={p.email!} />
-                ))}
+                {prospects
+                  .filter((p) => p.email)
+                  .map((p) => (
+                    <option key={p.id} value={p.email!} />
+                  ))}
               </datalist>
             </div>
             <div className="space-y-1.5">
