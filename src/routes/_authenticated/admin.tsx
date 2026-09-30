@@ -45,15 +45,17 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "Workspace",
     items: [
-      { to: "/admin", label: "Overview", icon: BarChart3, exact: true },
+      { to: "/admin", label: "Today", icon: BarChart3, exact: true },
       { to: "/admin/customers", label: "Customers", icon: Contact },
       { to: "/admin/tasks", label: "Tasks", icon: CheckSquare },
+      { to: "/admin/beats", label: "Beats", icon: Music },
+      { to: "/admin/sales", label: "Sales & Downloads", icon: Wallet },
+      { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
     ],
   },
   {
-    title: "Catalog",
+    title: "Catalog tools",
     items: [
-      { to: "/admin/beats", label: "Beats", icon: Music },
       { to: "/admin/beat-landing", label: "Landing Pages", icon: Link2 },
       { to: "/admin/beat-requests", label: "Beat Requests", icon: Music },
       { to: "/admin/import", label: "Import Beats", icon: Download },
@@ -63,7 +65,6 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "Business",
     items: [
-      { to: "/admin/sales", label: "Sales & Downloads", icon: Wallet },
       { to: "/admin/members", label: "Members", icon: Users },
       { to: "/admin/agreements", label: "Agreements", icon: FileText },
     ],
@@ -77,7 +78,6 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { to: "/admin/seo-pages", label: "SEO Pages", icon: FileText },
       { to: "/admin/home-gallery", label: "Home Gallery", icon: ImageIcon },
       { to: "/admin/commercials", label: "Commercials", icon: Megaphone },
-      { to: "/admin/analytics", label: "Plays & Ads", icon: BarChart3 },
       { to: "/admin/audio-tag", label: "Audio Tag", icon: Tag },
     ],
   },
@@ -99,7 +99,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
 ];
 
 const MOBILE_NAV: NavItem[] = [
-  { to: "/admin", label: "Overview", icon: BarChart3, exact: true },
+  { to: "/admin", label: "Today", icon: BarChart3, exact: true },
   { to: "/admin/customers", label: "Customers", icon: Contact },
   { to: "/admin/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/admin/beats", label: "Catalog", icon: Music },
@@ -145,10 +145,10 @@ function AdminLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const now = useNow();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [navGroup, setNavGroup] = useState("Workspace");
+  const [navGroup, setNavGroup] = useState("");
   useEffect(() => {
     const group = NAV_GROUPS.find((g) => g.items.some((item) => isActive(path, item)));
-    if (group) setNavGroup(group.title);
+    if (group && group.title !== "Workspace") setNavGroup(group.title);
   }, [path]);
 
   useEffect(() => {
@@ -268,27 +268,38 @@ function AdminLayout() {
                 ))}
               </select>
             </label>
-            {NAV_GROUPS.map((g) => (
-              <div key={g.title} className="rounded-xl border border-border/60 bg-card/40">
-                <button
-                  type="button"
-                  aria-expanded={navGroup === g.title}
-                  aria-controls={"admin-nav-" + g.title}
-                  onClick={() => setNavGroup(navGroup === g.title ? "" : g.title)}
-                  className="flex min-h-11 w-full items-center justify-between px-3 text-xs font-semibold"
-                >
-                  <span>{g.title}</span>
-                  <span aria-hidden="true" className="text-muted-foreground">
-                    {navGroup === g.title ? "−" : "+"}
-                  </span>
-                </button>
-                <div id={"admin-nav-" + g.title} hidden={navGroup !== g.title} className="space-y-0.5 px-1 pb-1">
+            {NAV_GROUPS.map((g) =>
+              g.title === "Workspace" ? (
+                <div key={g.title} className="space-y-1 border-b border-border/60 pb-3">
                   {g.items.map((item) => (
                     <NavLinkRow key={item.to} item={item} path={path} />
                   ))}
+                  <p className="px-3 pt-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    More tools
+                  </p>
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div key={g.title} className="rounded-xl border border-border/60 bg-card/40">
+                  <button
+                    type="button"
+                    aria-expanded={navGroup === g.title}
+                    aria-controls={"admin-nav-" + g.title}
+                    onClick={() => setNavGroup(navGroup === g.title ? "" : g.title)}
+                    className="flex min-h-11 w-full items-center justify-between px-3 text-xs font-semibold"
+                  >
+                    <span>{g.title}</span>
+                    <span aria-hidden="true" className="text-muted-foreground">
+                      {navGroup === g.title ? "−" : "+"}
+                    </span>
+                  </button>
+                  <div id={"admin-nav-" + g.title} hidden={navGroup !== g.title} className="space-y-0.5 px-1 pb-1">
+                    {g.items.map((item) => (
+                      <NavLinkRow key={item.to} item={item} path={path} />
+                    ))}
+                  </div>
+                </div>
+              ),
+            )}
           </nav>
         </aside>
 
