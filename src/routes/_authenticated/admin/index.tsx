@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckSquare, Contact, DollarSign, Download, Loader2, Music, Wallet } from "lucide-react";
@@ -18,7 +18,11 @@ const money = (c: number) => `$${(c / 100).toFixed(2)}`;
 const DAY = 86_400_000;
 
 function AdminOverview() {
-  const [view, setView] = useState("revenue");
+  const [view, setView] = useState("followups");
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const panels = ["followups", "revenue", "activity"];
+  const changePanel = (step: number) =>
+    setView((current) => panels[(panels.indexOf(current) + step + panels.length) % panels.length]);
   const fetchActivity = useServerFn(adminListCustomerActivity);
   const fetchCrm = useServerFn(adminListCrm);
 
@@ -43,8 +47,11 @@ function AdminOverview() {
   }, [activityQ.data]);
 
   const followUps = useMemo(() => {
-    const tasks = (crmQ.data?.tasks ?? []).filter((t) => t.status === "open");
-    const today = new Date().toISOString().slice(0, 10);
+    const tasks = (crmQ.data?.tasks ?? [])
+      .filter((t) => t.status === "open")
+      .sort((a, b) => (a.due_date ?? "9999").localeCompare(b.due_date ?? "9999"));
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     return {
       overdue: tasks.filter((t) => t.due_date && t.due_date < today),
       today: tasks.filter((t) => t.due_date === today),
@@ -62,7 +69,7 @@ function AdminOverview() {
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Workspace · last 30 days
           </p>
-          <h1 className="text-xl font-bold sm:text-2xl">Overview</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">Today</h1>
         </div>
         <div className="flex gap-2">
           <Button asChild size="sm" variant="outline">
@@ -78,7 +85,7 @@ function AdminOverview() {
           { label: "Paid revenue", value: money(stats.revenue), note: "Confirmed payments" },
           { label: "Paid sales", value: stats.paidCount, note: stats.pendingCount + " unpaid checkouts" },
           { label: "Downloads", value: stats.downloads, note: "Last 30 days" },
-          { label: "Prospects", value: stats.newLeads + prospects.length, note: prospects.length + " added by hand" },
+          { label: "Free download requests", value: stats.newLeads, note: "Last 30 days · may include repeats" },
         ].map((item) => (
           <div key={item.label} className="rounded-xl border border-border bg-card px-3 py-2">
             <div className="text-[11px] text-muted-foreground">{item.label}</div>
@@ -87,34 +94,14 @@ function AdminOverview() {
           </div>
         ))}
       </div>
-      <nav
-        aria-label="Quick actions"
-        className="grid shrink-0 grid-cols-4 gap-1 rounded-xl border border-border bg-card p-1"
-      >
-        {[
-          { to: "/admin/beats", label: "Beats", Icon: Music },
-          { to: "/admin/beat-landing", label: "Pages", Icon: Download },
-          { to: "/admin/customers", label: "Customers", Icon: Contact },
-          { to: "/admin/sales", label: "Sales", Icon: Wallet },
-        ].map(({ to, label, Icon }) => (
-          <Link
-            key={to}
-            to={to}
-            className="flex min-h-11 items-center justify-center gap-1 rounded-lg text-xs hover:bg-secondary"
-          >
-            <Icon className="h-4 w-4" />
-            <span>{label}</span>
-          </Link>
-        ))}
-      </nav>
       <div
         className="grid shrink-0 grid-cols-3 gap-1 rounded-xl bg-secondary/50 p-1"
         role="tablist"
         aria-label="Overview panels"
       >
         {[
+          { id: "followups", label: "Focus today", count: followUps.overdue.length + followUps.today.length },
           { id: "revenue", label: "Revenue" },
-          { id: "followups", label: "Follow-ups", count: followUps.overdue.length + followUps.today.length },
           { id: "activity", label: "Activity" },
         ].map((tab) => (
           <button
@@ -123,6 +110,18 @@ function AdminOverview() {
             role="tab"
             id={"overview-tab-" + tab.id}
             aria-selected={view === tab.id}
+            tabIndex={view === tab.id ? 0 : -1}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+                event.preventDefault();
+                const next =
+                  panels[
+                    (panels.indexOf(view) + (event.key === "ArrowRight" ? 1 : -1) + panels.length) % panels.length
+                  ];
+                setView(next);
+                document.getElementById("overview-tab-" + next)?.focus();
+              }
+            }}
             aria-controls={"overview-panel-" + tab.id}
             onClick={() => setView(tab.id)}
             className={
@@ -136,6 +135,24 @@ function AdminOverview() {
         ))}
       </div>
       <section
+        onTouchStart={(event) => {
+          const touch = event.touches[0];
+          touchStart.current = { x: touch.clientX, y: touch.clientY };
+        }}
+        onTouchEnd={(event) => {
+          const start = touchStart.current;
+          touchStart.current = null;
+          if (!start) return;
+          const touch = event.changedTouches[0];
+          const dx = touch.clientX - start.x;
+          const dy = touch.clientY - start.y;
+          if (
+            Math.abs(dx) > 70 &&
+            Math.abs(dx) > Math.abs(dy) * 2 &&
+            !(event.target as HTMLElement).closest("button, a, input, select, textarea, svg")
+          )
+            changePanel(dx < 0 ? 1 : -1);
+        }}
         role="tabpanel"
         id={"overview-panel-" + view}
         aria-labelledby={"overview-tab-" + view}
@@ -173,7 +190,7 @@ function AdminOverview() {
             {view === "followups" && (
               <>
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="font-semibold">Due & overdue</h2>
+                  <h2 className="font-semibold">Your next 5 follow-ups</h2>
                   <Link to="/admin/tasks" className="text-xs text-primary">
                     All tasks →
                   </Link>
@@ -190,12 +207,17 @@ function AdminOverview() {
                   />
                 ) : (
                   <ul className="space-y-2">
-                    {[...followUps.overdue, ...followUps.today].map((t) => (
+                    {[...followUps.overdue, ...followUps.today].slice(0, 5).map((t) => (
                       <li
                         key={t.id}
                         className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
                       >
-                        <span className="min-w-0 truncate text-sm">{t.title}</span>
+                        <Link
+                          to="/admin/tasks"
+                          className="min-w-0 truncate text-sm font-medium text-primary hover:underline"
+                        >
+                          {t.title}
+                        </Link>
                         <span className="shrink-0 text-xs text-muted-foreground">{t.due_date}</span>
                       </li>
                     ))}
