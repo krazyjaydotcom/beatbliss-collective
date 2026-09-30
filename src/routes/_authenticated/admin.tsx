@@ -1,5 +1,15 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   BarChart3,
   MessageSquare,
@@ -145,6 +155,7 @@ function AdminLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const now = useNow();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [recordsOpen, setRecordsOpen] = useState(false);
   const [navGroup, setNavGroup] = useState("");
   useEffect(() => {
     const group = NAV_GROUPS.find((g) => g.items.some((item) => isActive(path, item)));
@@ -197,12 +208,22 @@ function AdminLayout() {
               ADMIN
             </Badge>
           </div>
-          <div className="hidden text-right sm:block">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{dateStr}</div>
-            <div className="text-sm font-semibold tabular-nums">{timeStr}</div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setRecordsOpen(true)}
+              className="min-h-10 rounded-lg border border-border px-3 text-xs font-medium hover:bg-secondary"
+            >
+              Records &amp; Trash
+            </button>
+            <div className="hidden text-right sm:block">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{dateStr}</div>
+              <div className="text-sm font-semibold tabular-nums">{timeStr}</div>
+            </div>
           </div>
         </div>
       </header>
+      {recordsOpen && <RecordsWorkspace onClose={() => setRecordsOpen(false)} />}
 
       {drawerOpen && (
         <div
@@ -350,5 +371,430 @@ function AdminLayout() {
         </div>
       </nav>
     </div>
+  );
+}
+
+const RECORD_TYPES = [
+  ["lease_orders", "Purchases"],
+  ["beat_lead_captures", "Free downloads"],
+  ["downloads", "Member downloads"],
+  ["crm_prospects", "Manual prospects"],
+  ["crm_tasks", "Tasks"],
+  ["beat_landing_inquiries", "Beat inquiries"],
+  ["beat_requests", "Beat requests"],
+  ["beat_claims", "Beat claims"],
+  ["access_applications", "Access applications"],
+  ["beat_funnel_leads", "Funnel leads"],
+  ["agreements", "Agreements"],
+  ["invites", "Invites"],
+  ["whitelist_submissions", "Whitelist submissions"],
+  ["chat_messages", "Support messages"],
+  ["chat_threads", "Support conversations"],
+  ["notes", "Notes"],
+  ["notifications", "Notifications"],
+  ["transactions", "Credit transactions"],
+  ["exclusive_requests", "Exclusive rights requests"],
+  ["exclusive_bids", "Bids"],
+  ["beat_plays", "Beat plays"],
+  ["ad_events", "Ad events"],
+  ["purchase_funnel_events", "Funnel events"],
+  ["email_send_log", "Email delivery logs"],
+] as const;
+type ManagedRecord = {
+  id: string;
+  record_id: string;
+  date: string;
+  label: string;
+  email: string | null;
+  status: string | null;
+  amount_cents: number | null;
+};
+function RecordsWorkspace({ onClose }: { onClose: () => void }) {
+  const [table, setTable] = useState<string>("lease_orders");
+  const [trash, setTrash] = useState(false);
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [pending, setPending] = useState<{ action: "delete" | "restore" | "purge"; rows: ManagedRecord[] } | null>(
+    null,
+  );
+  const [confirmation, setConfirmation] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const queryClient = useQueryClient();
+  const records = useQuery({
+    queryKey: ["admin-records", table, trash, query, page],
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("admin_manage_records", {
+        p_action: trash ? "trash" : "list",
+        p_table: table,
+        p_search: query,
+        p_page: page,
+      });
+      if (error) throw new Error(error.message);
+      return data as { rows: ManagedRecord[]; total: number };
+    },
+  });
+  const rows = records.data?.rows ?? [];
+  const total = records.data?.total ?? 0;
+  const typeLabel = RECORD_TYPES.find(([key]) => key === table)?.[1] ?? "Records";
+  const reset = () => {
+    setSelected([]);
+    setPage(0);
+    setError("");
+    setFeedback("");
+  };
+  const requestAction = (action: "delete" | "restore" | "purge", targetRows: ManagedRecord[]) => {
+    setConfirmation("");
+    setError("");
+    setPending({ action, rows: targetRows });
+  };
+  const act = async () => {
+    if (!pending || busy || (pending.action === "purge" && confirmation !== "DELETE")) return;
+    setBusy(true);
+    setError("");
+    try {
+      const { data, error } = await (supabase as any).rpc("admin_manage_records", {
+        p_action: pending.action,
+        p_table: table,
+        p_ids: pending.rows.map((row) => row.id),
+      });
+      if (error) throw new Error(error.message);
+      setFeedback(
+        String(data.changed) +
+          (pending.action === "restore"
+            ? " restored."
+            : pending.action === "purge"
+              ? " permanently deleted."
+              : " moved to Trash. Open Trash to restore."),
+      );
+      setPending(null);
+      setSelected([]);
+      await queryClient.invalidateQueries();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The action failed. Please refresh and try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !busy) onClose();
+      }}
+    >
+      <DialogContent className="flex h-[min(90dvh,850px)] max-w-5xl flex-col gap-3 overflow-hidden">
+        <DialogHeader>
+          <DialogTitle>Records & Trash</DialogTitle>
+          <DialogDescription>
+            Manage submitted information and activity. Deleted records stay in Trash until you permanently remove them.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="min-w-0 flex-1 text-xs">
+            Record type
+            <select
+              aria-label="Record type"
+              value={table}
+              onChange={(event) => {
+                setTable(event.target.value);
+                reset();
+              }}
+              className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-2"
+            >
+              {RECORD_TYPES.map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex gap-1" aria-label="Record location">
+            {[false, true].map((mode) => (
+              <button
+                type="button"
+                key={String(mode)}
+                aria-pressed={trash === mode}
+                onClick={() => {
+                  setTrash(mode);
+                  reset();
+                }}
+                className={
+                  "h-10 rounded-lg border px-3 text-sm " +
+                  (trash === mode ? "border-primary bg-primary/15 text-primary" : "border-border")
+                }
+              >
+                {mode ? "Trash" : "Active"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <form
+          className="flex gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setQuery(search);
+            reset();
+          }}
+        >
+          <input
+            aria-label="Search records"
+            value={search}
+            maxLength={200}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search name, email, status or record ID"
+            className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-sm"
+          />
+          <button type="submit" className="rounded-lg border border-border px-3 text-sm">
+            Search
+          </button>
+        </form>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span>
+            {total} {typeLabel.toLowerCase()}
+            {trash ? " in Trash" : ""} · {selected.length} selected
+          </span>
+          {selected.length > 0 && (
+            <div className="flex gap-2">
+              {trash && (
+                <button
+                  type="button"
+                  className="rounded-md border border-border px-2 py-2"
+                  onClick={() =>
+                    requestAction(
+                      "restore",
+                      rows.filter((row) => selected.includes(row.id)),
+                    )
+                  }
+                >
+                  Restore selected
+                </button>
+              )}
+              <button
+                type="button"
+                className="rounded-md border border-red-400/40 px-2 py-2 text-red-400"
+                onClick={() =>
+                  requestAction(
+                    trash ? "purge" : "delete",
+                    rows.filter((row) => selected.includes(row.id)),
+                  )
+                }
+              >
+                {trash ? "Delete permanently" : "Delete selected"}
+              </button>
+            </div>
+          )}
+        </div>
+        {feedback && (
+          <p role="status" className="text-sm text-emerald-400">
+            {feedback}
+          </p>
+        )}
+        {records.isError ? (
+          <div role="alert" className="space-y-2">
+            <p className="text-sm text-red-400">{records.error.message}</p>
+            <button
+              type="button"
+              onClick={() => void records.refetch()}
+              className="rounded border border-border px-3 py-2"
+            >
+              Retry
+            </button>
+          </div>
+        ) : records.isLoading ? (
+          <p role="status">Loading records…</p>
+        ) : (
+          <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border">
+            <table className="w-full text-left text-xs">
+              <caption className="sr-only">
+                {typeLabel} {trash ? "in Trash" : "active records"}
+              </caption>
+              <thead className="sticky top-0 z-10 bg-card">
+                <tr>
+                  <th className="p-3">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all records on this page"
+                      checked={rows.length > 0 && selected.length === rows.length}
+                      onChange={(event) => setSelected(event.target.checked ? rows.map((row) => row.id) : [])}
+                    />
+                  </th>
+                  <th className="py-3">Record</th>
+                  <th className="hidden py-3 sm:table-cell">{trash ? "Deleted" : "Created"}</th>
+                  <th className="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id} className="border-t border-border hover:bg-secondary/40">
+                    <td className="p-3">
+                      <input
+                        type="checkbox"
+                        aria-label={"Select " + row.label + " " + (row.email ?? row.record_id)}
+                        checked={selected.includes(row.id)}
+                        onChange={(event) =>
+                          setSelected((old) =>
+                            event.target.checked ? [...old, row.id] : old.filter((id) => id !== row.id),
+                          )
+                        }
+                      />
+                    </td>
+                    <td className="max-w-[18rem] py-3 pr-2">
+                      <div className="truncate font-medium">{row.label}</div>
+                      <div className="truncate text-muted-foreground">{row.email ?? "No email recorded"}</div>
+                      <div className="text-muted-foreground">
+                        {row.status}
+                        {row.amount_cents != null ? " · $" + (row.amount_cents / 100).toFixed(2) : ""}
+                      </div>
+                      <details className="mt-1 text-muted-foreground">
+                        <summary className="cursor-pointer">Record ID</summary>
+                        <span className="break-all">{row.record_id}</span>
+                      </details>
+                    </td>
+                    <td className="hidden whitespace-nowrap py-3 pr-2 text-muted-foreground sm:table-cell">
+                      {row.date ? new Date(row.date).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="p-3 text-right">
+                      <div className="flex flex-wrap justify-end gap-2">
+                        {trash && (
+                          <button
+                            type="button"
+                            className="min-h-9 rounded-md border border-border px-2"
+                            onClick={() => requestAction("restore", [row])}
+                          >
+                            Restore
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="min-h-9 rounded-md border border-red-400/30 px-2 text-red-400"
+                          onClick={() => requestAction(trash ? "purge" : "delete", [row])}
+                        >
+                          {trash ? "Delete permanently" : "Delete"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {rows.length === 0 && (
+              <p className="p-8 text-center text-sm text-muted-foreground">
+                {trash ? "Trash is empty for this record type." : "No matching records."}
+              </p>
+            )}
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <button
+            type="button"
+            disabled={page === 0 || records.isFetching}
+            onClick={() => {
+              setPage(page - 1);
+              setSelected([]);
+            }}
+            className="min-h-9 rounded-md border border-border px-3 disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <span>
+            Page {page + 1} of {Math.max(1, Math.ceil(total / 50))}
+          </span>
+          <button
+            type="button"
+            disabled={(page + 1) * 50 >= total || records.isFetching}
+            onClick={() => {
+              setPage(page + 1);
+              setSelected([]);
+            }}
+            className="min-h-9 rounded-md border border-border px-3 disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+        <Dialog
+          open={pending !== null}
+          onOpenChange={(open) => {
+            if (!open && !busy) setPending(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {pending?.action === "restore"
+                  ? "Restore records?"
+                  : pending?.action === "purge"
+                    ? "Permanently delete records?"
+                    : "Move records to Trash?"}
+              </DialogTitle>
+              <DialogDescription>
+                {pending?.rows.length} {typeLabel.toLowerCase()} selected.{" "}
+                {pending?.action === "restore"
+                  ? "These records will return to their original pages and reports."
+                  : pending?.action === "purge"
+                    ? "This removes the recovery copy permanently. This cannot be undone."
+                    : "They will leave active lists and reports. You can restore them from Trash. Linked records block deletion instead of being deleted automatically."}
+              </DialogDescription>
+            </DialogHeader>
+            <ul className="max-h-32 overflow-auto text-xs">
+              {pending?.rows.map((row) => (
+                <li key={row.id} className="py-1">
+                  {row.label} · {row.email ?? row.record_id}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground">
+              This does not refund payments, change Stripe, reverse credit balances, or retrieve downloaded files.
+              Removing purchases, invites or claims can affect future access that depends on those records. Previously
+              sent emails and notifications cannot be recalled.
+            </p>
+            {pending?.action === "purge" && (
+              <label className="text-sm">
+                Type DELETE to confirm
+                <input
+                  aria-label="Type DELETE to confirm"
+                  value={confirmation}
+                  onChange={(event) => setConfirmation(event.target.value)}
+                  className="mt-2 h-10 w-full rounded border border-border bg-background px-3"
+                />
+              </label>
+            )}
+            {error && (
+              <p role="alert" className="text-sm text-red-400">
+                {error}
+              </p>
+            )}
+            <DialogFooter>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setPending(null)}
+                className="min-h-10 rounded-lg border border-border px-4"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busy || (pending?.action === "purge" && confirmation !== "DELETE")}
+                onClick={() => void act()}
+                className="min-h-10 rounded-lg bg-primary px-4 text-primary-foreground disabled:opacity-40"
+              >
+                {busy
+                  ? "Working…"
+                  : pending?.action === "restore"
+                    ? "Restore"
+                    : pending?.action === "purge"
+                      ? "Delete permanently"
+                      : "Move to Trash"}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </DialogContent>
+    </Dialog>
   );
 }
