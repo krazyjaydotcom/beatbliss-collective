@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { AlertTriangle, FileText, Loader2, Paperclip, Save, Trash2, X } from "lucide-react";
+import { AlertTriangle, FileText, Loader2, Paperclip, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -27,10 +27,6 @@ const AUDIENCE_LABEL: Record<Audience, string> = {
   members: "Active members",
   prospects: "CRM prospects",
 };
-const MAX_FILE = 10 * 1024 * 1024;
-const ALLOWED = /^(application\/pdf|image\/(png|jpeg|gif|webp)|audio\/(mpeg|wav|x-wav)|text\/plain|application\/(msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document))$/;
-type Att = { name: string; size: number; type: string };
-const fmtSize = (n: number) => (n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.ceil(n / 1024) + " KB");
 
 function AdminEmailPage() {
   const { to } = Route.useSearch();
@@ -41,7 +37,6 @@ function AdminEmailPage() {
   const [audiences, setAudiences] = useState<Audience[]>([]);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [atts, setAtts] = useState<Att[]>([]);
   const [reviewOpen, setReviewOpen] = useState(false);
   const preview = useServerFn(adminPreviewAudience);
 
@@ -64,7 +59,7 @@ function AdminEmailPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const row = { mode, to_email: mode === "single" ? toEmail.trim() || null : null, audience: audiences, subject, body, attachments: atts };
+      const row = { mode, to_email: mode === "single" ? toEmail.trim() || null : null, audience: audiences, subject, body, attachments: [] };
       const q = (supabase as any).from("admin_email_drafts");
       const { data, error } = draftId ? await q.update(row).eq("id", draftId).select("id").single() : await q.insert(row).select("id").single();
       if (error) throw error;
@@ -84,9 +79,9 @@ function AdminEmailPage() {
 
   const load = (d: any) => {
     setDraftId(d.id); setMode(d.mode); setToEmail(d.to_email ?? ""); setAudiences(d.audience ?? []);
-    setSubject(d.subject); setBody(d.body); setAtts(d.attachments ?? []);
+    setSubject(d.subject); setBody(d.body);
   };
-  const reset = () => { setDraftId(null); setToEmail(""); setAudiences([]); setSubject(""); setBody(""); setAtts([]); };
+  const reset = () => { setDraftId(null); setToEmail(""); setAudiences([]); setSubject(""); setBody(""); };
 
   const singleValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(toEmail.trim());
   const count = mode === "single" ? (singleValid ? 1 : 0) : audienceQ.data?.recipients.length ?? 0;
@@ -153,26 +148,12 @@ function AdminEmailPage() {
             <Textarea id="em-body" rows={9} value={body} maxLength={20000} onChange={(e) => setBody(e.target.value)} />
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2"><Paperclip className="h-4 w-4" />Files (sent as private download links)</Label>
-            <Input type="file" multiple onChange={(e) => {
-              const files = Array.from(e.target.files ?? []);
-              const ok: Att[] = [];
-              for (const f of files) {
-                if (!ALLOWED.test(f.type)) { toast.error(`${f.name}: file type not allowed`); continue; }
-                if (f.size > MAX_FILE) { toast.error(`${f.name}: over 10 MB`); continue; }
-                ok.push({ name: f.name, size: f.size, type: f.type });
-              }
-              setAtts((s) => [...s, ...ok].slice(0, 5));
-              e.target.value = "";
-            }} />
-            <p className="text-xs text-muted-foreground">PDF, Word, images, MP3/WAV, text · up to 10 MB each, 5 files. Only file names are kept in drafts until sending is enabled.</p>
-            {atts.map((a, i) => (
-              <div key={i} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
-                <span className="truncate">{a.name} · {fmtSize(a.size)}</span>
-                <button type="button" aria-label={`Remove ${a.name}`} onClick={() => setAtts((s) => s.filter((_, j) => j !== i))}><X className="h-4 w-4" /></button>
-              </div>
-            ))}
+          <div className="flex items-start gap-2 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
+            <Paperclip className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>
+              <strong className="text-foreground">Files: unavailable.</strong> File attachments and download links can't be
+              added until an email service and private file storage are connected. Drafts save text only.
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
@@ -219,7 +200,6 @@ function AdminEmailPage() {
             <div className="rounded-lg border border-border p-3">
               <div className="font-semibold">{subject}</div>
               <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{body}</p>
-              {atts.length > 0 && <p className="mt-2 text-xs">Download links: {atts.map((a) => a.name).join(", ")}</p>}
               {mode === "bulk" && <p className="mt-2 text-xs text-muted-foreground">An unsubscribe link will be added to bulk emails.</p>}
             </div>
             <div>
