@@ -77,7 +77,7 @@ export const adminSesStatus = createServerFn({ method: "GET" })
   });
 
 /** Consent/opt-out check for one recipient. Read-only. */
-async function basisFor(sb: any, email: string, purpose: "personal" | "promotional") {
+async function basisFor(sb: any, email: string, purpose: "personal") {
   const [sup, lead, member, client, prospect] = await Promise.all([
     sb.from("suppressed_emails").select("email").ilike("email", email).limit(1),
     sb.from("beat_lead_captures").select("id").ilike("email", email).limit(1),
@@ -86,11 +86,6 @@ async function basisFor(sb: any, email: string, purpose: "personal" | "promotion
     sb.from("crm_prospects").select("id").ilike("email", email).limit(1),
   ]);
   if ((sup.data ?? []).length) return { ok: false as const, reason: "This address has unsubscribed or bounced. It can't be emailed." };
-  if (purpose === "promotional") {
-    if ((lead.data ?? []).length) return { ok: true as const, basis: "Subscribed via free-download signup" };
-    if ((member.data ?? []).length) return { ok: true as const, basis: "Active member" };
-    return { ok: false as const, reason: "No subscription on record (not a free-download signup or active member). Promotional email isn't allowed." };
-  }
   if ((client.data ?? []).length) return { ok: true as const, basis: "Existing customer (paid order)" };
   if ((member.data ?? []).length) return { ok: true as const, basis: "Active member" };
   if ((prospect.data ?? []).length) return { ok: true as const, basis: "CRM contact" };
@@ -100,7 +95,7 @@ async function basisFor(sb: any, email: string, purpose: "personal" | "promotion
 
 export const adminSesCheckRecipient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ to: z.string().trim().toLowerCase().email(), purpose: z.enum(["personal", "promotional"]) }).parse(d))
+  .inputValidator((d) => z.object({ to: z.string().trim().toLowerCase().email(), purpose: z.literal("personal") }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     return basisFor((context as any).supabase, data.to, data.purpose);
@@ -138,7 +133,7 @@ export const adminSesSend = createServerFn({ method: "POST" })
       confirmTo: z.string().trim().toLowerCase().email(),
       subject: z.string().trim().min(1).max(200),
       body: z.string().trim().min(1).max(20000),
-      purpose: z.enum(["personal", "promotional"]),
+      purpose: z.literal("personal"),
       files: z.array(attSchema).max(SES_LIMITS.maxFiles),
       confirmed: z.literal(true),
     }).parse(d),
@@ -170,9 +165,6 @@ export const adminSesSend = createServerFn({ method: "POST" })
       meta.push({ name, size: blob.size });
     }
 
-    const footer = data.purpose === "promotional"
-      ? "\n\n—\nYou're receiving this because you signed up at mybeatcatalog.com. Reply \"unsubscribe\" and we'll stop emailing you."
-      : "";
     const { data: row, error } = await sb.from("ses_send_log").insert({
       to_email: data.to, from_email: c.from, subject: data.subject, body: data.body, purpose: data.purpose,
       basis: b.basis, attachments: meta, status: "pending", sent_by: context.userId,
@@ -190,7 +182,7 @@ export const adminSesSend = createServerFn({ method: "POST" })
           ReplyToAddresses: (context as any).claims?.email ? [(context as any).claims.email] : undefined,
           Content: { Simple: {
             Subject: { Data: data.subject, Charset: "UTF-8" },
-            Body: { Text: { Data: data.body + footer, Charset: "UTF-8" } },
+            Body: { Text: { Data: data.body, Charset: "UTF-8" } },
             ...(atts.length ? { Attachments: atts } : {}),
           } },
         }),

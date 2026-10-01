@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export type DraftFile = { path: string; name: string; size: number };
-export type Purpose = "personal" | "promotional";
+export type Purpose = "personal";
 
 const ACCEPT = ".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.mp3,.wav";
 const MAX_FILE = 10 * 1024 * 1024, MAX_TOTAL = 20 * 1024 * 1024, MAX_FILES = 5;
@@ -75,18 +75,9 @@ export function SesComposerSection({ files, setFiles, purpose, setPurpose }: {
       )}
       {ready && sd?.sandbox && <p className="text-xs text-amber-400">SES account is in sandbox mode — it can only send to verified addresses.</p>}
 
-      <div className="grid grid-cols-2 gap-1 rounded-md bg-secondary/50 p-1 text-xs" role="radiogroup" aria-label="Purpose">
-        {(["personal", "promotional"] as const).map((p) => (
-          <button key={p} type="button" role="radio" aria-checked={purpose === p} onClick={() => setPurpose(p)}
-            className={"min-h-9 rounded " + (purpose === p ? "bg-card font-semibold text-primary" : "text-muted-foreground")}>
-            {p === "personal" ? "Personal / customer matter" : "Promotional"}
-          </button>
-        ))}
-      </div>
       <p className="text-xs text-muted-foreground">
-        {purpose === "promotional"
-          ? "Needs a subscription on record (free-download signup or active member). Unsubscribed addresses are blocked."
-          : "Must be someone in your customer records. Unsubscribed addresses are blocked."}
+        Personal / customer matters only — the person must be in your customer records, and unsubscribed or bounced
+        addresses are blocked. Promotional email isn't sent through SES; use SendFox for that.
       </p>
 
       <div>
@@ -148,7 +139,7 @@ export function SesSendAction({ to, subject, body, purpose, files, onSent }: {
     <div className="space-y-2 rounded-lg border border-primary/40 p-3 text-xs">
       <div className="font-semibold text-foreground">Send one email via Amazon SES</div>
       <div>From: {sd?.from} · To: <strong>{email}</strong></div>
-      <div>Purpose: {purpose === "promotional" ? "Promotional" : "Personal / customer matter"} · Basis:{" "}
+      <div>Purpose: Personal / customer matter · Basis:{" "}
         {basis.isLoading ? "checking…" : basis.data?.ok ? basis.data.basis : <span className="text-destructive">{basis.data && !basis.data.ok ? basis.data.reason : "unknown"}</span>}
       </div>
       {files.length > 0 ? (
