@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { VoiceMemoButton } from "@/components/voice-memo-button";
+import { CustomerRecordDrawer } from "./customers";
 import { playSentDing, uploadVoiceMemo } from "@/lib/chat-audio";
 
 export const Route = createFileRoute("/_authenticated/admin/support")({
@@ -28,6 +29,12 @@ function BroadcastsPanel() {
       toast.error("Add a title for the announcement.");
       return;
     }
+    if (
+      !window.confirm(
+        `Send announcement to all active members?\n\n${title.trim()}\n${body.trim()}\n\nThis will send immediately.`,
+      )
+    )
+      return;
     setSending(true);
     const { data, error } = await supabase.rpc("admin_create_notification", {
       _title: title.trim(),
@@ -47,6 +54,7 @@ function BroadcastsPanel() {
 
   const broadcastVoiceMemo = async (blob: Blob, durationSeconds: number) => {
     if (!user) return;
+    if (!window.confirm(`Send this ${Math.round(durationSeconds)}-second voice memo to all active members?`)) return;
     setBroadcastingAudio(true);
     try {
       const uploaded = await uploadVoiceMemo(blob, user.id);
@@ -75,11 +83,7 @@ function BroadcastsPanel() {
 
       <div className="space-y-2">
         <label className="text-xs uppercase tracking-wide text-muted-foreground">Text announcement</label>
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Announcement title"
-        />
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Announcement title" />
         <Textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -126,6 +130,8 @@ interface Message {
 function SupportInbox() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const [view, setView] = useState("inbox");
+  const [customer, setCustomer] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -156,7 +162,9 @@ function SupportInbox() {
         qc.invalidateQueries({ queryKey: ["admin-threads"] });
       })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [qc]);
 
   // load active thread messages + subscribe
@@ -176,15 +184,24 @@ function SupportInbox() {
     })();
     const ch = supabase
       .channel(`admin-thread:${activeId}`)
-      .on("postgres_changes", {
-        event: "INSERT", schema: "public", table: "chat_messages",
-        filter: `thread_id=eq.${activeId}`,
-      }, (payload) => {
-        setMessages((prev) => [...prev, payload.new as Message]);
-        supabase.rpc("mark_thread_read", { _thread_id: activeId, _as_admin: true });
-      })
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_messages",
+          filter: `thread_id=eq.${activeId}`,
+        },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as Message]);
+          supabase.rpc("mark_thread_read", { _thread_id: activeId, _as_admin: true });
+        },
+      )
       .subscribe();
-    return () => { cancelled = true; supabase.removeChannel(ch); };
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
   }, [activeId, qc]);
 
   useEffect(() => {
@@ -220,69 +237,122 @@ function SupportInbox() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-full min-h-0 flex-col gap-3">
       <div>
-        <h1 className="text-3xl font-black tracking-tight">Support Inbox</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Support Inbox</h1>
         <p className="text-muted-foreground mt-1">Live conversations with users</p>
       </div>
-      <BroadcastsPanel />
-      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-[600px]">
-        <div className="rounded-2xl border border-border bg-card overflow-y-auto">
-          {isLoading ? (
-            <div className="p-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-          ) : threads.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground text-center">No conversations yet.</p>
-          ) : threads.map((t: any) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveId(t.id)}
-              className={cn(
-                "w-full text-left px-4 py-3 border-b border-border hover:bg-muted/30 transition-colors",
-                activeId === t.id && "bg-muted/50"
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-sm truncate">
-                  {t.profile?.display_name || t.profile?.email || t.user_id.slice(0, 8)}
-                </span>
-                {t.unread_for_admin > 0 && (
-                  <span className="h-5 min-w-5 px-1 rounded-full bg-accent text-accent-foreground text-xs font-bold flex items-center justify-center">
-                    {t.unread_for_admin}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground truncate mt-1">{t.last_message_preview || "—"}</p>
-            </button>
-          ))}
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card flex flex-col overflow-hidden">
-          {!activeId ? (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-              Select a conversation
-            </div>
-          ) : (
-            <>
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-3">
-                {messages.map((m) => (
-                  <div key={m.id} className={`flex ${m.sender_role === "admin" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
-                      m.sender_role === "admin" ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
-                    }`}>
-                      <MessageBubbleContent message={m} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <form onSubmit={(e) => { e.preventDefault(); send(); }} className="p-3 border-t border-border flex gap-2">
-                <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Reply…" />
-                <VoiceMemoButton disabled={!activeId || !user} onRecorded={sendVoiceMemo} />
-                <Button type="submit" size="icon" variant="hero"><Send className="h-4 w-4" /></Button>
-              </form>
-            </>
-          )}
-        </div>
+      <div className="flex shrink-0 gap-2">
+        <Button size="sm" variant={view === "inbox" ? "default" : "outline"} onClick={() => setView("inbox")}>
+          Conversations
+        </Button>
+        <Button size="sm" variant={view === "broadcast" ? "default" : "outline"} onClick={() => setView("broadcast")}>
+          Broadcasts
+        </Button>
       </div>
+      {view === "broadcast" ? (
+        <div className="min-h-0 flex-1 overflow-auto">
+          <BroadcastsPanel />
+        </div>
+      ) : (
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-[280px_1fr]">
+          <div
+            className={cn(
+              "min-h-0 rounded-xl border border-border bg-card overflow-y-auto",
+              activeId && "hidden md:block",
+            )}
+          >
+            {isLoading ? (
+              <div className="p-8 flex justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : threads.length === 0 ? (
+              <p className="p-6 text-sm text-muted-foreground text-center">No conversations yet.</p>
+            ) : (
+              threads.map((t: any) => (
+                <button
+                  key={t.id}
+                  onClick={() => setActiveId(t.id)}
+                  className={cn(
+                    "w-full text-left px-4 py-3 border-b border-border hover:bg-muted/30 transition-colors",
+                    activeId === t.id && "bg-muted/50",
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm truncate">
+                      {t.profile?.display_name || t.profile?.email || t.user_id.slice(0, 8)}
+                    </span>
+                    {t.unread_for_admin > 0 && (
+                      <span className="h-5 min-w-5 px-1 rounded-full bg-accent text-accent-foreground text-xs font-bold flex items-center justify-center">
+                        {t.unread_for_admin}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate mt-1">{t.last_message_preview || "—"}</p>
+                </button>
+              ))
+            )}
+          </div>
+
+          <div
+            className={cn(
+              "min-h-0 rounded-xl border border-border bg-card flex flex-col overflow-hidden",
+              !activeId && "hidden md:flex",
+            )}
+          >
+            {!activeId ? (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                Select a conversation
+              </div>
+            ) : (
+              <>
+                <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border p-3">
+                  <Button size="sm" variant="outline" className="md:hidden" onClick={() => setActiveId(null)}>
+                    Back to conversations
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const email = threads.find((t) => t.id === activeId)?.profile?.email;
+                      if (email) setCustomer(email);
+                    }}
+                  >
+                    Customer details
+                  </Button>
+                </div>
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-3">
+                  {messages.map((m) => (
+                    <div key={m.id} className={`flex ${m.sender_role === "admin" ? "justify-end" : "justify-start"}`}>
+                      <div
+                        className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                          m.sender_role === "admin" ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
+                        }`}
+                      >
+                        <MessageBubbleContent message={m} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    send();
+                  }}
+                  className="p-3 border-t border-border flex gap-2"
+                >
+                  <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Reply…" />
+                  <VoiceMemoButton disabled={!activeId || !user} onRecorded={sendVoiceMemo} />
+                  <Button type="submit" size="icon" variant="hero" aria-label="Send reply">
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      {customer && <CustomerRecordDrawer email={customer} onClose={() => setCustomer(null)} />}
     </div>
   );
 }
