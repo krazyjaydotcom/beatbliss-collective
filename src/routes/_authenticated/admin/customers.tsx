@@ -370,7 +370,14 @@ function AdminCustomersPage({
             <>
               <div className="flex-1 space-y-5 overflow-y-auto p-4">
                 <div className="space-y-1 text-sm">
-                  <div className="text-muted-foreground">{selected.email ?? "No email on file"}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-muted-foreground">{selected.email ?? "No email on file"}</span>
+                    {selected.email && (
+                      <Button asChild size="sm" variant="outline">
+                        <Link to="/admin/email" search={{ to: selected.email }}>Send email</Link>
+                      </Button>
+                    )}
+                  </div>
                   {selected.phone && <div className="text-muted-foreground">{selected.phone}</div>}
                   <div className="text-muted-foreground">
                     {selected.purchases} paid purchase{selected.purchases === 1 ? "" : "s"} ·{" "}
