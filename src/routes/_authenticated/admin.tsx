@@ -82,6 +82,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "Marketing",
     items: [
+      { to: "/admin/email", label: "Email", icon: Mail },
       { to: "/admin/email-templates", label: "Email Templates", icon: Mail },
       { to: "/admin/invites", label: "Invites", icon: Link2 },
       { to: "/admin/funnels", label: "Offer Page", icon: PanelsTopLeft },
