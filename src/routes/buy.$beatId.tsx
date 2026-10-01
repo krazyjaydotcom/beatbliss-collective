@@ -74,7 +74,7 @@ export const Route = createFileRoute("/buy/$beatId")({
     <div className="min-h-screen flex items-center justify-center bg-[#02060a] text-white px-6 text-center">
       <div>
         <h1 className="text-2xl font-black">Something went wrong</h1>
-        <p className="mt-2 text-sm text-white/60">{error.message}</p>
+        <p className="mt-2 text-sm text-white/60">{error instanceof Error ? error.message : "Unexpected error"}</p>
       </div>
     </div>
   ),
