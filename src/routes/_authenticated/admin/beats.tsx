@@ -100,6 +100,8 @@ function AdminBeatsPage() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingBeat, setEditingBeat] = useState<any | null>(null);
+  const [search, setSearch] = useState("");
+  const [toolsOpen, setToolsOpen] = useState(false);
   const toggle = (id: string) => {
     setSelected((s) => {
       const n = new Set(s);
@@ -237,9 +239,31 @@ function AdminBeatsPage() {
             );
             })}
             {beats.length === 0 && <p className="text-sm text-muted-foreground py-4">No beats yet.</p>}
+            {beats.length > 0 && visibleBeats.length === 0 && <p className="text-sm text-muted-foreground py-4">No beats match “{search}”.</p>}
           </div>
         )}
       </div>
+
+      <section id="beat-tools" className="rounded-2xl border border-border bg-card">
+        <button
+          type="button"
+          aria-expanded={toolsOpen}
+          onClick={() => setToolsOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-6"
+        >
+          <span className="font-semibold">Tools</span>
+          <span className="text-xs text-muted-foreground">Upload · Key/BPM scan · Catalog options · Exclusive rights {toolsOpen ? "▲" : "▼"}</span>
+        </button>
+        {toolsOpen && (
+          <div className="space-y-6 border-t border-border p-4 sm:p-6">
+            <DropUploader onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
+            <LibraryScanner beats={beats} onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
+            <CatalogOptionsManager />
+            <ExclusiveRightsAdminPanel />
+          </div>
+        )}
+      </section>
+
 
       <EditBeatDialog
         beat={editingBeat}
