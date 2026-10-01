@@ -209,8 +209,6 @@ function AdminEmailPage() {
               {mode === "single" && <p className="mt-2 text-xs text-muted-foreground">Personal emails stay as drafts in this app. They are never sent through SendFox.</p>}
             </div>
             {mode === "bulk" && <SendfoxDraftAction list={sfList} subject={subject} body={body} />}
-            <div className="hidden">
-            </div>
             <div>
               <div className="mb-1 font-medium">Recipients</div>
               <ul className="max-h-48 overflow-y-auto rounded-lg border border-border text-xs">
@@ -225,7 +223,7 @@ function AdminEmailPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setReviewOpen(false)}>Back to edit</Button>
-            <Button disabled title="Sending is turned off until an email service is connected">Send (not available yet)</Button>
+            <Button disabled title="Sending is turned off until an email service is connected">Send (off — sending happens in SendFox)</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
