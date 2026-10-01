@@ -62,7 +62,7 @@ export function SendfoxPanel({ listId, onList }: { listId: number | null; onList
           >
             <option value="">Choose a list…</option>
             {(lists.data?.lists ?? []).map((l) => (
-              <option key={l.id} value={l.id}>{l.name} · {l.subscribed} subscribed</option>
+              <option key={l.id} value={l.id}>{l.name} · {fmtSubscribed(l.subscribed)}</option>
             ))}
           </select>
           {lists.data?.reason && <p className="text-xs text-destructive">{why(lists.data.reason)}</p>}
