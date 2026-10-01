@@ -84,9 +84,9 @@ function AdminEmailPage() {
 
   const load = (d: any) => {
     setDraftId(d.id); setMode(d.mode); setToEmail(d.to_email ?? ""); setAudiences(d.audience ?? []);
-    setSubject(d.subject); setBody(d.body); setAtts(d.attachments ?? []);
+    setSubject(d.subject); setBody(d.body);
   };
-  const reset = () => { setDraftId(null); setToEmail(""); setAudiences([]); setSubject(""); setBody(""); setAtts([]); };
+  const reset = () => { setDraftId(null); setToEmail(""); setAudiences([]); setSubject(""); setBody(""); };
 
   const singleValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(toEmail.trim());
   const count = mode === "single" ? (singleValid ? 1 : 0) : audienceQ.data?.recipients.length ?? 0;
@@ -153,26 +153,12 @@ function AdminEmailPage() {
             <Textarea id="em-body" rows={9} value={body} maxLength={20000} onChange={(e) => setBody(e.target.value)} />
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2"><Paperclip className="h-4 w-4" />Files (sent as private download links)</Label>
-            <Input type="file" multiple onChange={(e) => {
-              const files = Array.from(e.target.files ?? []);
-              const ok: Att[] = [];
-              for (const f of files) {
-                if (!ALLOWED.test(f.type)) { toast.error(`${f.name}: file type not allowed`); continue; }
-                if (f.size > MAX_FILE) { toast.error(`${f.name}: over 10 MB`); continue; }
-                ok.push({ name: f.name, size: f.size, type: f.type });
-              }
-              setAtts((s) => [...s, ...ok].slice(0, 5));
-              e.target.value = "";
-            }} />
-            <p className="text-xs text-muted-foreground">PDF, Word, images, MP3/WAV, text · up to 10 MB each, 5 files. Only file names are kept in drafts until sending is enabled.</p>
-            {atts.map((a, i) => (
-              <div key={i} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
-                <span className="truncate">{a.name} · {fmtSize(a.size)}</span>
-                <button type="button" aria-label={`Remove ${a.name}`} onClick={() => setAtts((s) => s.filter((_, j) => j !== i))}><X className="h-4 w-4" /></button>
-              </div>
-            ))}
+          <div className="flex items-start gap-2 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
+            <Paperclip className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>
+              <strong className="text-foreground">Files: unavailable.</strong> File attachments and download links can't be
+              added until an email service and private file storage are connected. Drafts save text only.
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
