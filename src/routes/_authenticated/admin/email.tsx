@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { adminPreviewAudience, AUDIENCES, type Audience } from "@/lib/admin-email.functions";
 import { PageHeader, Surface, EmptyState } from "@/components/admin/ui";
 import { InquiryReplyPanel } from "@/components/admin/inquiry-reply-panel";
-import { SendfoxDraftAction, SendfoxPanel } from "@/components/admin/sendfox-panel";
+import { fmtSubscribed, SendfoxDraftAction, SendfoxPanel, type SendfoxList } from "@/components/admin/sendfox-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,7 @@ function AdminEmailPage() {
   const qc = useQueryClient();
   const [draftId, setDraftId] = useState<string | null>(null);
   const [mode, setMode] = useState<"single" | "bulk">("single");
-  const [sfList, setSfList] = useState<{ id: number; name: string; subscribed: number } | null>(null);
+  const [sfList, setSfList] = useState<SendfoxList | null>(null);
   const [toEmail, setToEmail] = useState(to ?? "");
   const [audiences, setAudiences] = useState<Audience[]>([]);
   const [subject, setSubject] = useState("");
@@ -87,7 +87,7 @@ function AdminEmailPage() {
   const reset = () => { setDraftId(null); setToEmail(""); setAudiences([]); setSubject(""); setBody(""); };
 
   const singleValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(toEmail.trim());
-  const count = mode === "single" ? (singleValid ? 1 : 0) : sfList?.subscribed ?? 0;
+  const count = mode === "single" ? (singleValid ? 1 : 0) : (sfList?.subscribed ?? 0);
   const canReview = (mode === "single" ? singleValid : !!sfList) && subject.trim() && body.trim();
 
   return (
@@ -170,7 +170,7 @@ function AdminEmailPage() {
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
             <span className="text-sm text-muted-foreground">
               {mode === "bulk"
-                ? sfList ? `SendFox · ${sfList.name} · ${sfList.subscribed} subscribed` : "Choose a SendFox list"
+                ? sfList ? `SendFox · ${sfList.name} · ${fmtSubscribed(sfList.subscribed)}` : "Choose a SendFox list"
                 : `${count} recipient${count === 1 ? "" : "s"}`}
             </span>
             <div className="flex gap-2">
@@ -214,7 +214,7 @@ function AdminEmailPage() {
             <DialogTitle>Review email</DialogTitle>
             <DialogDescription>
               {mode === "bulk"
-                ? sfList ? `SendFox list "${sfList.name}" · ${sfList.subscribed} subscribed (count reported by SendFox)` : "No SendFox list chosen"
+                ? sfList ? `SendFox list "${sfList.name}" · ${fmtSubscribed(sfList.subscribed)} (count reported by SendFox)` : "No SendFox list chosen"
                 : "One person · stays a draft in this app"}
             </DialogDescription>
           </DialogHeader>

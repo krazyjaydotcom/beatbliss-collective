@@ -25,7 +25,13 @@ export function useSendfoxStatus() {
   return useQuery({ queryKey: ["sendfox-status"], queryFn: () => fn(), staleTime: 60_000 });
 }
 
-export function SendfoxPanel({ listId, onList }: { listId: number | null; onList: (l: { id: number; name: string; subscribed: number } | null) => void }) {
+export type SendfoxList = { id: number; name: string; subscribed: number | null };
+
+/** Renders a subscriber count, or an honest fallback when SendFox didn't report one. Never prints undefined/NaN. */
+export const fmtSubscribed = (n: number | null | undefined) =>
+  typeof n === "number" && Number.isFinite(n) ? `${n} subscribed` : "count unavailable";
+
+export function SendfoxPanel({ listId, onList }: { listId: number | null; onList: (l: SendfoxList | null) => void }) {
   const status = useSendfoxStatus();
   const listsFn = useServerFn(sendfoxLists);
   const connected = status.data?.connected === true;
@@ -56,7 +62,7 @@ export function SendfoxPanel({ listId, onList }: { listId: number | null; onList
           >
             <option value="">Choose a list…</option>
             {(lists.data?.lists ?? []).map((l) => (
-              <option key={l.id} value={l.id}>{l.name} · {l.subscribed} subscribed</option>
+              <option key={l.id} value={l.id}>{l.name} · {fmtSubscribed(l.subscribed)}</option>
             ))}
           </select>
           {lists.data?.reason && <p className="text-xs text-destructive">{why(lists.data.reason)}</p>}
