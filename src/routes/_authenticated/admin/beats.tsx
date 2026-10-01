@@ -100,6 +100,8 @@ function AdminBeatsPage() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingBeat, setEditingBeat] = useState<any | null>(null);
+  const [search, setSearch] = useState("");
+  const [toolsOpen, setToolsOpen] = useState(false);
   const toggle = (id: string) => {
     setSelected((s) => {
       const n = new Set(s);
@@ -118,20 +120,26 @@ function AdminBeatsPage() {
     qc.invalidateQueries({ queryKey: ["admin-beats"] });
   }
 
+  const q = search.trim().toLowerCase();
+  const visibleBeats = q
+    ? beats.filter((b: any) =>
+        [b.title, b.genre, b.music_key, String(b.bpm ?? "")].some((v) => (v ?? "").toLowerCase().includes(q)),
+      )
+    : beats;
+  const openTools = () => {
+    setToolsOpen(true);
+    requestAnimationFrame(() => document.getElementById("beat-tools")?.scrollIntoView({ behavior: "smooth" }));
+  };
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black tracking-tight">Beats</h1>
-        <p className="text-muted-foreground mt-1">Drag &amp; drop to upload. MP3 + WAV are auto-generated. Files with <code>tag</code> or <code>tagged</code> in the name are paired as the free-tier preview.</p>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Beats</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Your library. Upload, scan and catalog settings live under Tools.</p>
+        </div>
+        <Button size="sm" onClick={openTools}><FolderUp className="h-4 w-4 mr-2" />Upload beats</Button>
       </div>
-
-      <DropUploader onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
-
-      <LibraryScanner beats={beats} onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
-
-      <CatalogOptionsManager />
-
-      <ExclusiveRightsAdminPanel />
 
       {selected.size > 0 && (
         <BulkEditBar
@@ -141,22 +149,32 @@ function AdminBeatsPage() {
         />
       )}
 
-      <div className="rounded-2xl border border-border bg-card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold flex items-center gap-2"><Music className="h-4 w-4" /> Catalog ({beats.length})</h2>
-          {beats.length > 0 && (
-            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={(v) => setSelected(v ? new Set(beats.map((b: any) => b.id)) : new Set())}
-              />
-              Select all
-            </label>
-          )}
+      <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 className="font-semibold flex items-center gap-2"><Music className="h-4 w-4" /> Catalog ({visibleBeats.length}{q ? ` of ${beats.length}` : ""})</h2>
+          <div className="flex flex-1 items-center justify-end gap-3 min-w-[200px]">
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search title, genre, key, BPM"
+              aria-label="Search beats"
+              className="h-9 max-w-xs"
+            />
+            {visibleBeats.length > 0 && (
+              <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                <Checkbox
+                  checked={visibleBeats.every((b: any) => selected.has(b.id))}
+                  onCheckedChange={(v) => setSelected(v ? new Set(visibleBeats.map((b: any) => b.id)) : new Set())}
+                />
+                Select all
+              </label>
+            )}
+          </div>
         </div>
         {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
           <div className="divide-y divide-border">
-            {beats.map((b: any) => {
+            {visibleBeats.map((b: any) => {
+
               const scheduled = !!b.release_at && new Date(b.release_at).getTime() > Date.now();
               return (
               <div key={b.id} className="py-3 flex items-center gap-4">
@@ -221,9 +239,31 @@ function AdminBeatsPage() {
             );
             })}
             {beats.length === 0 && <p className="text-sm text-muted-foreground py-4">No beats yet.</p>}
+            {beats.length > 0 && visibleBeats.length === 0 && <p className="text-sm text-muted-foreground py-4">No beats match “{search}”.</p>}
           </div>
         )}
       </div>
+
+      <section id="beat-tools" className="rounded-2xl border border-border bg-card">
+        <button
+          type="button"
+          aria-expanded={toolsOpen}
+          onClick={() => setToolsOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-6"
+        >
+          <span className="font-semibold">Tools</span>
+          <span className="text-xs text-muted-foreground">Upload · Key/BPM scan · Catalog options · Exclusive rights {toolsOpen ? "▲" : "▼"}</span>
+        </button>
+        {toolsOpen && (
+          <div className="space-y-6 border-t border-border p-4 sm:p-6">
+            <DropUploader onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
+            <LibraryScanner beats={beats} onDone={() => qc.invalidateQueries({ queryKey: ["admin-beats"] })} />
+            <CatalogOptionsManager />
+            <ExclusiveRightsAdminPanel />
+          </div>
+        )}
+      </section>
+
 
       <EditBeatDialog
         beat={editingBeat}
