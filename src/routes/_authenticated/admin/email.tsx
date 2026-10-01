@@ -87,23 +87,24 @@ function AdminEmailPage() {
   const reset = () => { setDraftId(null); setToEmail(""); setAudiences([]); setSubject(""); setBody(""); };
 
   const singleValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(toEmail.trim());
-  const count = mode === "single" ? (singleValid ? 1 : 0) : audienceQ.data?.recipients.length ?? 0;
-  const canReview = count > 0 && subject.trim() && body.trim();
+  const count = mode === "single" ? (singleValid ? 1 : 0) : sfList?.subscribed ?? 0;
+  const canReview = (mode === "single" ? singleValid : !!sfList) && subject.trim() && body.trim();
 
   return (
     <div className="space-y-4">
       <PageHeader
         breadcrumb="Marketing"
         title="Email"
-        description="Write one-off or bulk emails, review recipients and save drafts."
+        description="Prepare SendFox campaign drafts, keep personal drafts, and reply to inquiries."
         actions={<Button size="sm" variant="outline" onClick={reset}>New email</Button>}
       />
 
       <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
         <p>
-          <strong>Drafts only — live sending is off.</strong> Your current email service only sends account and purchase
-          emails. Bulk/promotional mail needs a marketing email service connected first. Nothing on this page sends email.
+          <strong>Drafts only.</strong> Bulk emails are created as drafts in SendFox and sent from inside SendFox, to a
+          SendFox list. Nothing on this page sends a campaign. The only email sent from here is a personal reply to a
+          specific inquiry, after you confirm it.
         </p>
       </div>
 
@@ -124,21 +125,27 @@ function AdminEmailPage() {
               <Input id="em-to" type="email" value={toEmail} onChange={(e) => setToEmail(e.target.value)} placeholder="name@example.com" />
             </div>
           ) : (
-            <div className="space-y-2">
-              <Label>Audience</Label>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {AUDIENCES.map((a) => (
-                  <label key={a} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-border px-3 text-sm">
-                    <Checkbox checked={audiences.includes(a)}
-                      onCheckedChange={(v) => setAudiences((s) => (v ? [...s, a] : s.filter((x) => x !== a)))} />
-                    {AUDIENCE_LABEL[a]}
-                  </label>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {audiences.length === 0 ? "Pick at least one group." : audienceQ.isLoading ? "Counting…" : audienceQ.isError ? "Could not load recipients." :
-                  `${count} recipients after removing ${audienceQ.data?.duplicates ?? 0} duplicates, ${audienceQ.data?.invalid ?? 0} invalid and ${audienceQ.data?.unsubscribed ?? 0} unsubscribed. Each person gets their own copy.`}
-              </p>
+            <div className="space-y-3">
+              <SendfoxPanel listId={sfList?.id ?? null} onList={setSfList} />
+              <details className="rounded-lg border border-dashed border-border p-3 text-sm">
+                <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Site groups (local reference only · not synced to SendFox)</summary>
+                <p className="mt-2 text-xs text-muted-foreground">These groups are saved with the draft for your notes. They don't change who receives a SendFox campaign, and no one is copied into SendFox.</p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {AUDIENCES.map((a) => (
+                    <label key={a} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-border px-3 text-sm">
+                      <Checkbox checked={audiences.includes(a)}
+                        onCheckedChange={(v) => setAudiences((s) => (v ? [...s, a] : s.filter((x) => x !== a)))} />
+                      {AUDIENCE_LABEL[a]}
+                    </label>
+                  ))}
+                </div>
+                {audiences.length > 0 && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {audienceQ.isLoading ? "Counting…" : audienceQ.isError ? "Could not load site contacts." :
+                      `${audienceQ.data?.recipients.length ?? 0} site contacts in these groups (reference only).`}
+                  </p>
+                )}
+              </details>
             </div>
           )}
 
@@ -163,7 +170,11 @@ function AdminEmailPage() {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
-            <span className="text-sm text-muted-foreground">{count} recipient{count === 1 ? "" : "s"}</span>
+            <span className="text-sm text-muted-foreground">
+              {mode === "bulk"
+                ? sfList ? `SendFox · ${sfList.name} · ${sfList.subscribed} subscribed` : "Choose a SendFox list"
+                : `${count} recipient${count === 1 ? "" : "s"}`}
+            </span>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => save.mutate()} disabled={save.isPending}>
                 {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save draft
@@ -203,27 +214,23 @@ function AdminEmailPage() {
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Review email</DialogTitle>
-            <DialogDescription>{count} recipient{count === 1 ? "" : "s"} · each receives a separate copy.</DialogDescription>
+            <DialogDescription>
+              {mode === "bulk"
+                ? sfList ? `SendFox list "${sfList.name}" · ${sfList.subscribed} subscribed (count reported by SendFox)` : "No SendFox list chosen"
+                : "One person · stays a draft in this app"}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm">
             <div className="rounded-lg border border-border p-3">
               <div className="font-semibold">{subject}</div>
               <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{body}</p>
-              {mode === "bulk" && <p className="mt-2 text-xs text-muted-foreground">SendFox adds its own unsubscribe link to bulk emails.</p>}
+              {mode === "bulk" && <p className="mt-2 text-xs text-muted-foreground">SendFox adds its own unsubscribe link and skips contacts unsubscribed in SendFox.</p>}
               {mode === "single" && <p className="mt-2 text-xs text-muted-foreground">Personal emails stay as drafts in this app. They are never sent through SendFox.</p>}
             </div>
             {mode === "bulk" && <SendfoxDraftAction list={sfList} subject={subject} body={body} />}
-            <div>
-              <div className="mb-1 font-medium">Recipients</div>
-              <ul className="max-h-48 overflow-y-auto rounded-lg border border-border text-xs">
-                {(mode === "single" ? [{ email: toEmail.trim(), sources: [] as string[] }] : audienceQ.data?.recipients ?? []).map((r) => (
-                  <li key={r.email} className="flex justify-between gap-2 border-b border-border px-3 py-1.5 last:border-0">
-                    <span className="truncate">{r.email}</span>
-                    <span className="shrink-0 text-muted-foreground">{r.sources.join(", ")}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {mode === "single" && (
+              <div className="rounded-lg border border-border px-3 py-2 text-xs">To: {toEmail.trim()}</div>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setReviewOpen(false)}>Back to edit</Button>
