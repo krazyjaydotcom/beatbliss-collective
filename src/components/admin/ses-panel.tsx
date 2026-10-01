@@ -30,6 +30,7 @@ export function SesComposerSection({ files, setFiles, purpose, setPurpose }: {
   const [busy, setBusy] = useState(false);
   useEffect(() => { cleanup().catch(() => {}); }, []); // removes stale unreferenced uploads (>24h)
   const ready = status.data?.ready === true;
+  const sd = status.data as any;
 
   const add = async (list: FileList | null) => {
     if (!list) return;
@@ -59,20 +60,20 @@ export function SesComposerSection({ files, setFiles, purpose, setPurpose }: {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-semibold">Amazon SES · one person, real attachments</span>
         {status.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : ready ? (
-          <span className="inline-flex items-center gap-1 text-xs text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" />Ready · {status.data.from}</span>
+          <span className="inline-flex items-center gap-1 text-xs text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" />Ready · {sd?.from}</span>
         ) : (
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><XCircle className="h-3.5 w-3.5" />Unavailable</span>
         )}
       </div>
       {!status.isLoading && !ready && (
         <div className="text-xs text-muted-foreground">
-          <p>{status.data && "reason" in status.data ? status.data.reason : "Couldn't check SES."} Attachments and sending stay off.</p>
-          {status.data && "missing" in status.data && status.data.missing.length > 0 && (
-            <p className="mt-1">Missing server settings: {status.data.missing.join(", ")}.</p>
+          <p>{sd?.reason ?? "Couldn't check SES."} Attachments and sending stay off.</p>
+          {sd?.missing?.length > 0 && (
+            <p className="mt-1">Missing server settings: {sd.missing.join(", ")}.</p>
           )}
         </div>
       )}
-      {ready && status.data.sandbox && <p className="text-xs text-amber-400">SES account is in sandbox mode — it can only send to verified addresses.</p>}
+      {ready && sd?.sandbox && <p className="text-xs text-amber-400">SES account is in sandbox mode — it can only send to verified addresses.</p>}
 
       <div className="grid grid-cols-2 gap-1 rounded-md bg-secondary/50 p-1 text-xs" role="radiogroup" aria-label="Purpose">
         {(["personal", "promotional"] as const).map((p) => (
@@ -121,6 +122,7 @@ export function SesSendAction({ to, subject, body, purpose, files, onSent }: {
   const sendFn = useServerFn(adminSesSend);
   const [confirmed, setConfirmed] = useState(false);
   const ready = status.data?.ready === true;
+  const sd = status.data as any;
   const email = to.trim().toLowerCase();
 
   const basis = useQuery({ queryKey: ["ses-basis", email, purpose], queryFn: () => checkFn({ data: { to: email, purpose } }), enabled: ready });
@@ -145,7 +147,7 @@ export function SesSendAction({ to, subject, body, purpose, files, onSent }: {
   return (
     <div className="space-y-2 rounded-lg border border-primary/40 p-3 text-xs">
       <div className="font-semibold text-foreground">Send one email via Amazon SES</div>
-      <div>From: {status.data.from} · To: <strong>{email}</strong></div>
+      <div>From: {sd?.from} · To: <strong>{email}</strong></div>
       <div>Purpose: {purpose === "promotional" ? "Promotional" : "Personal / customer matter"} · Basis:{" "}
         {basis.isLoading ? "checking…" : basis.data?.ok ? basis.data.basis : <span className="text-destructive">{basis.data && !basis.data.ok ? basis.data.reason : "unknown"}</span>}
       </div>
