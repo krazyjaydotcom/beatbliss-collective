@@ -1,19 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { adminListCustomerActivity, type ActivityRow } from "@/lib/admin-activity.functions";
-import { adminListCrm, adminSaveProspect, type Prospect, type ProspectStage } from "@/lib/crm.functions";
+import { adminListCrm, adminSaveProspect, adminSaveTask, type Prospect, type ProspectStage } from "@/lib/crm.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EmptyState, PageHeader, StageChip, StatTile, Surface, STAGE_LABELS } from "@/components/admin/ui";
 import { cn } from "@/lib/utils";
@@ -51,10 +49,19 @@ function buildContacts(rows: ActivityRow[], prospects: Prospect[]): Contact[] {
     if (!c) {
       c = {
         key,
-        email: null, name: null, phone: null,
-        stage: "new_lead", source: "activity", notes: "",
-        nextFollowUp: null, prospectId: null,
-        purchases: 0, downloads: 0, spendCents: 0, lastActivity: null, activity: [],
+        email: null,
+        name: null,
+        phone: null,
+        stage: "new_lead",
+        source: "activity",
+        notes: "",
+        nextFollowUp: null,
+        prospectId: null,
+        purchases: 0,
+        downloads: 0,
+        spendCents: 0,
+        lastActivity: null,
+        activity: [],
       };
       map.set(key, c);
     }
@@ -97,21 +104,37 @@ function buildContacts(rows: ActivityRow[], prospects: Prospect[]): Contact[] {
     if (!c.prospectId && c.purchases > 0) c.stage = "client";
   }
 
-  return [...map.values()].sort((a, b) => (a.lastActivity ?? "") < (b.lastActivity ?? "") ? 1 : -1);
+  return [...map.values()].sort((a, b) => ((a.lastActivity ?? "") < (b.lastActivity ?? "") ? 1 : -1));
 }
 
-function AdminCustomersPage() {
+function AdminCustomersPage({
+  initialEmail,
+  embedded = false,
+  onClose,
+}: { initialEmail?: string; embedded?: boolean; onClose?: () => void } = {}) {
   const qc = useQueryClient();
   const fetchActivity = useServerFn(adminListCustomerActivity);
   const fetchCrm = useServerFn(adminListCrm);
   const saveProspect = useServerFn(adminSaveProspect);
+  const saveTask = useServerFn(adminSaveTask);
+  const [layout, setLayout] = useState("list");
+  const [followUpTitle, setFollowUpTitle] = useState("");
+  const openedEmail = useRef("");
+  const localToday = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
 
   const [q, setQ] = useState("");
   const [stage, setStage] = useState<string>("all");
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [draft, setDraft] = useState<{ name: string; email: string; phone: string; source: string; notes: string }>({
-    name: "", email: "", phone: "", source: "manual", notes: "",
+    name: "",
+    email: "",
+    phone: "",
+    source: "manual",
+    notes: "",
   });
   const [edit, setEdit] = useState<{ stage: ProspectStage; notes: string; next: string } | null>(null);
 
@@ -148,89 +171,197 @@ function AdminCustomersPage() {
     setEdit({ stage: c.stage, notes: c.notes, next: c.nextFollowUp ?? "" });
   };
 
+  useEffect(() => {
+    if (!initialEmail || openedEmail.current === initialEmail || activityQ.isLoading || crmQ.isLoading) return;
+    openedEmail.current = initialEmail;
+    const contact = contacts.find((c) => norm(c.email) === norm(initialEmail));
+    if (contact) openDetail(contact);
+  }, [initialEmail, contacts, activityQ.isLoading, crmQ.isLoading]);
+  const followUp = useMutation({
+    mutationFn: () =>
+      saveTask({
+        data: {
+          title: followUpTitle.trim() || "Follow up with " + (selected?.name ?? selected?.email ?? "customer"),
+          customer_email: selected?.email,
+          prospect_id: selected?.prospectId,
+          due_date: edit?.next || localToday(),
+          status: "open",
+        },
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["admin-crm"] });
+      setFollowUpTitle("");
+      toast.success("Follow-up added to Tasks");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
   const loading = activityQ.isLoading || crmQ.isLoading;
   const clients = contacts.filter((c) => c.stage === "client").length;
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        breadcrumb="Workspace"
-        title="Customers &amp; leads"
-        description="Everyone who bought or downloaded, plus prospects you add yourself."
-        actions={
-          <Button size="sm" onClick={() => setNewOpen(true)}>
-            <Plus className="mr-1.5 h-4 w-4" /> Add prospect
-          </Button>
-        }
-      />
-
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label="Contacts" value={contacts.length} />
-        <StatTile label="Clients" value={clients} />
-        <StatTile label="Manual prospects" value={crmQ.data?.prospects.length ?? 0} />
-        <StatTile
-          label="Follow-ups set"
-          value={(crmQ.data?.prospects ?? []).filter((p) => p.next_follow_up_at).length}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search name or email…"
-            className="h-11 pl-9 text-base"
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      {!embedded && (
+        <>
+          <PageHeader
+            breadcrumb="Workspace"
+            title="Customers & leads"
+            description="Everyone who bought or downloaded, plus prospects you add yourself."
+            actions={
+              <Button size="sm" onClick={() => setNewOpen(true)}>
+                <Plus className="mr-1.5 h-4 w-4" /> Add prospect
+              </Button>
+            }
           />
-        </div>
-        <Select value={stage} onValueChange={setStage}>
-          <SelectTrigger className="h-11 text-base"><SelectValue placeholder="Stage" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All stages</SelectItem>
-            {Object.entries(STAGE_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
-      {loading ? (
-        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-      ) : filtered.length === 0 ? (
-        <EmptyState title="No contacts match" description="Try a different search, or add a prospect by hand." />
-      ) : (
-        <div className="space-y-2">
-          {filtered.map((c) => (
-            <Surface key={c.key} className="p-0">
-              <button
-                onClick={() => openDetail(c)}
-                className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 p-3 text-left"
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatTile label="Contacts" value={contacts.length} />
+            <StatTile label="Clients" value={clients} />
+            <StatTile label="Manual prospects" value={crmQ.data?.prospects.length ?? 0} />
+            <StatTile
+              label="Follow-ups due"
+              value={
+                (crmQ.data?.prospects ?? []).filter((p) => p.next_follow_up_at && p.next_follow_up_at <= localToday())
+                  .length
+              }
+            />
+          </div>
+
+          <div className="flex shrink-0 gap-2">
+            {["list", "board"].map((mode) => (
+              <Button
+                key={mode}
+                size="sm"
+                variant={layout === mode ? "default" : "outline"}
+                aria-pressed={layout === mode}
+                onClick={() => setLayout(mode)}
               >
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold">{c.name ?? c.email ?? "Unknown"}</div>
-                  <div className="truncate text-xs text-muted-foreground">{c.email ?? "No email on file"}</div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                    <StageChip stage={c.stage} />
-                    <span className="text-[11px] text-muted-foreground">
-                      {c.purchases} purchase{c.purchases === 1 ? "" : "s"} · {c.downloads} download{c.downloads === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                </div>
-                <div className="shrink-0 text-right">
-                  <div className="text-sm font-semibold tabular-nums">{money(c.spendCents)}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {c.lastActivity ? new Date(c.lastActivity).toLocaleDateString() : "—"}
-                  </div>
-                </div>
-              </button>
-            </Surface>
-          ))}
-        </div>
-      )}
+                {mode === "list" ? "List" : "Board"}
+              </Button>
+            ))}
+          </div>
+          <div className="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search name or email…"
+                className="h-11 pl-9 text-base"
+              />
+            </div>
+            <Select value={stage} onValueChange={setStage}>
+              <SelectTrigger className="h-11 text-base">
+                <SelectValue placeholder="Stage" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All stages</SelectItem>
+                {Object.entries(STAGE_LABELS).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <EmptyState title="No contacts match" description="Try a different search, or add a prospect by hand." />
+          ) : layout === "board" ? (
+            <div
+              className="flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-auto pb-2"
+              aria-label="Customer pipeline"
+            >
+              {Object.entries(STAGE_LABELS).map(([key, label]) => (
+                <section key={key} className="w-64 shrink-0 snap-start rounded-xl border border-border bg-card p-3">
+                  <h2 className="mb-3 font-semibold">
+                    {label}{" "}
+                    <span className="text-muted-foreground">{filtered.filter((c) => c.stage === key).length}</span>
+                  </h2>
+                  <div className="space-y-2">
+                    {filtered
+                      .filter((c) => c.stage === key)
+                      .map((c) => (
+                        <button
+                          key={c.key}
+                          onClick={() => openDetail(c)}
+                          className="w-full rounded-lg border border-border bg-background p-3 text-left"
+                        >
+                          <div className="truncate text-sm font-medium">{c.name ?? c.email ?? "Unknown customer"}</div>
+                          <div className="mt-1 truncate text-xs text-muted-foreground">{c.email}</div>
+                          <div className="mt-2 text-xs">
+                            {c.nextFollowUp ? "Follow up " + c.nextFollowUp : "Set next action"}
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+              {filtered.map((c) => (
+                <Surface key={c.key} className="p-0">
+                  <button
+                    onClick={() => openDetail(c)}
+                    className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 p-3 text-left"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold">{c.name ?? c.email ?? "Unknown"}</div>
+                      <div className="truncate text-xs text-muted-foreground">{c.email ?? "No email on file"}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {c.nextFollowUp ? "Next follow-up: " + c.nextFollowUp : "No follow-up scheduled"}
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                        <StageChip stage={c.stage} />
+                        <span className="text-[11px] text-muted-foreground">
+                          {c.purchases} purchase{c.purchases === 1 ? "" : "s"} · {c.downloads} download
+                          {c.downloads === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-semibold tabular-nums">{money(c.spendCents)}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {c.lastActivity ? new Date(c.lastActivity).toLocaleDateString() : "—"}
+                      </div>
+                    </div>
+                  </button>
+                </Surface>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+      {embedded && !selected && (
+        <Sheet
+          open
+          onOpenChange={(open) => {
+            if (!open) onClose?.();
+          }}
+        >
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Customer</SheetTitle>
+            </SheetHeader>
+            <p className="p-4">{loading ? "Loading customer…" : "No customer activity found for " + initialEmail}</p>
+          </SheetContent>
+        </Sheet>
+      )}
       {/* Detail panel */}
-      <Sheet open={!!selected} onOpenChange={(o) => { if (!o) { setOpenKey(null); setEdit(null); } }}>
+      <Sheet
+        open={!!selected}
+        onOpenChange={(o) => {
+          if (!o) {
+            setOpenKey(null);
+            setEdit(null);
+            onClose?.();
+          }
+        }}
+      >
         <SheetContent side="right" className="flex h-full w-full flex-col gap-0 p-0 sm:max-w-lg">
           <SheetHeader className="border-b border-border/60 p-4">
             <SheetTitle className="truncate">{selected?.name ?? selected?.email ?? "Contact"}</SheetTitle>
@@ -242,17 +373,22 @@ function AdminCustomersPage() {
                   <div className="text-muted-foreground">{selected.email ?? "No email on file"}</div>
                   {selected.phone && <div className="text-muted-foreground">{selected.phone}</div>}
                   <div className="text-muted-foreground">
-                    {selected.purchases} paid purchase{selected.purchases === 1 ? "" : "s"} · {money(selected.spendCents)} total
+                    {selected.purchases} paid purchase{selected.purchases === 1 ? "" : "s"} ·{" "}
+                    {money(selected.spendCents)} total
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label>Stage</Label>
                   <Select value={edit.stage} onValueChange={(v) => setEdit({ ...edit, stage: v as ProspectStage })}>
-                    <SelectTrigger className="h-11 text-base"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-11 text-base">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {Object.entries(STAGE_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -261,7 +397,9 @@ function AdminCustomersPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="c-next">Next follow-up</Label>
                   <Input
-                    id="c-next" type="date" className="h-11 text-base"
+                    id="c-next"
+                    type="date"
+                    className="h-11 text-base"
                     value={edit.next}
                     onChange={(e) => setEdit({ ...edit, next: e.target.value })}
                   />
@@ -270,7 +408,9 @@ function AdminCustomersPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="c-notes">Notes</Label>
                   <Textarea
-                    id="c-notes" rows={5} className="text-base"
+                    id="c-notes"
+                    rows={5}
+                    className="text-base"
                     value={edit.notes}
                     onChange={(e) => setEdit({ ...edit, notes: e.target.value })}
                   />
@@ -289,7 +429,13 @@ function AdminCustomersPage() {
                           <div className="min-w-0">
                             <div className="truncate text-sm">{r.beat_title}</div>
                             <div className="truncate text-xs text-muted-foreground">
-                              {r.kind === "purchase" ? (r.paid ? "Paid sale" : "Unpaid checkout") : r.kind === "member_download" ? "Member download" : "Free download"}
+                              {r.kind === "purchase"
+                                ? r.paid
+                                  ? "Paid sale"
+                                  : "Unpaid checkout"
+                                : r.kind === "member_download"
+                                  ? "Member download"
+                                  : "Free download"}
                               {r.agreement_code ? ` · ${r.agreement_code}` : " · License not available"}
                             </div>
                           </div>
@@ -302,12 +448,46 @@ function AdminCustomersPage() {
                   )}
                 </div>
 
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/admin/tasks">Open tasks</Link>
-                </Button>
+                <section className="space-y-3 rounded-lg border border-border p-3">
+                  <h3 className="text-sm font-semibold">Linked tasks</h3>
+                  {(crmQ.data?.tasks ?? [])
+                    .filter(
+                      (t) =>
+                        (selected.prospectId && t.prospect_id === selected.prospectId) ||
+                        (selected.email && norm(t.customer_email) === norm(selected.email)),
+                    )
+                    .map((t) => (
+                      <div key={t.id} className="flex items-center justify-between gap-2 text-xs">
+                        <span className={t.status === "done" ? "line-through text-muted-foreground" : ""}>
+                          {t.title}
+                        </span>
+                        <span>{t.status === "done" ? "Completed" : (t.due_date ?? "No due date")}</span>
+                      </div>
+                    ))}
+                  <Label htmlFor="customer-followup-title">Next action</Label>
+                  <Input
+                    id="customer-followup-title"
+                    value={followUpTitle}
+                    onChange={(e) => setFollowUpTitle(e.target.value)}
+                    placeholder="Send license options, call, review brief…"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Uses the follow-up date above, or today. Customer is already linked.
+                  </p>
+                  <Button size="sm" disabled={followUp.isPending} onClick={() => followUp.mutate()}>
+                    {followUp.isPending ? "Creating…" : "Schedule follow-up"}
+                  </Button>
+                </section>
               </div>
               <div className="flex gap-2 border-t border-border/60 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                <Button variant="outline" className="flex-1" onClick={() => { setOpenKey(null); setEdit(null); }}>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setOpenKey(null);
+                    setEdit(null);
+                  }}
+                >
                   Close
                 </Button>
                 <Button
@@ -345,7 +525,9 @@ function AdminCustomersPage() {
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
             {(["name", "email", "phone", "source"] as const).map((field) => (
               <div key={field} className="space-y-1.5">
-                <Label htmlFor={`p-${field}`} className={cn("capitalize")}>{field}</Label>
+                <Label htmlFor={`p-${field}`} className={cn("capitalize")}>
+                  {field}
+                </Label>
                 <Input
                   id={`p-${field}`}
                   className="h-11 text-base"
@@ -357,14 +539,18 @@ function AdminCustomersPage() {
             <div className="space-y-1.5">
               <Label htmlFor="p-notes">Notes</Label>
               <Textarea
-                id="p-notes" rows={5} className="text-base"
+                id="p-notes"
+                rows={5}
+                className="text-base"
                 value={draft.notes}
                 onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
               />
             </div>
           </div>
           <div className="flex gap-2 border-t border-border/60 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <Button variant="outline" className="flex-1" onClick={() => setNewOpen(false)}>Cancel</Button>
+            <Button variant="outline" className="flex-1" onClick={() => setNewOpen(false)}>
+              Cancel
+            </Button>
             <Button
               className="flex-1"
               disabled={save.isPending || (!draft.name.trim() && !draft.email.trim())}
@@ -388,4 +574,8 @@ function AdminCustomersPage() {
       </Sheet>
     </div>
   );
+}
+
+export function CustomerRecordDrawer({ email, onClose }: { email: string; onClose: () => void }) {
+  return <AdminCustomersPage initialEmail={email} embedded onClose={onClose} />;
 }
