@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { adminPreviewAudience, AUDIENCES, type Audience } from "@/lib/admin-email.functions";
 import { PageHeader, Surface, EmptyState } from "@/components/admin/ui";
 import { InquiryReplyPanel } from "@/components/admin/inquiry-reply-panel";
-import { SendfoxDraftAction, SendfoxPanel } from "@/components/admin/sendfox-panel";
+import { fmtSubscribed, SendfoxDraftAction, SendfoxPanel, type SendfoxList } from "@/components/admin/sendfox-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,7 @@ function AdminEmailPage() {
   const qc = useQueryClient();
   const [draftId, setDraftId] = useState<string | null>(null);
   const [mode, setMode] = useState<"single" | "bulk">("single");
-  const [sfList, setSfList] = useState<{ id: number; name: string; subscribed: number } | null>(null);
+  const [sfList, setSfList] = useState<SendfoxList | null>(null);
   const [toEmail, setToEmail] = useState(to ?? "");
   const [audiences, setAudiences] = useState<Audience[]>([]);
   const [subject, setSubject] = useState("");
