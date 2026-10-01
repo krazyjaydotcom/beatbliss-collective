@@ -56,10 +56,25 @@ export const sendfoxLists = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const r = await sf<{ data: { id: number; name: string; subscribed_contacts_count: number; unsubscribed_contacts_count: number }[] }>("/lists");
+    const r = await sf<{ data: Record<string, unknown>[] }>("/lists");
     if (!r.ok) return { lists: [], reason: r.reason };
+    // SendFox has used different count field names over time; read whichever is
+    // a finite number and report null (count unavailable) rather than guessing.
+    const num = (v: unknown): number | null => {
+      const n = typeof v === "string" ? Number(v) : v;
+      return typeof n === "number" && Number.isFinite(n) ? n : null;
+    };
+    const pick = (l: Record<string, unknown>, keys: string[]) => {
+      for (const k of keys) { const n = num(l[k]); if (n !== null) return n; }
+      return null;
+    };
     return {
-      lists: (r.data.data ?? []).map((l) => ({ id: l.id, name: l.name, subscribed: l.subscribed_contacts_count ?? 0, unsubscribed: l.unsubscribed_contacts_count ?? 0 })),
+      lists: (r.data.data ?? []).map((l) => ({
+        id: Number(l.id),
+        name: String(l.name ?? ""),
+        subscribed: pick(l, ["subscribed_contacts_count", "subscribed_count", "contacts_count", "subscribed"]),
+        unsubscribed: pick(l, ["unsubscribed_contacts_count", "unsubscribed_count", "unsubscribed"]),
+      })),
       reason: null,
     };
   });
