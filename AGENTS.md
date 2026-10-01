@@ -1,1 +1,2 @@
 - Bulk/marketing email goes through SendFox via admin-only server functions in src/lib/sendfox.functions.ts (token from SENDFOX_API_TOKEN, drafts only, web_publish=false); personal one-off emails never go through SendFox — keeps marketing separate from transactional mail.
+- Personal one-off emails are only sent as replies to a specific inquiry (src/lib/inquiry-reply.functions.ts, 'inquiry-reply' app-email template): recipient loaded server-side from the inquiry row, admin-only, every attempt logged in inquiry_replies — the app-email service forbids promotional or list sends.
