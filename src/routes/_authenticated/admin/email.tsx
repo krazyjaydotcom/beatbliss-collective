@@ -35,7 +35,7 @@ function AdminEmailPage() {
   const qc = useQueryClient();
   const [draftId, setDraftId] = useState<string | null>(null);
   const [mode, setMode] = useState<"single" | "bulk">("single");
-  const [sfList, setSfList] = useState<{ id: number; name: string } | null>(null);
+  const [sfList, setSfList] = useState<{ id: number; name: string; subscribed: number } | null>(null);
   const [toEmail, setToEmail] = useState(to ?? "");
   const [audiences, setAudiences] = useState<Audience[]>([]);
   const [subject, setSubject] = useState("");
@@ -157,8 +157,6 @@ function AdminEmailPage() {
             <Label htmlFor="em-body">Message</Label>
             <Textarea id="em-body" rows={9} value={body} maxLength={20000} onChange={(e) => setBody(e.target.value)} />
           </div>
-
-          {mode === "bulk" && <SendfoxPanel listId={sfList?.id ?? null} onList={setSfList} />}
 
           <div className="flex items-start gap-2 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
             <Paperclip className="mt-0.5 h-4 w-4 shrink-0" />

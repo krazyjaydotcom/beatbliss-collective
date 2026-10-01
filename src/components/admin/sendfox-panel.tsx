@@ -25,7 +25,7 @@ export function useSendfoxStatus() {
   return useQuery({ queryKey: ["sendfox-status"], queryFn: () => fn(), staleTime: 60_000 });
 }
 
-export function SendfoxPanel({ listId, onList }: { listId: number | null; onList: (l: { id: number; name: string } | null) => void }) {
+export function SendfoxPanel({ listId, onList }: { listId: number | null; onList: (l: { id: number; name: string; subscribed: number } | null) => void }) {
   const status = useSendfoxStatus();
   const listsFn = useServerFn(sendfoxLists);
   const connected = status.data?.connected === true;
@@ -44,14 +44,14 @@ export function SendfoxPanel({ listId, onList }: { listId: number | null; onList
       )}
       {connected && (
         <div className="space-y-1.5">
-          <Label htmlFor="sf-list" className="text-xs">SendFox list (who receives it)</Label>
+          <Label htmlFor="sf-list" className="text-xs">Audience: SendFox list (who receives it)</Label>
           <select
             id="sf-list"
             className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
             value={listId ?? ""}
             onChange={(e) => {
               const l = lists.data?.lists.find((x) => x.id === Number(e.target.value));
-              onList(l ? { id: l.id, name: l.name } : null);
+              onList(l ? { id: l.id, name: l.name, subscribed: l.subscribed } : null);
             }}
           >
             <option value="">Choose a list…</option>
