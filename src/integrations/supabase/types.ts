@@ -184,6 +184,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_record_trash: {
+        Row: {
+          deleted_at: string
+          deleted_by: string
+          id: string
+          payload: Json
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by: string
+          id?: string
+          payload: Json
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string
+          id?: string
+          payload?: Json
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
       agreements: {
         Row: {
           accepted_at: string
@@ -2025,6 +2052,16 @@ export type Database = {
           _title: string
         }
         Returns: string
+      }
+      admin_manage_records: {
+        Args: {
+          p_action: string
+          p_ids?: string[]
+          p_page?: number
+          p_search?: string
+          p_table: string
+        }
+        Returns: Json
       }
       beat_audio_access_level: {
         Args: { _object_name: string }
