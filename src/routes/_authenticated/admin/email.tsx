@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { adminPreviewAudience, AUDIENCES, type Audience } from "@/lib/admin-email.functions";
 import { PageHeader, Surface, EmptyState } from "@/components/admin/ui";
+import { InquiryReplyPanel } from "@/components/admin/inquiry-reply-panel";
 import { SendfoxDraftAction, SendfoxPanel } from "@/components/admin/sendfox-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -172,6 +173,8 @@ function AdminEmailPage() {
           </div>
         </Surface>
 
+        <div className="space-y-4">
+        {mode === "single" && <InquiryReplyPanel />}
         <Surface className="p-4">
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Drafts</h2>
           {drafts.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (drafts.data ?? []).length === 0 ? (
@@ -193,6 +196,7 @@ function AdminEmailPage() {
             </ul>
           )}
         </Surface>
+        </div>
       </div>
 
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
