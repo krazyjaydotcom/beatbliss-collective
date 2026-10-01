@@ -184,6 +184,45 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_email_drafts: {
+        Row: {
+          attachments: Json
+          audience: string[]
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          mode: string
+          subject: string
+          to_email: string | null
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          audience?: string[]
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mode?: string
+          subject?: string
+          to_email?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          audience?: string[]
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mode?: string
+          subject?: string
+          to_email?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_record_trash: {
         Row: {
           deleted_at: string
