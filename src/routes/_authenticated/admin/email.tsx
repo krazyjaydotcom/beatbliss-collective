@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { adminPreviewAudience, AUDIENCES, type Audience } from "@/lib/admin-email.functions";
 import { PageHeader, Surface, EmptyState } from "@/components/admin/ui";
+import { SendfoxDraftAction, SendfoxPanel } from "@/components/admin/sendfox-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +34,7 @@ function AdminEmailPage() {
   const qc = useQueryClient();
   const [draftId, setDraftId] = useState<string | null>(null);
   const [mode, setMode] = useState<"single" | "bulk">("single");
+  const [sfList, setSfList] = useState<{ id: number; name: string } | null>(null);
   const [toEmail, setToEmail] = useState(to ?? "");
   const [audiences, setAudiences] = useState<Audience[]>([]);
   const [subject, setSubject] = useState("");
@@ -148,11 +150,14 @@ function AdminEmailPage() {
             <Textarea id="em-body" rows={9} value={body} maxLength={20000} onChange={(e) => setBody(e.target.value)} />
           </div>
 
+          {mode === "bulk" && <SendfoxPanel listId={sfList?.id ?? null} onList={setSfList} />}
+
           <div className="flex items-start gap-2 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
             <Paperclip className="mt-0.5 h-4 w-4 shrink-0" />
             <p>
-              <strong className="text-foreground">Files: unavailable.</strong> File attachments and download links can't be
-              added until an email service and private file storage are connected. Drafts save text only.
+              <strong className="text-foreground">Files: unavailable.</strong> SendFox can't attach files on any plan. It can only
+              include links. File uploads stay off until private storage and expiring, per-recipient download links are built.
+              Drafts save text only.
             </p>
           </div>
 
@@ -200,8 +205,10 @@ function AdminEmailPage() {
             <div className="rounded-lg border border-border p-3">
               <div className="font-semibold">{subject}</div>
               <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{body}</p>
-              {mode === "bulk" && <p className="mt-2 text-xs text-muted-foreground">An unsubscribe link will be added to bulk emails.</p>}
+              {mode === "bulk" && <p className="mt-2 text-xs text-muted-foreground">SendFox adds its own unsubscribe link to bulk emails.</p>}
+              {mode === "single" && <p className="mt-2 text-xs text-muted-foreground">Personal emails stay as drafts in this app. They are never sent through SendFox.</p>}
             </div>
+            {mode === "bulk" && <SendfoxDraftAction list={sfList} subject={subject} body={body} />}
             <div>
               <div className="mb-1 font-medium">Recipients</div>
               <ul className="max-h-48 overflow-y-auto rounded-lg border border-border text-xs">
@@ -216,7 +223,7 @@ function AdminEmailPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setReviewOpen(false)}>Back to edit</Button>
-            <Button disabled title="Sending is turned off until an email service is connected">Send (not available yet)</Button>
+            <Button disabled title="Sending is turned off until an email service is connected">Send (off — sending happens in SendFox)</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

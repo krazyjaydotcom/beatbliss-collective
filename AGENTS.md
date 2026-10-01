@@ -1,0 +1,1 @@
+- Bulk/marketing email goes through SendFox via admin-only server functions in src/lib/sendfox.functions.ts (token from SENDFOX_API_TOKEN, drafts only, web_publish=false); personal one-off emails never go through SendFox — keeps marketing separate from transactional mail.
