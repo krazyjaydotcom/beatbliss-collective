@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { AlertTriangle, FileText, Loader2, Paperclip, Save, Trash2, X } from "lucide-react";
+import { AlertTriangle, FileText, Loader2, Paperclip, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -27,10 +27,6 @@ const AUDIENCE_LABEL: Record<Audience, string> = {
   members: "Active members",
   prospects: "CRM prospects",
 };
-const MAX_FILE = 10 * 1024 * 1024;
-const ALLOWED = /^(application\/pdf|image\/(png|jpeg|gif|webp)|audio\/(mpeg|wav|x-wav)|text\/plain|application\/(msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document))$/;
-type Att = { name: string; size: number; type: string };
-const fmtSize = (n: number) => (n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.ceil(n / 1024) + " KB");
 
 function AdminEmailPage() {
   const { to } = Route.useSearch();
@@ -41,7 +37,6 @@ function AdminEmailPage() {
   const [audiences, setAudiences] = useState<Audience[]>([]);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [atts, setAtts] = useState<Att[]>([]);
   const [reviewOpen, setReviewOpen] = useState(false);
   const preview = useServerFn(adminPreviewAudience);
 
@@ -64,7 +59,7 @@ function AdminEmailPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const row = { mode, to_email: mode === "single" ? toEmail.trim() || null : null, audience: audiences, subject, body, attachments: atts };
+      const row = { mode, to_email: mode === "single" ? toEmail.trim() || null : null, audience: audiences, subject, body, attachments: [] };
       const q = (supabase as any).from("admin_email_drafts");
       const { data, error } = draftId ? await q.update(row).eq("id", draftId).select("id").single() : await q.insert(row).select("id").single();
       if (error) throw error;
@@ -205,7 +200,6 @@ function AdminEmailPage() {
             <div className="rounded-lg border border-border p-3">
               <div className="font-semibold">{subject}</div>
               <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{body}</p>
-              {atts.length > 0 && <p className="mt-2 text-xs">Download links: {atts.map((a) => a.name).join(", ")}</p>}
               {mode === "bulk" && <p className="mt-2 text-xs text-muted-foreground">An unsubscribe link will be added to bulk emails.</p>}
             </div>
             <div>
