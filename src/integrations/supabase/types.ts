@@ -1477,6 +1477,48 @@ export type Database = {
         }
         Relationships: []
       }
+      inquiry_replies: {
+        Row: {
+          body: string
+          created_at: string
+          error: string | null
+          id: string
+          sent_by: string
+          source_id: string
+          source_table: string
+          status: string
+          subject: string
+          to_email: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          sent_by: string
+          source_id: string
+          source_table: string
+          status?: string
+          subject: string
+          to_email: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          sent_by?: string
+          source_id?: string
+          source_table?: string
+          status?: string
+          subject?: string
+          to_email?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invites: {
         Row: {
           claimed_by_user_id: string | null
