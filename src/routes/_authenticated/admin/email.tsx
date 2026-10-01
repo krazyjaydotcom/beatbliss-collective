@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { adminPreviewAudience, AUDIENCES, type Audience } from "@/lib/admin-email.functions";
 import { PageHeader, Surface, EmptyState } from "@/components/admin/ui";
 import { InquiryReplyPanel } from "@/components/admin/inquiry-reply-panel";
+import { SesComposerSection, SesLogPanel, SesSendAction, type DraftFile, type Purpose } from "@/components/admin/ses-panel";
 import { fmtSubscribed, SendfoxDraftAction, SendfoxPanel, type SendfoxList } from "@/components/admin/sendfox-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,8 @@ function AdminEmailPage() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [files, setFiles] = useState<DraftFile[]>([]);
+  const [purpose, setPurpose] = useState<Purpose>("personal");
   const preview = useServerFn(adminPreviewAudience);
 
   useEffect(() => { if (to) { setMode("single"); setToEmail(to); } }, [to]);
@@ -62,7 +65,7 @@ function AdminEmailPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const row = { mode, to_email: mode === "single" ? toEmail.trim() || null : null, audience: audiences, subject, body, attachments: [] };
+      const row = { mode, to_email: mode === "single" ? toEmail.trim() || null : null, audience: audiences, subject, body, attachments: mode === "single" ? files : [] };
       const q = (supabase as any).from("admin_email_drafts");
       const { data, error } = draftId ? await q.update(row).eq("id", draftId).select("id").single() : await q.insert(row).select("id").single();
       if (error) throw error;
@@ -74,7 +77,10 @@ function AdminEmailPage() {
 
   const removeDraft = async (id: string) => {
     if (!confirm("Delete this draft?")) return;
+    const d = (drafts.data ?? []).find((x) => x.id === id);
     const { error } = await (supabase as any).from("admin_email_drafts").delete().eq("id", id);
+    const paths = ((d?.attachments ?? []) as any[]).map((a) => a?.path).filter(Boolean);
+    if (!error && paths.length) await supabase.storage.from("email-attachments").remove(paths);
     if (error) return toast.error(error.message);
     if (id === draftId) setDraftId(null);
     qc.invalidateQueries({ queryKey: ["admin-email-drafts"] });
@@ -83,8 +89,9 @@ function AdminEmailPage() {
   const load = (d: any) => {
     setDraftId(d.id); setMode(d.mode); setToEmail(d.to_email ?? ""); setAudiences(d.audience ?? []);
     setSubject(d.subject); setBody(d.body);
+    setFiles(((d.attachments ?? []) as any[]).filter((a) => a?.path && a?.name).map((a) => ({ path: a.path, name: a.name, size: Number(a.size) || 0 })));
   };
-  const reset = () => { setDraftId(null); setToEmail(""); setAudiences([]); setSubject(""); setBody(""); };
+  const reset = () => { setDraftId(null); setToEmail(""); setAudiences([]); setSubject(""); setBody(""); setFiles([]); };
 
   const singleValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(toEmail.trim());
   const count = mode === "single" ? (singleValid ? 1 : 0) : (sfList?.subscribed ?? 0);
@@ -95,16 +102,16 @@ function AdminEmailPage() {
       <PageHeader
         breadcrumb="Marketing"
         title="Email"
-        description="Prepare SendFox campaign drafts, keep personal drafts, and reply to inquiries."
+        description="SendFox for bulk campaign drafts · Amazon SES for one-person emails with attachments · replies to inquiries."
         actions={<Button size="sm" variant="outline" onClick={reset}>New email</Button>}
       />
 
       <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
         <p>
-          <strong>Drafts only.</strong> Bulk emails are created as drafts in SendFox and sent from inside SendFox, to a
-          SendFox list. Nothing on this page sends a campaign. The only email sent from here is a personal reply to a
-          specific inquiry, after you confirm it.
+          <strong>Bulk = SendFox drafts only</strong> (sent from inside SendFox). <strong>One person</strong> can be sent via
+          Amazon SES with real attachments, only after review and confirmation. Inquiry replies use their own panel.
+          Saving or previewing never sends.
         </p>
       </div>
 
@@ -158,20 +165,25 @@ function AdminEmailPage() {
             <Textarea id="em-body" rows={9} value={body} maxLength={20000} onChange={(e) => setBody(e.target.value)} />
           </div>
 
+          {mode === "single" ? (
+            <SesComposerSection files={files} setFiles={setFiles} purpose={purpose} setPurpose={setPurpose} />
+          ) : (
           <div className="flex items-start gap-2 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
             <Paperclip className="mt-0.5 h-4 w-4 shrink-0" />
             <p>
               <strong className="text-foreground">Files: unavailable.</strong> SendFox can't attach files on any plan. It can only
               include links. File uploads stay off until private storage and expiring, per-recipient download links are built.
-              Drafts save text only.
+              Bulk drafts save text only.
             </p>
           </div>
+
+          )}
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
             <span className="text-sm text-muted-foreground">
               {mode === "bulk"
                 ? sfList ? `SendFox · ${sfList.name} · ${fmtSubscribed(sfList.subscribed)}` : "Choose a SendFox list"
-                : `${count} recipient${count === 1 ? "" : "s"}`}
+                : `${count} recipient${count === 1 ? "" : "s"}${files.length ? ` · ${files.length} file${files.length === 1 ? "" : "s"}` : ""}`}
             </span>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => save.mutate()} disabled={save.isPending}>
@@ -184,6 +196,7 @@ function AdminEmailPage() {
 
         <div className="space-y-4">
         {mode === "single" && <InquiryReplyPanel />}
+        {mode === "single" && <Surface className="p-4"><SesLogPanel /></Surface>}
         <Surface className="p-4">
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Drafts</h2>
           {drafts.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (drafts.data ?? []).length === 0 ? (
@@ -215,7 +228,7 @@ function AdminEmailPage() {
             <DialogDescription>
               {mode === "bulk"
                 ? sfList ? `SendFox list "${sfList.name}" · ${fmtSubscribed(sfList.subscribed)} (count reported by SendFox)` : "No SendFox list chosen"
-                : "One person · stays a draft in this app"}
+                : "One person · draft in this app, or send via Amazon SES below"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm">
@@ -223,16 +236,16 @@ function AdminEmailPage() {
               <div className="font-semibold">{subject}</div>
               <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{body}</p>
               {mode === "bulk" && <p className="mt-2 text-xs text-muted-foreground">SendFox adds its own unsubscribe link and skips contacts unsubscribed in SendFox.</p>}
-              {mode === "single" && <p className="mt-2 text-xs text-muted-foreground">Personal emails stay as drafts in this app. They are never sent through SendFox.</p>}
+              {mode === "single" && <p className="mt-2 text-xs text-muted-foreground">Never sent through SendFox. Separate from inquiry replies.</p>}
             </div>
             {mode === "bulk" && <SendfoxDraftAction list={sfList} subject={subject} body={body} />}
             {mode === "single" && (
-              <div className="rounded-lg border border-border px-3 py-2 text-xs">To: {toEmail.trim()}</div>
+              <SesSendAction to={toEmail} subject={subject} body={body} purpose={purpose} files={files} onSent={() => setReviewOpen(false)} />
             )}
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setReviewOpen(false)}>Back to edit</Button>
-            <Button disabled title="Sending is turned off until an email service is connected">Send (off — sending happens in SendFox)</Button>
+            {mode === "bulk" && <Button disabled>Send (off — sending happens in SendFox)</Button>}
           </DialogFooter>
         </DialogContent>
       </Dialog>

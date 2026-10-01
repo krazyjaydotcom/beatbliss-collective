@@ -1950,6 +1950,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ses_send_log: {
+        Row: {
+          attachments: Json
+          basis: string | null
+          body: string
+          created_at: string
+          error: string | null
+          from_email: string | null
+          id: string
+          purpose: string
+          sent_by: string | null
+          ses_message_id: string | null
+          status: string
+          subject: string
+          to_email: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          basis?: string | null
+          body: string
+          created_at?: string
+          error?: string | null
+          from_email?: string | null
+          id?: string
+          purpose: string
+          sent_by?: string | null
+          ses_message_id?: string | null
+          status?: string
+          subject: string
+          to_email: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          basis?: string | null
+          body?: string
+          created_at?: string
+          error?: string | null
+          from_email?: string | null
+          id?: string
+          purpose?: string
+          sent_by?: string | null
+          ses_message_id?: string | null
+          status?: string
+          subject?: string
+          to_email?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
