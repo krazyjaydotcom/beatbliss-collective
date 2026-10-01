@@ -71,8 +71,14 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
+      // The browser already closed this request (reload/navigation); nothing to report.
+      if (request.signal?.aborted) {
+        consumeLastCapturedError();
+        return response;
+      }
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
+      if (request.signal?.aborted) return new Response(null, { status: 499 });
       console.error(error);
       return brandedErrorResponse();
     }
