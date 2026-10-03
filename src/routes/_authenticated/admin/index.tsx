@@ -182,7 +182,7 @@ function AdminOverview() {
               <>
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="font-semibold">Revenue</h2>
-                  <span className="text-[10px] text-muted-foreground">Paid only · 30 days</span>
+                  <span className="text-[10px] text-muted-foreground">Paid only</span>
                 </div>
                 <RevenueChart data={buildDailyRevenue(activityQ.data?.rows ?? [])} />
               </>
