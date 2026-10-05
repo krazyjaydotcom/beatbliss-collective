@@ -6,6 +6,7 @@ import { formatTime } from "@/components/store/player-provider";
 import { LicenseCheckout } from "@/components/store/license-panel";
 import { CoverArt } from "@/components/store/cover-art";
 import { ShareBeatButton } from "@/components/store/share-beat-button";
+import type { LicenseTier } from "@/lib/licensing";
 
 export function BeatDetail({
   beat,
@@ -25,6 +26,11 @@ export function BeatDetail({
   onClose?: () => void;
 }) {
   const [paying, setPaying] = useState(false);
+  const [tier, setTier] = useState<LicenseTier>("nonexclusive");
+  useEffect(() => {
+    setTier("nonexclusive");
+    setPaying(false);
+  }, [beat.id]);
   const meta = [
     beat.genre,
     beat.bpm ? `${beat.bpm} BPM` : null,
@@ -35,7 +41,7 @@ export function BeatDetail({
   if (paying) {
     return (
       <div className="flex h-full min-h-0 flex-col animate-in fade-in duration-300 motion-reduce:animate-none">
-        <LicenseCheckout beat={beat} paying onPayingChange={setPaying} />
+        <LicenseCheckout beat={beat} paying onPayingChange={setPaying} tier={tier} onTierChange={setTier} />
       </div>
     );
   }
@@ -107,7 +113,7 @@ export function BeatDetail({
         />
       </div>
 
-      <LicenseCheckout beat={beat} paying={false} onPayingChange={setPaying} compact />
+      <LicenseCheckout beat={beat} paying={false} onPayingChange={setPaying} compact tier={tier} onTierChange={setTier} />
 
     </div>
   );

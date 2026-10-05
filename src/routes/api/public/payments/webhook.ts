@@ -353,14 +353,21 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                     }
 
                     if (buyerEmail) {
-                      await queueBuyerPurchaseEmail({
-                        to: buyerEmail,
-                        beatTitle: `${beatTitle} (${licenseType})`,
-                        downloadUrl: beat?.audio_url ?? beat?.audio_url_tagged ?? null,
-                        amountCents: amounts[i] ?? 0,
-                        sessionId: `${session.id}:${beatId}`,
-                        beatSlug: beat?.landing_slug ?? null,
-                      });
+                      const tierKey = (["nonexclusive", "unlimited", "trackout"] as const).find((t) => t === licenseType) ?? "unlimited";
+                      try {
+                        await queueBuyerPurchaseEmail({
+                          to: buyerEmail,
+                          beatTitle,
+                          downloadUrl: beat?.audio_url ?? null,
+                          wavUrl: beat?.audio_url_wav ?? null,
+                          licenseTier: tierKey,
+                          amountCents: amounts[i] ?? 0,
+                          sessionId: `${session.id}:${beatId}`,
+                          beatSlug: beat?.landing_slug ?? null,
+                        });
+                      } catch (err) {
+                        console.error("[webhook] buyer delivery email failed", err);
+                      }
                     }
                   }
 
