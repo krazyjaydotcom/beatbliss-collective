@@ -276,6 +276,23 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
               // Multi-beat cart purchase: reconcile one lease order per beat and
               // deliver every beat in the same way a single purchase is delivered.
               if (session.metadata?.source === "beat_cart") {
+                // License-limited discount codes are applied by us (not Stripe),
+                // so count the use on the promotion code ourselves.
+                const promoId = session.metadata?.discount_promo_id;
+                if (promoId && /^promo_[A-Za-z0-9]+$/.test(promoId)) {
+                  try {
+                    const { createStripeClient } = await import("@/lib/stripe.server");
+                    const s = createStripeClient(env);
+                    const p: any = await s.promotionCodes.retrieve(promoId);
+                    const used = Number(p.metadata?.tier_redemptions ?? 0) + 1;
+                    await s.promotionCodes.update(promoId, {
+                      metadata: { ...(p.metadata ?? {}), tier_redemptions: String(used) },
+                      ...(p.max_redemptions && used >= p.max_redemptions ? { active: false } : {}),
+                    });
+                  } catch (err) {
+                    console.error("[webhook] discount redemption count failed", err);
+                  }
+                }
                 try {
                   const admin = getAdmin();
                   const buyerEmail = (
