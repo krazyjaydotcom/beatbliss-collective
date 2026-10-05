@@ -6,6 +6,7 @@ import { formatTime } from "@/components/store/player-provider";
 import { LicenseCheckout } from "@/components/store/license-panel";
 import { CoverArt } from "@/components/store/cover-art";
 import { ShareBeatButton } from "@/components/store/share-beat-button";
+import type { LicenseTier } from "@/lib/licensing";
 
 export function BeatDetail({
   beat,
@@ -112,7 +113,7 @@ export function BeatDetail({
         />
       </div>
 
-      <LicenseCheckout beat={beat} paying={false} onPayingChange={setPaying} compact />
+      <LicenseCheckout beat={beat} paying={false} onPayingChange={setPaying} compact tier={tier} onTierChange={setTier} />
 
     </div>
   );
