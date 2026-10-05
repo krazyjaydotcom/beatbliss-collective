@@ -295,5 +295,6 @@ export async function queueLicenseLookupEmail(opts: {
   const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111"><div style="max-width:600px;margin:0 auto;padding:32px 24px;background:#fff"><h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MYBEATCATALOG</h1><p style="color:#71717a;margin:0 0 20px">Your license agreements (${opts.licenses.length})</p>${blocks}<p style="color:#71717a;font-size:12px;margin:16px 0 0">You requested these at mybeatcatalog.com/licenses. Questions? Reply to this email.</p></div></body></html>`;
   const text = opts.licenses.map((l) => `${l.license_label} — ${l.beat_title}\nAgreement ID: ${l.agreement_code}\nDate: ${l.created_at.slice(0, 10)}\nRights: ${l.rights_text}\nCredits: ${credits}`).join("\n\n");
   const bucket = Math.floor(Date.now() / (10 * 60 * 1000));
+  if (await alreadyQueued(`license_lookup_${opts.to}_${bucket}`)) return;
   await enqueue({ to: opts.to, subject: "Your MYBEATCATALOG license agreements", html, text, label: "license_lookup", message_id: `license_lookup_${opts.to}_${bucket}` });
 }
