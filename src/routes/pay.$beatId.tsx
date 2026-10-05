@@ -44,7 +44,7 @@ function PaymentLinkPage() {
       <Link to="/" className="text-primary underline">Browse beats</Link>
     </main>
   );
-  const price = tierPriceCents(beat, tier as LicenseTier);
+  const price = tierPriceCents({ ...beat, priceCents: beat.priceCents ?? 0 }, tier);
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
