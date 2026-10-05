@@ -69,6 +69,7 @@ import { Route as AuthenticatedAdminGiftRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminFunnelsRouteImport } from './routes/_authenticated/admin/funnels'
 import { Route as AuthenticatedAdminEmailTemplatesRouteImport } from './routes/_authenticated/admin/email-templates'
 import { Route as AuthenticatedAdminEmailRouteImport } from './routes/_authenticated/admin/email'
+import { Route as AuthenticatedAdminDiscountsRouteImport } from './routes/_authenticated/admin/discounts'
 import { Route as AuthenticatedAdminCustomersRouteImport } from './routes/_authenticated/admin/customers'
 import { Route as AuthenticatedAdminCommercialsRouteImport } from './routes/_authenticated/admin/commercials'
 import { Route as AuthenticatedAdminClassroomRouteImport } from './routes/_authenticated/admin/classroom'
@@ -401,6 +402,12 @@ const AuthenticatedAdminEmailRoute = AuthenticatedAdminEmailRouteImport.update({
   path: '/email',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminDiscountsRoute =
+  AuthenticatedAdminDiscountsRouteImport.update({
+    id: '/discounts',
+    path: '/discounts',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCustomersRoute =
   AuthenticatedAdminCustomersRouteImport.update({
     id: '/customers',
@@ -557,6 +564,7 @@ export interface FileRoutesByFullPath {
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
   '/admin/commercials': typeof AuthenticatedAdminCommercialsRoute
   '/admin/customers': typeof AuthenticatedAdminCustomersRoute
+  '/admin/discounts': typeof AuthenticatedAdminDiscountsRoute
   '/admin/email': typeof AuthenticatedAdminEmailRoute
   '/admin/email-templates': typeof AuthenticatedAdminEmailTemplatesRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
@@ -635,6 +643,7 @@ export interface FileRoutesByTo {
   '/admin/classroom': typeof AuthenticatedAdminClassroomRoute
   '/admin/commercials': typeof AuthenticatedAdminCommercialsRoute
   '/admin/customers': typeof AuthenticatedAdminCustomersRoute
+  '/admin/discounts': typeof AuthenticatedAdminDiscountsRoute
   '/admin/email': typeof AuthenticatedAdminEmailRoute
   '/admin/email-templates': typeof AuthenticatedAdminEmailTemplatesRoute
   '/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
@@ -716,6 +725,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/classroom': typeof AuthenticatedAdminClassroomRoute
   '/_authenticated/admin/commercials': typeof AuthenticatedAdminCommercialsRoute
   '/_authenticated/admin/customers': typeof AuthenticatedAdminCustomersRoute
+  '/_authenticated/admin/discounts': typeof AuthenticatedAdminDiscountsRoute
   '/_authenticated/admin/email': typeof AuthenticatedAdminEmailRoute
   '/_authenticated/admin/email-templates': typeof AuthenticatedAdminEmailTemplatesRoute
   '/_authenticated/admin/funnels': typeof AuthenticatedAdminFunnelsRoute
@@ -797,6 +807,7 @@ export interface FileRouteTypes {
     | '/admin/classroom'
     | '/admin/commercials'
     | '/admin/customers'
+    | '/admin/discounts'
     | '/admin/email'
     | '/admin/email-templates'
     | '/admin/funnels'
@@ -875,6 +886,7 @@ export interface FileRouteTypes {
     | '/admin/classroom'
     | '/admin/commercials'
     | '/admin/customers'
+    | '/admin/discounts'
     | '/admin/email'
     | '/admin/email-templates'
     | '/admin/funnels'
@@ -955,6 +967,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/classroom'
     | '/_authenticated/admin/commercials'
     | '/_authenticated/admin/customers'
+    | '/_authenticated/admin/discounts'
     | '/_authenticated/admin/email'
     | '/_authenticated/admin/email-templates'
     | '/_authenticated/admin/funnels'
@@ -1443,6 +1456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEmailRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/discounts': {
+      id: '/_authenticated/admin/discounts'
+      path: '/discounts'
+      fullPath: '/admin/discounts'
+      preLoaderRoute: typeof AuthenticatedAdminDiscountsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/customers': {
       id: '/_authenticated/admin/customers'
       path: '/customers'
@@ -1586,6 +1606,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminClassroomRoute: typeof AuthenticatedAdminClassroomRoute
   AuthenticatedAdminCommercialsRoute: typeof AuthenticatedAdminCommercialsRoute
   AuthenticatedAdminCustomersRoute: typeof AuthenticatedAdminCustomersRoute
+  AuthenticatedAdminDiscountsRoute: typeof AuthenticatedAdminDiscountsRoute
   AuthenticatedAdminEmailRoute: typeof AuthenticatedAdminEmailRoute
   AuthenticatedAdminEmailTemplatesRoute: typeof AuthenticatedAdminEmailTemplatesRoute
   AuthenticatedAdminFunnelsRoute: typeof AuthenticatedAdminFunnelsRoute
@@ -1622,6 +1643,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminClassroomRoute: AuthenticatedAdminClassroomRoute,
   AuthenticatedAdminCommercialsRoute: AuthenticatedAdminCommercialsRoute,
   AuthenticatedAdminCustomersRoute: AuthenticatedAdminCustomersRoute,
+  AuthenticatedAdminDiscountsRoute: AuthenticatedAdminDiscountsRoute,
   AuthenticatedAdminEmailRoute: AuthenticatedAdminEmailRoute,
   AuthenticatedAdminEmailTemplatesRoute: AuthenticatedAdminEmailTemplatesRoute,
   AuthenticatedAdminFunnelsRoute: AuthenticatedAdminFunnelsRoute,
