@@ -20,15 +20,19 @@ export interface InlineCheckoutItem {
 export function InlineCheckout({
   items,
   onComplete,
+  initialCode,
+  buyerEmail,
 }: {
   items: InlineCheckoutItem[];
   onComplete?: () => void;
+  initialCode?: string;
+  buyerEmail?: string;
 }) {
   const create = useServerFn(createCartCheckoutSession);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [codeInput, setCodeInput] = useState("");
-  const [code, setCode] = useState("");
+  const [codeInput, setCodeInput] = useState(initialCode ?? "");
+  const [code, setCode] = useState(initialCode ?? "");
   const [note, setNote] = useState<string | null>(null);
 
   // Keep the item list stable for the provider: changing the options object
@@ -53,6 +57,7 @@ export function InlineCheckout({
         items: payload,
         environment,
         ...(code ? { discountCode: code } : {}),
+        ...(buyerEmail ? { email: buyerEmail } : {}),
         returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
         attribution: getPurchaseAttribution(),
       },
@@ -65,7 +70,7 @@ export function InlineCheckout({
     setError(null);
     setNote(r.discountNote ?? null);
     return r.clientSecret;
-  }, [create, payload, code]);
+  }, [create, payload, code, buyerEmail]);
 
   const options = useMemo(
     () => ({
