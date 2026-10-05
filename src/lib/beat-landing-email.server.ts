@@ -196,6 +196,7 @@ export async function queueBuyerPurchaseEmail(opts: {
 // --- Paid purchase: admin sales notification ---
 export async function queueAdminSaleEmail(opts: {
   beatTitle: string;
+  licenseLabel?: string;
   buyerEmail: string;
   amountCents: number;
   sessionId: string;
@@ -217,17 +218,21 @@ export async function queueAdminSaleEmail(opts: {
 
   const price = `$${(opts.amountCents / 100).toFixed(2)}`;
   const beatUrl = opts.beatSlug ? `${SITE}/beats/${opts.beatSlug}` : SITE;
+  const licenseLabel = opts.licenseLabel || "Beat license";
   const { resolveTemplate } = await import("@/lib/email-templates.server");
   const resolved = await resolveTemplate("beat_purchase_admin", {
     beatTitle: opts.beatTitle,
+    licenseLabel,
     buyerEmail: opts.buyerEmail,
     amount: price,
     sessionId: opts.sessionId,
     beatUrl,
+    salesUrl: `${SITE}/admin/sales`,
+    customersUrl: `${SITE}/admin/customers?q=${encodeURIComponent(opts.buyerEmail)}`,
   });
-  const subject = resolved?.subject ?? `[Sale] ${opts.beatTitle} — ${price}`;
+  const subject = resolved?.subject ?? `🔥 BAG ALERT: You just made ${price} on MYBEATCATALOG!`;
   const html = resolved?.html ?? `<!doctype html><html><body><p>New sale: ${escapeHtml(opts.beatTitle)} ${price}</p></body></html>`;
-  const text = `New beat lease sale — ${price}\nBeat: ${opts.beatTitle}\nBuyer: ${opts.buyerEmail}\nAmount: ${price}\nStripe session: ${opts.sessionId}\nBeat URL: ${beatUrl}`;
+  const text = `🔥 BAG ALERT — ${price}\nSomebody just copped ${opts.beatTitle} (${licenseLabel}).\nBuyer: ${opts.buyerEmail}\nBeat: ${beatUrl}\nView sales: ${SITE}/admin/sales\n\nSession: ${opts.sessionId}`;
 
   await enqueue({ to: adminEmail, subject, html, text, label: "beat_purchase_admin", message_id: messageId });
   return { queued: true, messageId };

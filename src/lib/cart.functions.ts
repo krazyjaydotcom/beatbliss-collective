@@ -127,6 +127,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
         mode: "payment" as const,
         line_items: lineItems,
         ui_mode: "embedded_page" as const,
+        allow_promotion_codes: true,
         ...(email ? { customer_email: email } : {}),
         payment_intent_data: {
           description: `MYBEATCATALOG — ${lineItems.length} license(s)`,

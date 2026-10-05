@@ -393,12 +393,16 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                     }
                   }
 
+                  const tierNames: Record<string, string> = { nonexclusive: "Non-Exclusive MP3", unlimited: "Unlimited License", trackout: "Unlimited w/ STEMs" };
+                  const titles = beatIds.map((id) => ((byId.get(id) as any)?.title as string | undefined) ?? "Beat");
+                  const firstSlug = beatIds.length === 1 ? (((byId.get(beatIds[0]!) as any)?.landing_slug as string | null) ?? null) : null;
                   await queueAdminSaleEmail({
-                    beatTitle: `${beatIds.length} beat(s) — cart purchase`,
+                    beatTitle: titles.join(", "),
+                    licenseLabel: [...new Set(tiers.map((t) => tierNames[t] ?? t))].join(" + ") || "Beat license",
                     buyerEmail: buyerEmail || "(unknown)",
                     amountCents: session.amount_total ?? 0,
                     sessionId: session.id,
-                    beatSlug: null,
+                    beatSlug: firstSlug,
                   });
 
                   if (session.payment_status === "paid") try {
