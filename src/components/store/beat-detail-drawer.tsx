@@ -25,6 +25,11 @@ export function BeatDetail({
   onClose?: () => void;
 }) {
   const [paying, setPaying] = useState(false);
+  const [tier, setTier] = useState<LicenseTier>("nonexclusive");
+  useEffect(() => {
+    setTier("nonexclusive");
+    setPaying(false);
+  }, [beat.id]);
   const meta = [
     beat.genre,
     beat.bpm ? `${beat.bpm} BPM` : null,
@@ -35,7 +40,7 @@ export function BeatDetail({
   if (paying) {
     return (
       <div className="flex h-full min-h-0 flex-col animate-in fade-in duration-300 motion-reduce:animate-none">
-        <LicenseCheckout beat={beat} paying onPayingChange={setPaying} />
+        <LicenseCheckout beat={beat} paying onPayingChange={setPaying} tier={tier} onTierChange={setTier} />
       </div>
     );
   }

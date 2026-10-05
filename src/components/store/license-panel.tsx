@@ -72,14 +72,23 @@ export function LicenseCheckout({
   paying,
   onPayingChange,
   compact = false,
+  tier: tierProp,
+  onTierChange,
 }: {
   beat: StoreBeat;
   paying?: boolean;
   onPayingChange?: (paying: boolean) => void;
   compact?: boolean;
+  tier?: LicenseTier;
+  onTierChange?: (tier: LicenseTier) => void;
 }) {
   const cart = useCart();
-  const [tier, setTier] = useState<LicenseTier>("nonexclusive");
+  const [localTier, setLocalTier] = useState<LicenseTier>("nonexclusive");
+  const tier = tierProp ?? localTier;
+  const setTier = (next: LicenseTier) => {
+    setLocalTier(next);
+    onTierChange?.(next);
+  };
   const [detailsTier, setDetailsTier] = useState<LicenseTier | null>(null);
   const [termsOpen, setTermsOpen] = useState(false);
   const [localPaying, setLocalPaying] = useState(false);
