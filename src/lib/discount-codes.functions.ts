@@ -23,6 +23,8 @@ export type DiscountCode = {
   maxRedemptions: number | null;
   expiresAt: number | null;
   created: number;
+  /** null = every license */
+  tiers: string[] | null;
 };
 
 export const listDiscountCodes = createServerFn({ method: "POST" })
@@ -41,10 +43,11 @@ export const listDiscountCodes = createServerFn({ method: "POST" })
         active: p.active,
         percentOff: coupon.percent_off ?? null,
         amountOffCents: coupon.amount_off ?? null,
-        timesRedeemed: p.times_redeemed ?? 0,
+        timesRedeemed: (p.times_redeemed ?? 0) + Number(p.metadata?.tier_redemptions ?? coupon.metadata?.tier_redemptions ?? 0),
         maxRedemptions: p.max_redemptions ?? null,
         expiresAt: p.expires_at ?? null,
         created: p.created,
+        tiers: coupon.metadata?.tiers ? String(coupon.metadata.tiers).split(",") : null,
       };
     });
   });
@@ -61,6 +64,7 @@ export const createDiscountCode = createServerFn({ method: "POST" })
         maxRedemptions: z.number().int().positive().optional(),
         expiresAt: z.string().optional(),
         firstTimeOnly: z.boolean().optional(),
+        tiers: z.array(z.enum(["nonexclusive", "unlimited", "trackout"])).min(1).optional(),
       })
       .refine((v) => v.kind !== "percent" || v.value <= 100, "Percent must be 1–100")
       .parse(d),
@@ -70,8 +74,18 @@ export const createDiscountCode = createServerFn({ method: "POST" })
     try {
       const { createStripeClient } = await import("@/lib/stripe.server");
       const stripe = createStripeClient(data.environment);
+      const restricted = data.tiers && data.tiers.length < 3 ? data.tiers : null;
+      let placeholder: string | undefined;
+      if (restricted) {
+        // Restricted codes are applied by our cart server, never by Stripe's
+        // own code box — tie the coupon to an unused product so Stripe rejects it there.
+        const found = await stripe.products.search({ query: "metadata['discount_placeholder']:'1'", limit: 1 });
+        placeholder = found.data[0]?.id ??
+          (await stripe.products.create({ name: "Discount restriction (internal)", metadata: { discount_placeholder: "1" } })).id;
+      }
       const coupon = await stripe.coupons.create({
         name: data.code,
+        ...(restricted ? { metadata: { tiers: restricted.join(",") }, applies_to: { products: [placeholder!] } } : {}),
         duration: "once",
         ...(data.kind === "percent"
           ? { percent_off: data.value }
