@@ -281,7 +281,6 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                 const promoId = session.metadata?.discount_promo_id;
                 if (promoId && /^promo_[A-Za-z0-9]+$/.test(promoId)) {
                   try {
-                    const { createStripeClient } = await import("@/lib/stripe.server");
                     const s = createStripeClient(env);
                     const p: any = await s.promotionCodes.retrieve(promoId);
                     const used = Number(p.metadata?.tier_redemptions ?? 0) + 1;
