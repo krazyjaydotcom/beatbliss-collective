@@ -97,18 +97,6 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
         }
         amounts.push(amount);
         lineMeta.push({ beat, tier: item.tier });
-        continue;
-        lineItems.push({
-          price_data: {
-            currency: "usd",
-            unit_amount: amount,
-            product_data: {
-              name: `${beat.title} — ${TIER_META[item.tier].label} License`,
-              ...(beat.cover_url ? { images: [beat.cover_url] } : {}),
-            },
-          },
-          quantity: 1,
-        });
       }
 
       // Discount code handling. Codes for every license go straight to Stripe;
