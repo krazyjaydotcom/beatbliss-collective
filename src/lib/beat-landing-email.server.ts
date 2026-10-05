@@ -108,9 +108,9 @@ export async function queueFreeDownloadEmail(opts: {
 }
 
 // --- Paid purchase: buyer email with download + license ---
-type PurchaseTier = "nonexclusive" | "unlimited" | "trackout";
+export type PurchaseTier = "nonexclusive" | "unlimited" | "trackout";
 
-const TIER_EMAIL: Record<PurchaseTier, { label: string; rights: string; files: string }> = {
+export const TIER_EMAIL: Record<PurchaseTier, { label: string; rights: string; files: string }> = {
   nonexclusive: {
     label: "Non-Exclusive MP3 License",
     rights:
@@ -131,7 +131,7 @@ const TIER_EMAIL: Record<PurchaseTier, { label: string; rights: string; files: s
   },
 };
 
-function agreementCode(sessionId: string): string {
+export function agreementCode(sessionId: string): string {
   let h = 0;
   for (let i = 0; i < sessionId.length; i++) h = (h * 31 + sessionId.charCodeAt(i)) >>> 0;
   return `MBC-${new Date().getUTCFullYear()}-${h.toString(36).toUpperCase().padStart(7, "0").slice(-7)}`;
@@ -146,6 +146,8 @@ export async function queueBuyerPurchaseEmail(opts: {
   beatSlug: string | null;
   licenseTier?: PurchaseTier;
   wavUrl?: string | null;
+  stemsUrl?: string | null;
+  agreementCode?: string;
 }): Promise<{ queued: boolean; skipped?: string; messageId?: string }> {
   const messageId = `bl_buyer_${opts.sessionId}`;
   if (await alreadyQueued(messageId)) return { queued: false, skipped: "already_queued" };
@@ -155,20 +157,22 @@ export async function queueBuyerPurchaseEmail(opts: {
 
   if (opts.licenseTier && TIER_EMAIL[opts.licenseTier]) {
     const t = TIER_EMAIL[opts.licenseTier];
-    const code = agreementCode(opts.sessionId);
+    const code = opts.agreementCode ?? agreementCode(opts.sessionId);
+    const hasStems = opts.licenseTier === "trackout" && !!opts.stemsUrl;
     const links: { label: string; url: string }[] = [];
     if (opts.licenseTier !== "nonexclusive" && opts.wavUrl) links.push({ label: "Download WAV", url: opts.wavUrl });
     if (opts.downloadUrl) links.push({ label: "Download MP3", url: opts.downloadUrl });
+    if (hasStems) links.push({ label: "Download STEMs", url: opts.stemsUrl! });
     const e = escapeHtml;
     const buttons = links
       .map((l) => `<a href="${e(l.url)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px;margin:0 8px 8px 0">${e(l.label)}</a>`)
       .join("");
-    const stemNote = opts.licenseTier === "trackout"
+    const stemNote = opts.licenseTier === "trackout" && !hasStems
       ? `<p style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;font-size:13px;color:#1e3a8a;margin:0 0 16px">Your STEMs are being prepared and will be emailed within 24 hours.</p>`
       : "";
     const subject = `Your ${t.label} — ${opts.beatTitle}`;
-    const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111"><div style="max-width:600px;margin:0 auto;padding:32px 24px;background:#fff"><h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MYBEATCATALOG</h1><p style="color:#71717a;margin:0 0 24px">Purchase Confirmation</p><h2 style="font-size:20px;margin:0 0 10px">Thank you for your purchase!</h2><p style="line-height:1.6;color:#3f3f46;margin:0 0 16px">You purchased the <strong>${e(t.label)}</strong> for <strong>${e(opts.beatTitle)}</strong> (${price}).<br>Included files: ${e(t.files)}.</p><div style="margin:0 0 16px">${buttons}</div>${stemNote}<h3 style="font-size:16px;font-weight:800;margin:24px 0 8px">${e(t.label)} Agreement</h3><div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:16px;font-size:13px;line-height:1.6;color:#3f3f46"><p style="margin:0 0 8px"><strong>Agreement ID:</strong> ${code}<br><strong>Licensee:</strong> ${e(opts.to)}<br><strong>Beat:</strong> ${e(opts.beatTitle)}<br><strong>License:</strong> ${e(t.label)}<br><strong>Amount paid:</strong> ${price}<br><strong>Purchase ID:</strong> ${e(opts.sessionId)}<br><strong>Date:</strong> ${date}</p><p style="margin:8px 0"><strong>Rights granted:</strong> ${e(t.rights)}</p><p style="margin:8px 0"><strong>Producer credits (required):</strong> Writer — Jason A. Spencer (IPI 516703075) 50%; Publishing — March 26th Publishing (IPI 1213085595) 50%; PRO — ASCAP. Failure to register these splits voids the rights granted.</p><p style="margin:8px 0 0"><strong>Restrictions:</strong> Licensee may not resell, redistribute, sublicense, or claim sole ownership of the underlying beat. MYBEATCATALOG retains ownership of the composition and production.</p></div><p style="color:#71717a;font-size:12px;margin:16px 0 0">Keep this email as your license record. Questions? Reply to this email.<br>— KRAZYJAYDOTCOM</p></div></body></html>`;
-    const text = `Thank you for your purchase!\n\n${t.label} — ${opts.beatTitle} (${price})\nIncluded files: ${t.files}\n\n${links.map((l) => `${l.label}: ${l.url}`).join("\n")}\n\n${opts.licenseTier === "trackout" ? "STEMs will be emailed within 24 hours.\n\n" : ""}LICENSE AGREEMENT ${code}\nLicensee: ${opts.to}\nRights: ${t.rights}\nProducer credits: Jason A. Spencer (IPI 516703075) 50% writer; March 26th Publishing (IPI 1213085595) 50% publisher; ASCAP.\nPurchase ID: ${opts.sessionId}\nDate: ${date}\n\n— MYBEATCATALOG`;
+    const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111"><div style="max-width:600px;margin:0 auto;padding:32px 24px;background:#fff"><h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MYBEATCATALOG</h1><p style="color:#71717a;margin:0 0 24px">Purchase Confirmation</p><h2 style="font-size:20px;margin:0 0 10px">Thank you for your purchase!</h2><p style="line-height:1.6;color:#3f3f46;margin:0 0 16px">You purchased the <strong>${e(t.label)}</strong> for <strong>${e(opts.beatTitle)}</strong> (${price}).<br>Included files: ${e(hasStems ? "Untagged WAV + MP3 + individual WAV STEMs" : t.files)}.</p><div style="margin:0 0 16px">${buttons}</div>${stemNote}<h3 style="font-size:16px;font-weight:800;margin:24px 0 8px">${e(t.label)} Agreement</h3><div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:16px;font-size:13px;line-height:1.6;color:#3f3f46"><p style="margin:0 0 8px"><strong>Agreement ID:</strong> ${code}<br><strong>Licensee:</strong> ${e(opts.to)}<br><strong>Beat:</strong> ${e(opts.beatTitle)}<br><strong>License:</strong> ${e(t.label)}<br><strong>Amount paid:</strong> ${price}<br><strong>Purchase ID:</strong> ${e(opts.sessionId)}<br><strong>Date:</strong> ${date}</p><p style="margin:8px 0"><strong>Rights granted:</strong> ${e(t.rights)}</p><p style="margin:8px 0"><strong>Producer credits (required):</strong> Writer — Jason A. Spencer (IPI 516703075) 50%; Publishing — March 26th Publishing (IPI 1213085595) 50%; PRO — ASCAP. Failure to register these splits voids the rights granted.</p><p style="margin:8px 0 0"><strong>Restrictions:</strong> Licensee may not resell, redistribute, sublicense, or claim sole ownership of the underlying beat. MYBEATCATALOG retains ownership of the composition and production.</p></div><p style="color:#71717a;font-size:12px;margin:16px 0 0">Keep this email as your license record. You can request a copy anytime at ${SITE}/licenses. Questions? Reply to this email.<br>— KRAZYJAYDOTCOM</p></div></body></html>`;
+    const text = `Thank you for your purchase!\n\n${t.label} — ${opts.beatTitle} (${price})\nIncluded files: ${hasStems ? "Untagged WAV + MP3 + STEMs" : t.files}\n\n${links.map((l) => `${l.label}: ${l.url}`).join("\n")}\n\n${opts.licenseTier === "trackout" && !hasStems ? "STEMs will be emailed within 24 hours.\n\n" : ""}LICENSE AGREEMENT ${code}\nLicensee: ${opts.to}\nRights: ${t.rights}\nProducer credits: Jason A. Spencer (IPI 516703075) 50% writer; March 26th Publishing (IPI 1213085595) 50% publisher; ASCAP.\nPurchase ID: ${opts.sessionId}\nDate: ${date}\n\n— MYBEATCATALOG`;
     await enqueue({ to: opts.to, subject, html, text, label: "beat_purchase_buyer", message_id: messageId });
     return { queued: true, messageId };
   }
@@ -278,4 +282,18 @@ export async function queueExclusiveInquiryEmail(opts: {
     reply_to: opts.email,
   });
   return { queued: true, messageId };
+}
+
+// --- Licence lookup: buyer requested copies of their licences ---
+export async function queueLicenseLookupEmail(opts: {
+  to: string;
+  licenses: { agreement_code: string; beat_title: string; license_label: string; rights_text: string; amount_cents: number; created_at: string; buyer_name: string | null }[];
+}): Promise<void> {
+  const e = escapeHtml;
+  const credits = "Writer — Jason A. Spencer (IPI 516703075) 50%; Publishing — March 26th Publishing (IPI 1213085595) 50%; PRO — ASCAP.";
+  const blocks = opts.licenses.map((l) => `<div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:16px;font-size:13px;line-height:1.6;color:#3f3f46;margin:0 0 14px"><p style="margin:0 0 8px"><strong>${e(l.license_label)} — ${e(l.beat_title)}</strong><br><strong>Agreement ID:</strong> ${e(l.agreement_code)}<br><strong>Licensee:</strong> ${e(l.buyer_name || opts.to)} (${e(opts.to)})<br><strong>Amount paid:</strong> $${(l.amount_cents / 100).toFixed(2)}<br><strong>Date:</strong> ${l.created_at.slice(0, 10)}</p><p style="margin:8px 0"><strong>Rights granted:</strong> ${e(l.rights_text)}</p><p style="margin:8px 0 0"><strong>Producer credits (required):</strong> ${credits}</p></div>`).join("");
+  const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111"><div style="max-width:600px;margin:0 auto;padding:32px 24px;background:#fff"><h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MYBEATCATALOG</h1><p style="color:#71717a;margin:0 0 20px">Your license agreements (${opts.licenses.length})</p>${blocks}<p style="color:#71717a;font-size:12px;margin:16px 0 0">You requested these at mybeatcatalog.com/licenses. Questions? Reply to this email.</p></div></body></html>`;
+  const text = opts.licenses.map((l) => `${l.license_label} — ${l.beat_title}\nAgreement ID: ${l.agreement_code}\nDate: ${l.created_at.slice(0, 10)}\nRights: ${l.rights_text}\nCredits: ${credits}`).join("\n\n");
+  const bucket = Math.floor(Date.now() / (10 * 60 * 1000));
+  await enqueue({ to: opts.to, subject: "Your MYBEATCATALOG license agreements", html, text, label: "license_lookup", message_id: `license_lookup_${opts.to}_${bucket}` });
 }
