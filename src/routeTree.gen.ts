@@ -13,6 +13,7 @@ import { Route as VipRouteImport } from './routes/vip'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LicensesRouteImport } from './routes/licenses'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as BeatClaimRouteImport } from './routes/beat-claim'
@@ -105,6 +106,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LicensesRoute = LicensesRouteImport.update({
+  id: '/licenses',
+  path: '/licenses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -507,6 +513,7 @@ export interface FileRoutesByFullPath {
   '/beat-claim': typeof BeatClaimRoute
   '/checkout': typeof CheckoutRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/licenses': typeof LicensesRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -585,6 +592,7 @@ export interface FileRoutesByTo {
   '/beat-claim': typeof BeatClaimRoute
   '/checkout': typeof CheckoutRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/licenses': typeof LicensesRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -664,6 +672,7 @@ export interface FileRoutesById {
   '/beat-claim': typeof BeatClaimRoute
   '/checkout': typeof CheckoutRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/licenses': typeof LicensesRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -744,6 +753,7 @@ export interface FileRouteTypes {
     | '/beat-claim'
     | '/checkout'
     | '/forgot-password'
+    | '/licenses'
     | '/login'
     | '/reset-password'
     | '/signup'
@@ -822,6 +832,7 @@ export interface FileRouteTypes {
     | '/beat-claim'
     | '/checkout'
     | '/forgot-password'
+    | '/licenses'
     | '/login'
     | '/reset-password'
     | '/signup'
@@ -900,6 +911,7 @@ export interface FileRouteTypes {
     | '/beat-claim'
     | '/checkout'
     | '/forgot-password'
+    | '/licenses'
     | '/login'
     | '/reset-password'
     | '/signup'
@@ -980,6 +992,7 @@ export interface RootRouteChildren {
   BeatClaimRoute: typeof BeatClaimRoute
   CheckoutRoute: typeof CheckoutRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LicensesRoute: typeof LicensesRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
@@ -1036,6 +1049,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/licenses': {
+      id: '/licenses'
+      path: '/licenses'
+      fullPath: '/licenses'
+      preLoaderRoute: typeof LicensesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -1688,6 +1708,7 @@ const rootRouteChildren: RootRouteChildren = {
   BeatClaimRoute: BeatClaimRoute,
   CheckoutRoute: CheckoutRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  LicensesRoute: LicensesRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,

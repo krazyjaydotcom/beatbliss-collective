@@ -354,8 +354,30 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
 
                     if (buyerEmail) {
                       const tierKey = (["nonexclusive", "unlimited", "trackout"] as const).find((t) => t === licenseType) ?? "unlimited";
+                      const { TIER_EMAIL, agreementCode } = await import("@/lib/beat-landing-email.server");
+                      const licSession = `${session.id}:${beatId}`;
+                      const code = agreementCode(licSession);
+                      try {
+                        await admin.from("purchase_licenses" as any).upsert({
+                          agreement_code: code,
+                          email: buyerEmail,
+                          buyer_name: session.customer_details?.name ?? null,
+                          beat_id: beatId,
+                          beat_title: beatTitle,
+                          license_tier: tierKey,
+                          license_label: TIER_EMAIL[tierKey].label,
+                          rights_text: TIER_EMAIL[tierKey].rights,
+                          amount_cents: amounts[i] ?? 0,
+                          stripe_session_id: session.id,
+                          payment_environment: env,
+                        } as any, { onConflict: "stripe_session_id,beat_id", ignoreDuplicates: true });
+                      } catch (err) {
+                        console.error("[webhook] license record failed", err);
+                      }
                       try {
                         await queueBuyerPurchaseEmail({
+                          agreementCode: code,
+                          stemsUrl: beat?.stems_url ?? null,
                           to: buyerEmail,
                           beatTitle,
                           downloadUrl: beat?.audio_url ?? null,

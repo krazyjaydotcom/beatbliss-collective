@@ -808,6 +808,7 @@ export type Database = {
           single_sale_description: string | null
           single_sale_enabled: boolean
           single_sale_price_cents: number | null
+          stems_url: string | null
           title: string
           trackout_price_cents: number | null
         }
@@ -844,6 +845,7 @@ export type Database = {
           single_sale_description?: string | null
           single_sale_enabled?: boolean
           single_sale_price_cents?: number | null
+          stems_url?: string | null
           title: string
           trackout_price_cents?: number | null
         }
@@ -880,6 +882,7 @@ export type Database = {
           single_sale_description?: string | null
           single_sale_enabled?: boolean
           single_sale_price_cents?: number | null
+          stems_url?: string | null
           title?: string
           trackout_price_cents?: number | null
         }
@@ -1889,6 +1892,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "purchase_funnel_events_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_licenses: {
+        Row: {
+          agreement_code: string
+          amount_cents: number
+          beat_id: string | null
+          beat_title: string
+          buyer_name: string | null
+          created_at: string
+          email: string
+          id: string
+          license_label: string
+          license_tier: string
+          payment_environment: string
+          rights_text: string
+          stripe_session_id: string
+        }
+        Insert: {
+          agreement_code: string
+          amount_cents?: number
+          beat_id?: string | null
+          beat_title: string
+          buyer_name?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          license_label: string
+          license_tier: string
+          payment_environment?: string
+          rights_text: string
+          stripe_session_id: string
+        }
+        Update: {
+          agreement_code?: string
+          amount_cents?: number
+          beat_id?: string | null
+          beat_title?: string
+          buyer_name?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          license_label?: string
+          license_tier?: string
+          payment_environment?: string
+          rights_text?: string
+          stripe_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_licenses_beat_id_fkey"
             columns: ["beat_id"]
             isOneToOne: false
             referencedRelation: "beats"

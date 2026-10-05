@@ -105,7 +105,8 @@ function AdminAgreementsPage() {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <main className="flex min-h-0 flex-1 flex-col gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">All License Agreements</h1>
+        <PurchasedLicenses onCustomer={setCustomer} />
+        <h1 className="text-2xl font-bold tracking-tight">Member Download Agreements</h1>
         <p className="text-xs text-muted-foreground">{rows.length} total · showing latest 500</p>
 
         <div className="relative shrink-0 max-w-md">
@@ -174,5 +175,100 @@ function AdminAgreementsPage() {
       </main>
       {customer && <CustomerRecordDrawer email={customer} onClose={() => setCustomer(null)} />}
     </div>
+  );
+}
+
+function PurchasedLicenses({ onCustomer }: { onCustomer: (email: string) => void }) {
+  const [q, setQ] = useState("");
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["admin-purchase-licenses"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("purchase_licenses")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  const s = q.trim().toLowerCase();
+  const filtered = s
+    ? rows.filter((r) =>
+        [r.agreement_code, r.email, r.buyer_name, r.beat_title, r.license_label]
+          .some((v) => (v ?? "").toLowerCase().includes(s)),
+      )
+    : rows;
+  const pdf = (r: any) => {
+    const a: AgreementData = {
+      agreement_id: r.agreement_code,
+      user_name: r.buyer_name || r.email,
+      user_email: r.email,
+      beat_title: r.beat_title,
+      beat_id: r.beat_id ?? "",
+      producer_name: "KRAZYJAYDOTCOM",
+      license_type: r.license_label,
+      credits_used: 0,
+      file_type: r.license_tier === "nonexclusive" ? "MP3" : r.license_tier === "trackout" ? "WAV + MP3 + STEMs" : "WAV + MP3",
+      accepted_at: r.created_at,
+      agreement_text: `${r.rights_text}\n\nProducer credits (required): Writer — Jason A. Spencer (IPI 516703075) 50%; Publishing — March 26th Publishing (IPI 1213085595) 50%; PRO — ASCAP. Failure to register these splits voids the rights granted.\n\nRestrictions: Licensee may not resell, redistribute, sublicense, or claim sole ownership of the underlying beat. MYBEATCATALOG retains ownership of the composition and production.\n\nAmount paid: $${(r.amount_cents / 100).toFixed(2)}${r.payment_environment === "sandbox" ? " (test payment)" : ""}`,
+    };
+    generateAgreementPdf(a).save(`MBC_${r.agreement_code}.pdf`);
+  };
+  return (
+    <section className="flex max-h-[50dvh] min-h-0 shrink-0 flex-col gap-2">
+      <h1 className="text-2xl font-bold tracking-tight">Purchased Licenses</h1>
+      <p className="text-xs text-muted-foreground">
+        {rows.length} total · buyers can get copies anytime at mybeatcatalog.com/licenses
+      </p>
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, beat or agreement ID…" className="pl-9" />
+      </div>
+      <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-card text-foreground">
+        {isLoading ? (
+          <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        ) : filtered.length === 0 ? (
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            {rows.length === 0 ? "No purchased licenses yet. New purchases appear here automatically." : "No matches."}
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-card text-xs uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium">Agreement ID</th>
+                <th className="px-4 py-3 text-left font-medium">Buyer</th>
+                <th className="hidden px-4 py-3 text-left font-medium sm:table-cell">Beat</th>
+                <th className="hidden px-4 py-3 text-left font-medium lg:table-cell">License</th>
+                <th className="hidden px-4 py-3 text-left font-medium md:table-cell">Date</th>
+                <th className="px-4 py-3 text-right font-medium">PDF</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((r) => (
+                <tr key={r.id} className="border-t border-border hover:bg-secondary/50">
+                  <td className="px-4 py-3 font-mono text-xs">
+                    {r.agreement_code}
+                    {r.payment_environment === "sandbox" ? <Badge variant="outline" className="ml-2">test</Badge> : null}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button className="text-left font-medium text-primary hover:underline" onClick={() => onCustomer(r.email)}>
+                      {r.buyer_name || r.email}
+                    </button>
+                    <div className="text-xs text-muted-foreground">{r.email}</div>
+                  </td>
+                  <td className="hidden px-4 py-3 sm:table-cell">{r.beat_title}</td>
+                  <td className="hidden px-4 py-3 lg:table-cell"><Badge variant="secondary">{r.license_label}</Badge></td>
+                  <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">{new Date(r.created_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Button size="sm" variant="ghost" onClick={() => pdf(r)}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </section>
   );
 }

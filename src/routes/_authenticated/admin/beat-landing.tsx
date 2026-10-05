@@ -50,6 +50,7 @@ type BeatRow = {
   nonexclusive_price_cents: number | null;
   trackout_price_cents: number | null;
   exclusive_price_cents: number | null;
+  stems_url?: string | null;
 };
 
 function BeatLandingAdmin() {
@@ -620,6 +621,7 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
       beat.trackout_price_cents == null ? "" : String(beat.trackout_price_cents),
     exclusive_price_cents:
       beat.exclusive_price_cents == null ? "" : String(beat.exclusive_price_cents),
+    stems_url: beat.stems_url || "",
   });
 
   const save = async () => {
@@ -647,6 +649,7 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
           form.trackout_price_cents.trim() === "" ? null : Number(form.trackout_price_cents),
         exclusive_price_cents:
           form.exclusive_price_cents.trim() === "" ? null : Number(form.exclusive_price_cents),
+        stems_url: form.stems_url.trim() || null,
       },
     });
     if (r.ok) {
@@ -729,6 +732,20 @@ function EditBeatModal({ beat, onClose }: { beat: BeatRow; onClose: () => void }
               value={form.trackout_price_cents}
               onChange={(e) => setForm({ ...form, trackout_price_cents: e.target.value })}
               placeholder="15000"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold">
+              STEMs download link{" "}
+              <span className="font-normal text-muted-foreground">
+                (sent to "Unlimited w/ STEMs" buyers; blank = they get the 24-hour arrival message)
+              </span>
+            </label>
+            <input
+              className={inp}
+              value={form.stems_url}
+              onChange={(e) => setForm({ ...form, stems_url: e.target.value })}
+              placeholder="https://drive.google.com/..."
             />
           </div>
           <div className="sm:col-span-2">
