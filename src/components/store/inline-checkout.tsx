@@ -27,6 +27,9 @@ export function InlineCheckout({
   const create = useServerFn(createCartCheckoutSession);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [code, setCode] = useState("");
+  const [note, setNote] = useState<string | null>(null);
 
   // Keep the item list stable for the provider: changing the options object
   // after the session exists makes Stripe throw.
@@ -49,6 +52,7 @@ export function InlineCheckout({
       data: {
         items: payload,
         environment,
+        ...(code ? { discountCode: code } : {}),
         returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
         attribution: getPurchaseAttribution(),
       },
@@ -59,8 +63,9 @@ export function InlineCheckout({
       throw new Error(msg);
     }
     setError(null);
+    setNote(r.discountNote ?? null);
     return r.clientSecret;
-  }, [create, payload]);
+  }, [create, payload, code]);
 
   const options = useMemo(
     () => ({
@@ -73,11 +78,42 @@ export function InlineCheckout({
     [fetchClientSecret, onComplete],
   );
 
+  const codeBox = (
+    <form
+      className="mb-2 flex gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setError(null);
+        setNote(null);
+        setCode(codeInput.trim().toUpperCase());
+      }}
+    >
+      <input
+        value={codeInput}
+        onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+        placeholder="Discount code"
+        aria-label="Discount code"
+        className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+      />
+      <button type="submit" disabled={!codeInput.trim()} className="rounded-md border border-border px-3 text-sm font-semibold disabled:opacity-50">
+        Apply
+      </button>
+      {code && (
+        <button type="button" onClick={() => { setCode(""); setCodeInput(""); setError(null); setNote(null); }} className="text-xs text-muted-foreground underline">
+          Remove
+        </button>
+      )}
+    </form>
+  );
+
   if (error) {
     return (
-      <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
-        <p className="font-semibold text-destructive">Checkout unavailable</p>
-        <p className="mt-1 text-muted-foreground">{error}</p>
+      <div>
+        {codeBox}
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
+          <p className="font-semibold text-destructive">{code ? "Code not applied" : "Checkout unavailable"}</p>
+          <p className="mt-1 text-muted-foreground">{error}</p>
+        </div>
       </div>
     );
   }
@@ -96,10 +132,14 @@ export function InlineCheckout({
   }
 
   return (
+    <div>
+    {codeBox}
+    {note && <p className="mb-2 text-xs font-semibold text-primary">{note}</p>}
     <div className="rounded-xl bg-white/[0.02] p-1">
-      <EmbeddedCheckoutProvider stripe={getStripe()} options={options}>
+      <EmbeddedCheckoutProvider key={code || "none"} stripe={getStripe()} options={options}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>
+    </div>
     </div>
   );
 }
