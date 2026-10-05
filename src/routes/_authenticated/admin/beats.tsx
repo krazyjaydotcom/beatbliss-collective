@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { decodeAudioFile, encodeMp3, encodeWav, isMp3, isWav } from "@/lib/audio-convert";
 import { analyzeBuffer, analyzeUrl, parseBpmFromName, parseKeyFromName } from "@/lib/audio-analysis";
 import { slugifyTitle } from "@/lib/slug";
+import { CreatePaymentLink } from "@/components/admin/create-payment-link";
 
 export const Route = createFileRoute("/_authenticated/admin/beats")({
   component: AdminBeatsPage,
@@ -138,7 +139,10 @@ function AdminBeatsPage() {
           <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Beats</h1>
           <p className="text-muted-foreground mt-1 text-sm">Your library. Upload, scan and catalog settings live under Tools.</p>
         </div>
-        <Button size="sm" onClick={openTools}><FolderUp className="h-4 w-4 mr-2" />Upload beats</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <CreatePaymentLink beats={beats} />
+          <Button size="sm" onClick={openTools}><FolderUp className="h-4 w-4 mr-2" />Upload beats</Button>
+        </div>
       </div>
 
       {selected.size > 0 && (

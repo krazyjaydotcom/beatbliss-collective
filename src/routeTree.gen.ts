@@ -22,6 +22,7 @@ import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as YtSlugRouteImport } from './routes/yt.$slug'
 import { Route as TagsSlugRouteImport } from './routes/tags.$slug'
+import { Route as PayBeatIdRouteImport } from './routes/pay.$beatId'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -151,6 +152,11 @@ const YtSlugRoute = YtSlugRouteImport.update({
 const TagsSlugRoute = TagsSlugRouteImport.update({
   id: '/tags/$slug',
   path: '/tags/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayBeatIdRoute = PayBeatIdRouteImport.update({
+  id: '/pay/$beatId',
+  path: '/pay/$beatId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfferTokenRoute = OfferTokenRouteImport.update({
@@ -549,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/pay/$beatId': typeof PayBeatIdRoute
   '/tags/$slug': typeof TagsSlugRoute
   '/yt/$slug': typeof YtSlugRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
@@ -628,6 +635,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/pay/$beatId': typeof PayBeatIdRoute
   '/tags/$slug': typeof TagsSlugRoute
   '/yt/$slug': typeof YtSlugRoute
   '/admin/access': typeof AuthenticatedAdminAccessRoute
@@ -710,6 +718,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/pay/$beatId': typeof PayBeatIdRoute
   '/tags/$slug': typeof TagsSlugRoute
   '/yt/$slug': typeof YtSlugRoute
   '/_authenticated/admin/access': typeof AuthenticatedAdminAccessRoute
@@ -792,6 +801,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/join/$token'
     | '/offer/$token'
+    | '/pay/$beatId'
     | '/tags/$slug'
     | '/yt/$slug'
     | '/admin/access'
@@ -871,6 +881,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/join/$token'
     | '/offer/$token'
+    | '/pay/$beatId'
     | '/tags/$slug'
     | '/yt/$slug'
     | '/admin/access'
@@ -952,6 +963,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/join/$token'
     | '/offer/$token'
+    | '/pay/$beatId'
     | '/tags/$slug'
     | '/yt/$slug'
     | '/_authenticated/admin/access'
@@ -1021,6 +1033,7 @@ export interface RootRouteChildren {
   InviteTokenRoute: typeof InviteTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  PayBeatIdRoute: typeof PayBeatIdRoute
   TagsSlugRoute: typeof TagsSlugRoute
   YtSlugRoute: typeof YtSlugRoute
   ApiPublicBeatAttachmentRoute: typeof ApiPublicBeatAttachmentRoute
@@ -1125,6 +1138,13 @@ declare module '@tanstack/react-router' {
       path: '/tags/$slug'
       fullPath: '/tags/$slug'
       preLoaderRoute: typeof TagsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/$beatId': {
+      id: '/pay/$beatId'
+      path: '/pay/$beatId'
+      fullPath: '/pay/$beatId'
+      preLoaderRoute: typeof PayBeatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offer/$token': {
@@ -1746,6 +1766,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteTokenRoute: InviteTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
   OfferTokenRoute: OfferTokenRoute,
+  PayBeatIdRoute: PayBeatIdRoute,
   TagsSlugRoute: TagsSlugRoute,
   YtSlugRoute: YtSlugRoute,
   ApiPublicBeatAttachmentRoute: ApiPublicBeatAttachmentRoute,

@@ -86,7 +86,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
 
       for (const item of data.items) {
         const beat = byId.get(item.beatId);
-        if (!beat || !beat.is_active)
+        if (!beat || !beat.is_active || beat.landing_visibility === "private")
           return { clientSecret: null, error: "One of these beats is no longer available." };
         const amount = resolvePrice(beat, item.tier);
         if (!amount || amount < 50) {
