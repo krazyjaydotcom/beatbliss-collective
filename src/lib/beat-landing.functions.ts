@@ -262,7 +262,7 @@ export const adminListBeats = createServerFn({ method: "GET" })
       }
     }
     const { data } = await sb.from("beats")
-      .select("id,title,landing_slug,landing_visibility,is_landing_published,is_active,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,audio_url_tagged,audio_url,nonexclusive_price_cents,trackout_price_cents,exclusive_price_cents")
+      .select("id,title,landing_slug,landing_visibility,is_landing_published,is_active,price_cents,discount_price_cents,cover_url,producer_name,checkout_url,application_url,seo_title,seo_description,custom_video_url,custom_video_recorded_at,audio_url_tagged,audio_url,nonexclusive_price_cents,trackout_price_cents,exclusive_price_cents,stems_url")
       // show all beats so admin can assign slugs
       .order("title", { ascending: true });
     return { beats: (data ?? []) as Array<Record<string, string | number | boolean | null>> };
@@ -288,6 +288,7 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
     nonexclusive_price_cents?: number | null;
     trackout_price_cents?: number | null;
     exclusive_price_cents?: number | null;
+    stems_url?: string | null;
   }) => z.object({
     id: z.string().uuid(),
     landing_slug: z.string().max(120).optional(),
@@ -305,6 +306,7 @@ export const adminUpdateBeatLanding = createServerFn({ method: "POST" })
     nonexclusive_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
     trackout_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
     exclusive_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
+    stems_url: z.string().trim().url().max(2048).refine((u) => /^https?:\/\//i.test(u), "Must be http(s)").nullable().optional(),
   }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
