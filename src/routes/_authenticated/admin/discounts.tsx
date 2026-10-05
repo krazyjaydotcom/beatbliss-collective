@@ -16,6 +16,12 @@ export const Route = createFileRoute("/_authenticated/admin/discounts")({
   component: DiscountsPage,
 });
 
+const TIER_OPTIONS = [
+  { id: "nonexclusive", label: "Non-Exclusive" },
+  { id: "unlimited", label: "Unlimited" },
+  { id: "trackout", label: "Unlimited w/ STEMs" },
+];
+
 function env(): "sandbox" | "live" {
   try { return getStripeEnvironment(); } catch { return "sandbox"; }
 }
@@ -32,6 +38,7 @@ function DiscountsPage() {
   const [expires, setExpires] = useState("");
   const [firstTime, setFirstTime] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [tiers, setTiers] = useState<string[]>(["nonexclusive", "unlimited", "trackout"]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["discount-codes", env()],
@@ -51,6 +58,7 @@ function DiscountsPage() {
           maxRedemptions: max ? Number(max) : undefined,
           expiresAt: expires || undefined,
           firstTimeOnly: firstTime,
+          tiers: tiers as ("nonexclusive" | "unlimited" | "trackout")[],
         },
       });
       if (!r.ok) throw new Error(r.error);
@@ -104,8 +112,26 @@ function DiscountsPage() {
             <input type="checkbox" checked={firstTime} onChange={(e) => setFirstTime(e.target.checked)} />
             First-time buyers only
           </label>
+          <fieldset className="space-y-1.5 sm:col-span-2 lg:col-span-3">
+            <Label>Works on</Label>
+            <div className="flex flex-wrap gap-4 text-sm">
+              {TIER_OPTIONS.map((t) => (
+                <label key={t.id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={tiers.includes(t.id)}
+                    onChange={(e) => setTiers((cur) => (e.target.checked ? [...cur, t.id] : cur.filter((x) => x !== t.id)))}
+                  />
+                  {t.label}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {tiers.length === 3 ? "All licenses." : "Only the checked licenses get the discount. Buyers enter limited codes in the cart's code box."}
+            </p>
+          </fieldset>
           <div className="self-end">
-            <Button type="submit" disabled={saving || !code}>
+            <Button type="submit" disabled={saving || !code || !tiers.length}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Create code
             </Button>
           </div>
@@ -129,6 +155,7 @@ function DiscountsPage() {
                     <div className="font-mono text-sm font-bold text-foreground">{c.code}</div>
                     <div className="text-xs text-muted-foreground">
                       {c.percentOff != null ? `${c.percentOff}% off` : c.amountOffCents != null ? `$${(c.amountOffCents / 100).toFixed(2)} off` : "—"}
+                      {" · "}{c.tiers ? c.tiers.map((t) => TIER_OPTIONS.find((o) => o.id === t)?.label ?? t).join(", ") : "All licenses"}
                       {" · "}used {c.timesRedeemed}{c.maxRedemptions ? ` / ${c.maxRedemptions}` : ""}
                       {c.expiresAt ? ` · expires ${new Date(c.expiresAt * 1000).toLocaleDateString()}` : ""}
                     </div>
