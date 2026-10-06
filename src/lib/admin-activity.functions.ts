@@ -1,3 +1,4 @@
+import { matchPurchaseLicense } from "@/lib/purchase-license-match";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -29,6 +30,7 @@ export type ActivityRow = {
   /** human agreement code e.g. MBC-2026-00042 */
   agreement_code: string | null;
   license_type: string | null;
+  download_code: string | null;
 };
 
 export type ActivitySummary = {
@@ -54,7 +56,7 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
     const [beatsRes, ordersRes, leadsRes, dlRes, agrRes, profRes] = await Promise.all([
       sb.from("beats").select("id,title,landing_slug"),
       sb.from("lease_orders")
-        .select("id,beat_id,email,amount_cents,used_first_time_discount,stripe_session_id,created_at")
+        .select("id,beat_id,email,amount_cents,used_first_time_discount,stripe_session_id,license_tier,created_at")
         .order("created_at", { ascending: false }).limit(1000),
       sb.from("beat_lead_captures")
         .select("id,beat_id,first_name,email,created_at")
@@ -79,22 +81,12 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
     const rows: ActivityRow[] = [];
 
     const licRes = await sb.from("purchase_licenses")
-      .select("id,agreement_code,email,buyer_name,beat_id,license_label,stripe_session_id")
+      .select("id,agreement_code,email,buyer_name,beat_id,license_label,stripe_session_id,short_code")
       .order("created_at", { ascending: false }).limit(2000);
-    const licBySession = new Map<string, any>();
-    const licByEmailBeat = new Map<string, any>();
-    for (const l of licRes.data ?? []) {
-      licBySession.set(`${l.stripe_session_id}:${l.beat_id}`, l);
-      licBySession.set(l.stripe_session_id, licBySession.get(l.stripe_session_id) ?? l);
-      licByEmailBeat.set(`${(l.email ?? "").toLowerCase()}:${l.beat_id}`, l);
-    }
-
+    if (licRes.error) throw new Error("Could not load purchase licenses.");
     for (const o of ordersRes.data ?? []) {
       const beat = o.beat_id ? beats.get(o.beat_id) : undefined;
-      const lic = o.stripe_session_id
-        ? licBySession.get(`${o.stripe_session_id}:${o.beat_id}`) ?? licBySession.get(o.stripe_session_id)
-        : undefined;
-      const license = lic ?? (o.stripe_session_id ? licByEmailBeat.get(`${(o.email ?? "").toLowerCase()}:${o.beat_id}`) : undefined);
+      const license = matchPurchaseLicense(o, licRes.data ?? []) as any;
       rows.push({
         id: `order:${o.id}`,
         kind: "purchase",
@@ -109,7 +101,8 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
         detail: o.used_first_time_discount ? "First-time discount" : null,
         agreement_row_id: license ? `lic:${license.id}` : null,
         agreement_code: license?.agreement_code ?? null,
-        license_type: license?.license_label ?? "Unlimited Lease License",
+        license_type: license?.license_label ?? ({ nonexclusive: "Non-exclusive", unlimited: "Unlimited", trackout: "Unlimited with STEMs" } as Record<string, string>)[o.license_tier] ?? "License needs review",
+        download_code: license?.short_code ?? null,
       });
     }
 
@@ -130,6 +123,7 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
         agreement_row_id: null,
         agreement_code: null,
         license_type: "Demo / tagged preview",
+        download_code: null,
       });
     }
 
@@ -152,6 +146,7 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
         agreement_row_id: agr?.id ?? null,
         agreement_code: agr?.agreement_id ?? null,
         license_type: agr?.license_type ?? null,
+        download_code: null,
       });
     }
 

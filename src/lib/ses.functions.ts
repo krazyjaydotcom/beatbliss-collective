@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 /**
  * Amazon SES v2 one-person sender (admin-only). Credentials live only in server secrets.
  * SES is called solely from adminSesSend, after explicit on-screen confirmation.
- * Never used for bulk; SendFox remains the bulk path; inquiry replies use their own path.
+ * Never used for bulk; Bird is the marketing path; inquiry replies use their own path.
  */
 const BUCKET = "email-attachments";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

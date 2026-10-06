@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Paperclip, X, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { adminCleanupEmailUploads, adminSesCheckRecipient, adminSesLog, adminSesSend, adminSesStatus, adminSesValidateFiles } from "@/lib/ses.functions";
+import { adminSesCheckRecipient, adminSesLog, adminSesSend, adminSesStatus, adminSesValidateFiles } from "@/lib/ses.functions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -25,10 +25,9 @@ export function SesComposerSection({ files, setFiles, purpose, setPurpose }: {
   files: DraftFile[]; setFiles: (f: DraftFile[]) => void; purpose: Purpose; setPurpose: (p: Purpose) => void;
 }) {
   const status = useSesStatus();
-  const cleanup = useServerFn(adminCleanupEmailUploads);
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { cleanup().catch(() => {}); }, []); // removes stale unreferenced uploads (>24h)
+  // Cleanup is explicit; opening a composer must not delete stored draft files.
   const ready = status.data?.ready === true;
   const sd = status.data as any;
 
@@ -77,7 +76,7 @@ export function SesComposerSection({ files, setFiles, purpose, setPurpose }: {
 
       <p className="text-xs text-muted-foreground">
         Personal / customer matters only — the person must be in your customer records, and unsubscribed or bounced
-        addresses are blocked. Promotional email isn't sent through SES; use SendFox for that.
+        addresses are blocked. Promotional email isn't sent through SES; choose Bird for that.
       </p>
 
       <div>

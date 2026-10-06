@@ -58,9 +58,9 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { to: "/admin", label: "Today", icon: BarChart3, exact: true },
       { to: "/admin/customers", label: "Customers", icon: Contact },
       { to: "/admin/tasks", label: "Tasks", icon: CheckSquare },
-      { to: "/admin/beats", label: "Beats", icon: Music },
-      { to: "/admin/sales", label: "Sales & Downloads", icon: Wallet },
-      { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/admin/beats", label: "Catalog", icon: Music },
+      { to: "/admin/email", label: "Email", icon: Mail },
+
     ],
   },
   {
@@ -75,6 +75,8 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "Business",
     items: [
+      { to: "/admin/sales", label: "Sales & Downloads", icon: Wallet },
+      { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/admin/members", label: "Members", icon: Users },
       { to: "/admin/agreements", label: "Agreements", icon: FileText },
     ],
@@ -82,7 +84,6 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "Marketing",
     items: [
-      { to: "/admin/email", label: "Email", icon: Mail },
       { to: "/admin/discounts", label: "Discount codes", icon: Tag },
       { to: "/admin/email-templates", label: "Email Templates", icon: Mail },
       { to: "/admin/invites", label: "Invites", icon: Link2 },
@@ -115,6 +116,7 @@ const MOBILE_NAV: NavItem[] = [
   { to: "/admin/customers", label: "Customers", icon: Contact },
   { to: "/admin/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/admin/beats", label: "Catalog", icon: Music },
+  { to: "/admin/email", label: "Email", icon: Mail },
 ];
 
 function isActive(path: string, item: NavItem) {
@@ -343,7 +345,7 @@ function AdminLayout() {
         className="md:hidden shrink-0 z-40 border-t border-border/70 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
         aria-label="Primary"
       >
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-6">
           {MOBILE_NAV.map((item) => {
             const active = isActive(path, item);
             const Icon = item.icon;
@@ -387,7 +389,9 @@ const RECORD_TYPES = [
   ["beat_claims", "Beat claims"],
   ["access_applications", "Access applications"],
   ["beat_funnel_leads", "Funnel leads"],
-  ["agreements", "Agreements"],
+  ["agreements", "Member agreements"],
+  ["purchase_licenses", "Purchased licenses"],
+  ["admin_email_drafts", "Email drafts"],
   ["invites", "Invites"],
   ["whitelist_submissions", "Whitelist submissions"],
   ["chat_messages", "Support messages"],

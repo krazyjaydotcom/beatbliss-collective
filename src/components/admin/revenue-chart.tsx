@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -53,7 +54,7 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">
-          {money(total)} <span className="font-normal text-muted-foreground">confirmed revenue</span>
+          {money(total)} <span className="font-normal text-muted-foreground">confirmed revenue · {days} days</span>
         </p>
         <div className="flex gap-1">
           {[7, 30].map((range) => (
@@ -102,7 +103,7 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
             <tbody>
               {visible.map((point) => (
                 <tr key={point.date} className="border-t border-border">
-                  <td className="py-2">{shortDate(point.date)}</td>
+                  <td className="py-2"><button type="button" className="text-primary hover:underline" onClick={() => setSelected(point)}>{shortDate(point.date)}</button></td>
                   <td>{point.count}</td>
                   <td className="text-right">{money(point.cents)}</td>
                 </tr>
@@ -162,8 +163,9 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
       <p aria-live="polite" className="text-xs text-muted-foreground">
         {selected
           ? `${shortDate(selected.date)}: ${money(selected.cents)} from ${selected.count} paid sales`
-          : "Hover or tap a day for details. Use Table to read every value."}
+          : table ? "Select a date to inspect its sales." : "Hover or tap a day for details. Use Table to read every value."}
       </p>
+      {selected && <Link className="inline-flex min-h-9 items-center text-sm text-primary hover:underline" to="/admin/sales" search={{ day: selected.date }}>View sales for {shortDate(selected.date)}</Link>}
     </div>
   );
 }

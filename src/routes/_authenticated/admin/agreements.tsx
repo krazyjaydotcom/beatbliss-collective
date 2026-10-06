@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { z } from "zod";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, FileText, Link2, Loader2, Search, ShieldCheck } from "lucide-react";
@@ -13,6 +14,7 @@ import { generateAgreementPdf, buildAgreementFilename, type AgreementData } from
 
 export const Route = createFileRoute("/_authenticated/admin/agreements")({
   head: () => ({ meta: [{ title: "Admin · Agreements — MYBEATCATALOG" }] }),
+  validateSearch: (s) => z.object({ agreement: z.string().optional() }).parse(s),
   component: AdminAgreementsPage,
 });
 
@@ -179,7 +181,11 @@ function AdminAgreementsPage() {
 }
 
 function PurchasedLicenses({ onCustomer }: { onCustomer: (email: string) => void }) {
-  const [q, setQ] = useState("");
+  const { agreement } = Route.useSearch();
+  const [q, setQ] = useState(agreement ?? "");
+  useEffect(() => { setQ(agreement ?? ""); }, [agreement]);
+  const qc = useQueryClient();
+  const remove = async (id: string) => { if (!confirm("Move this purchased license to Trash? The buyer download link and license lookup will stop working until you restore it in Records & Trash. This does not refund a payment or cancel the granted legal rights.")) return; const { error } = await (supabase as any).rpc("admin_manage_records", { p_action: "delete", p_table: "purchase_licenses", p_ids: [id] }); if (error) toast.error(error.message); else { await qc.invalidateQueries(); toast.success("Purchased license moved to Trash"); } };
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["admin-purchase-licenses"],
     queryFn: async () => {
@@ -279,6 +285,7 @@ function PurchasedLicenses({ onCustomer }: { onCustomer: (email: string) => void
                         <Link2 className="mr-1 h-4 w-4" /> Link
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => pdf(r)}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+                      <Button size="sm" variant="ghost" onClick={() => void remove(r.id)}>Trash</Button>
                     </div>
                   </td>
                 </tr>

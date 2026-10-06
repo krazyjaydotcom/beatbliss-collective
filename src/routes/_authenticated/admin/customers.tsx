@@ -1,3 +1,4 @@
+import { adminCustomerEmailHistory } from "@/lib/bird.functions";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -374,7 +375,7 @@ function AdminCustomersPage({
                     <span className="truncate text-muted-foreground">{selected.email ?? "No email on file"}</span>
                     {selected.email && (
                       <Button asChild size="sm" variant="outline">
-                        <Link to="/admin/email" search={{ to: selected.email }}>Send email</Link>
+                        <Link to="/admin/email" search={{ to: selected.email, returnToCustomer: selected.email }}>Send email</Link>
                       </Button>
                     )}
                   </div>
@@ -443,8 +444,10 @@ function AdminCustomersPage({
                                 : r.kind === "member_download"
                                   ? "Member download"
                                   : "Free download"}
-                              {r.agreement_code ? ` · ${r.agreement_code}` : " · License not available"}
+                              {r.agreement_code ? ` · ${r.agreement_code}` : r.kind === "free_download" ? " · Tagged preview" : r.kind === "purchase" && r.paid ? " · License needs review" : ""}
                             </div>
+                            {r.agreement_row_id && <Button asChild size="sm" variant="ghost"><Link to="/admin/agreements" search={{ agreement: r.agreement_code ?? undefined }}>View license</Link></Button>}
+                            {r.download_code && <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(`https://mybeatcatalog.com/d/${r.download_code}`).then(() => toast.success("Buyer download link copied"), () => toast.error("Could not copy link"))}>Copy download link</Button>}
                           </div>
                           <div className="shrink-0 text-right text-xs text-muted-foreground">
                             {new Date(r.created_at).toLocaleDateString()}
@@ -455,6 +458,7 @@ function AdminCustomersPage({
                   )}
                 </div>
 
+                {selected.email && <CustomerEmailHistory email={selected.email} />}
                 <section className="space-y-3 rounded-lg border border-border p-3">
                   <h3 className="text-sm font-semibold">Linked tasks</h3>
                   {(crmQ.data?.tasks ?? [])
@@ -585,4 +589,10 @@ function AdminCustomersPage({
 
 export function CustomerRecordDrawer({ email, onClose }: { email: string; onClose: () => void }) {
   return <AdminCustomersPage initialEmail={email} embedded onClose={onClose} />;
+}
+
+function CustomerEmailHistory({ email }: { email: string }) {
+  const historyFn = useServerFn(adminCustomerEmailHistory);
+  const history = useQuery({ queryKey: ["customer-email-history", email], queryFn: () => historyFn({ data: { email } }) });
+  return <details className="rounded-lg border border-border p-3"><summary className="cursor-pointer text-sm font-semibold">Recent email activity</summary><p className="mt-2 text-xs text-muted-foreground">Recent site logs. Sent or accepted does not prove inbox delivery.</p>{history.isError ? <p className="text-xs">Could not load email activity.</p> : history.isLoading ? <p className="text-xs">Loading…</p> : !history.data?.length ? <p className="text-xs text-muted-foreground">No matches in the latest 100 site email logs.</p> : history.data.map((r) => <div key={r.id} className="flex justify-between gap-2 border-t border-border py-2 text-xs"><span>{(r.metadata as any)?.subject || r.template_name}<br />{new Date(r.created_at).toLocaleString()}</span><span>{r.status}</span></div>)}</details>;
 }

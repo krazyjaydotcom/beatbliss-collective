@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,6 +17,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/sales")({
   head: () => ({ meta: [{ title: "Admin · Sales & Downloads — MYBEATCATALOG" }] }),
+  validateSearch: (s) => z.object({ day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).parse(s),
   component: AdminSalesPage,
 });
 
@@ -36,6 +38,7 @@ function kindLabel(r: ActivityRow) {
 }
 
 function AdminSalesPage() {
+  const { day } = Route.useSearch();
   const qc = useQueryClient();
   const [customer, setCustomer] = useState<string | null>(null);
   const [range, setRange] = useState("30");
@@ -58,7 +61,12 @@ function AdminSalesPage() {
     return rows
       .filter((r) => {
         if (tab !== "all" && r.kind !== tab) return false;
-        if (range !== "all" && new Date(r.created_at).getTime() < Date.now() - Number(range) * 86400000) return false;
+        if (day) {
+          const date = new Date(r.created_at);
+          const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+          if (key !== day) return false;
+        }
+        if (!day && range !== "all" && new Date(r.created_at).getTime() < Date.now() - Number(range) * 86400000) return false;
         if (payment === "paid" && !(r.kind === "purchase" && r.paid)) return false;
         if (payment === "pending" && !(r.kind === "purchase" && !r.paid)) return false;
         if (!s) return true;
@@ -76,7 +84,7 @@ function AdminSalesPage() {
             ? a.created_at.localeCompare(b.created_at)
             : b.created_at.localeCompare(a.created_at),
       );
-  }, [rows, tab, q, range, payment, sort]);
+  }, [rows, tab, q, range, payment, sort, day]);
   const summary = {
     paidRevenueCents: filtered
       .filter((r) => r.kind === "purchase" && r.paid)
@@ -166,6 +174,7 @@ function AdminSalesPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
+      {day && <p className="text-sm text-primary">Sales on {day} · <a href="/admin/sales" className="underline">Clear date</a></p>}
       <PageHeader
         breadcrumb="Business"
         title="Sales & downloads"
@@ -228,7 +237,7 @@ function AdminSalesPage() {
           Reset filters
         </Button>
       </div>
-      <div className="grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-5">
+      <div className="grid shrink-0 grid-cols-3 gap-2 lg:grid-cols-5">
         <StatTile
           icon={DollarSign}
           label="Paid revenue"
@@ -312,7 +321,7 @@ function AdminSalesPage() {
                         <FileText className="mr-1 h-4 w-4" /> {r.agreement_code ?? "License PDF"}
                       </Button>
                     ) : (
-                      <span className="text-[11px] text-muted-foreground">No license document on file</span>
+                      <span className="text-[11px] text-muted-foreground">{r.kind === "free_download" ? "Tagged preview · no paid license needed" : "License needs review"}</span>
                     )}
                   </div>
                 </Surface>
@@ -398,7 +407,7 @@ function AdminSalesPage() {
                             <FileText className="mr-1 h-4 w-4" /> {r.agreement_code ?? "PDF"}
                           </Button>
                         ) : (
-                          <span className="text-xs text-muted-foreground">No license document on file</span>
+                          <span className="text-xs text-muted-foreground">{r.kind === "free_download" ? "Tagged preview · no paid license needed" : "License needs review"}</span>
                         )}
                       </td>
                     </tr>

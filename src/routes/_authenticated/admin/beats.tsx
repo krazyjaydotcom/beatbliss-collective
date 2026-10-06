@@ -103,6 +103,7 @@ function AdminBeatsPage() {
   const [editingBeat, setEditingBeat] = useState<any | null>(null);
   const [search, setSearch] = useState("");
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [fileStatus, setFileStatus] = useState("all");
   const toggle = (id: string) => {
     setSelected((s) => {
       const n = new Set(s);
@@ -122,11 +123,12 @@ function AdminBeatsPage() {
   }
 
   const q = search.trim().toLowerCase();
-  const visibleBeats = q
+  const searchedBeats = q
     ? beats.filter((b: any) =>
         [b.title, b.genre, b.music_key, String(b.bpm ?? "")].some((v) => (v ?? "").toLowerCase().includes(q)),
       )
     : beats;
+  const visibleBeats = searchedBeats.filter((b: any) => fileStatus === "all" || (fileStatus === "ready" ? !!b.audio_url_tagged : !b.audio_url_tagged));
   const openTools = () => {
     setToolsOpen(true);
     requestAnimationFrame(() => document.getElementById("beat-tools")?.scrollIntoView({ behavior: "smooth" }));
@@ -157,6 +159,7 @@ function AdminBeatsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h2 className="font-semibold flex items-center gap-2"><Music className="h-4 w-4" /> Catalog ({visibleBeats.length}{q ? ` of ${beats.length}` : ""})</h2>
           <div className="flex flex-1 items-center justify-end gap-3 min-w-[200px]">
+            <select aria-label="Filter beat file readiness" className="h-9 rounded border border-border bg-card px-2 text-xs" value={fileStatus} onChange={(e) => setFileStatus(e.target.value)}><option value="all">All files</option><option value="ready">Preview ready</option><option value="missing">Needs tagged preview</option></select>
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -197,7 +200,7 @@ function AdminBeatsPage() {
                     {b.genre} · {b.bpm} BPM · {b.music_key}
                     {b.audio_url ? <span className="ml-2 inline-flex items-center gap-1"><FileMusic className="h-3 w-3" />MP3</span> : null}
                     {b.audio_url_wav ? <span className="ml-2 inline-flex items-center gap-1"><FileAudio className="h-3 w-3" />WAV</span> : null}
-                    {b.audio_url_tagged ? <span className="ml-2 inline-flex items-center gap-1 text-electric"><FileMusic className="h-3 w-3" />TAGGED</span> : <span className="ml-2 text-amber-500">· no tagged file (free users blocked)</span>}
+                    {b.audio_url_tagged ? <span className="ml-2 inline-flex items-center gap-1 text-electric"><FileMusic className="h-3 w-3" />TAGGED</span> : <span className="ml-2 text-amber-500">· Needs tagged preview</span>}
                     {b.is_member_only ? " · Members" : ""}
                     {scheduled ? <span className="ml-2 text-amber-400">· releases {new Date(b.release_at).toLocaleString()}</span> : null}
                   </div>
@@ -206,7 +209,7 @@ function AdminBeatsPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    title="Copy share link (home page with this beat)"
+                    aria-label={`Copy share link for ${b.title}`} title="Copy share link (home page with this beat)"
                     onClick={() => {
                       const slug = slugifyTitle(b.title);
                       const url = slug
@@ -224,7 +227,7 @@ function AdminBeatsPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      title="Copy buy link"
+                      aria-label={`Copy buy link for ${b.title}`} title="Copy buy link"
                       onClick={() => {
                         const url = `${window.location.origin}/buy/${b.id}`;
                         navigator.clipboard.writeText(url).then(
@@ -236,8 +239,8 @@ function AdminBeatsPage() {
                       <Copy className="h-4 w-4" />
                     </Button>
                   ) : null}
-                  <Button size="sm" variant="ghost" onClick={() => setEditingBeat(b)}><Pencil className="h-4 w-4" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDelete(b.id, b.title)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" aria-label={`Edit ${b.title}`} onClick={() => setEditingBeat(b)}><Pencil className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" aria-label={`Delete ${b.title}`} onClick={() => handleDelete(b.id, b.title)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
             );

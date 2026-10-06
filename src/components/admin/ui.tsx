@@ -59,15 +59,15 @@ export function StatTile({
   icon?: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-card/60 p-4">
+    <div className="rounded-xl border border-border/70 bg-card/60 px-3 py-2">
       <div className="flex items-center justify-between gap-2">
         <span className="truncate text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
           {label}
         </span>
         {Icon && <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />}
       </div>
-      <div className="mt-2 text-2xl font-bold tabular-nums text-foreground">{value}</div>
-      {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
+      <div className="mt-1 text-xl font-bold tabular-nums text-foreground">{value}</div>
+      {hint && <div className="mt-1 text-[11px] text-muted-foreground">{hint}</div>}
     </div>
   );
 }
