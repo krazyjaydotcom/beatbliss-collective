@@ -1907,6 +1907,7 @@ export type Database = {
           beat_title: string
           buyer_name: string | null
           created_at: string
+          download_token: string
           email: string
           id: string
           license_label: string
@@ -1922,6 +1923,7 @@ export type Database = {
           beat_title: string
           buyer_name?: string | null
           created_at?: string
+          download_token?: string
           email: string
           id?: string
           license_label: string
@@ -1937,6 +1939,7 @@ export type Database = {
           beat_title?: string
           buyer_name?: string | null
           created_at?: string
+          download_token?: string
           email?: string
           id?: string
           license_label?: string

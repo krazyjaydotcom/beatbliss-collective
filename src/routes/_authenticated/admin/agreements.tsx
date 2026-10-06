@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, FileText, Loader2, Search, ShieldCheck } from "lucide-react";
+import { ArrowLeft, FileText, Link2, Loader2, Search, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { CustomerRecordDrawer } from "./customers";
@@ -261,7 +261,23 @@ function PurchasedLicenses({ onCustomer }: { onCustomer: (email: string) => void
                   <td className="hidden px-4 py-3 lg:table-cell"><Badge variant="secondary">{r.license_label}</Badge></td>
                   <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">{new Date(r.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-right">
-                    <Button size="sm" variant="ghost" onClick={() => pdf(r)}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Copy buyer download link (files + agreement)"
+                        onClick={() => {
+                          const url = `https://mybeatcatalog.com/download/${r.download_token}`;
+                          navigator.clipboard.writeText(url).then(
+                            () => toast.success("Download link copied"),
+                            () => toast.error("Could not copy link"),
+                          );
+                        }}
+                      >
+                        <Link2 className="mr-1 h-4 w-4" /> Link
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => pdf(r)}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+                    </div>
                   </td>
                 </tr>
               ))}
