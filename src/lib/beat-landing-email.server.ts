@@ -168,6 +168,9 @@ export async function queueBuyerPurchaseEmail(opts: {
     const buttons = links
       .map((l) => `<a href="${e(l.url)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px;margin:0 8px 8px 0">${e(l.label)}</a>`)
       .join("");
+    const pageButton = opts.downloadPageUrl
+      ? `<a href="${e(opts.downloadPageUrl)}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px;margin:0 8px 8px 0">Your download page (files + license)</a>`
+      : "";
     const stemNote = opts.licenseTier === "trackout" && !hasStems
       ? `<p style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;font-size:13px;color:#1e3a8a;margin:0 0 16px">Your STEMs are being prepared and will be emailed within 24 hours.</p>`
       : "";
