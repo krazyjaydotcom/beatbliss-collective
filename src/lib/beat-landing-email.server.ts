@@ -148,6 +148,7 @@ export async function queueBuyerPurchaseEmail(opts: {
   wavUrl?: string | null;
   stemsUrl?: string | null;
   agreementCode?: string;
+  downloadPageUrl?: string | null;
 }): Promise<{ queued: boolean; skipped?: string; messageId?: string }> {
   const messageId = `bl_buyer_${opts.sessionId}`;
   if (await alreadyQueued(messageId)) return { queued: false, skipped: "already_queued" };

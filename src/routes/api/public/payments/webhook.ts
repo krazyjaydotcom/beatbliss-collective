@@ -410,6 +410,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                           amountCents: amounts[i] ?? 0,
                           sessionId: `${session.id}:${beatId}`,
                           beatSlug: beat?.landing_slug ?? null,
+                          downloadPageUrl: downloadToken ? `https://mybeatcatalog.com/download/${downloadToken}` : null,
                         });
                       } catch (err) {
                         console.error("[webhook] buyer delivery email failed", err);
