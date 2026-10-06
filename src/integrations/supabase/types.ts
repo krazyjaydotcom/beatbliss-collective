@@ -1914,6 +1914,7 @@ export type Database = {
           license_tier: string
           payment_environment: string
           rights_text: string
+          short_code: string
           stripe_session_id: string
         }
         Insert: {
@@ -1930,6 +1931,7 @@ export type Database = {
           license_tier: string
           payment_environment?: string
           rights_text: string
+          short_code?: string
           stripe_session_id: string
         }
         Update: {
@@ -1946,6 +1948,7 @@ export type Database = {
           license_tier?: string
           payment_environment?: string
           rights_text?: string
+          short_code?: string
           stripe_session_id?: string
         }
         Relationships: [
