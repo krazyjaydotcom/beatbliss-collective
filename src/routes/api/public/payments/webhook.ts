@@ -374,6 +374,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                       const licSession = `${session.id}:${beatId}`;
                       const code = agreementCode(licSession);
                       let downloadToken: string | null = null;
+                      let shortCode: string | null = null;
                       try {
                         await admin.from("purchase_licenses" as any).upsert({
                           agreement_code: code,
@@ -390,11 +391,12 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                         } as any, { onConflict: "stripe_session_id,beat_id", ignoreDuplicates: true });
                         const { data: licRow } = await admin
                           .from("purchase_licenses" as any)
-                          .select("download_token")
+                          .select("download_token,short_code")
                           .eq("stripe_session_id", session.id)
                           .eq("beat_id", beatId)
                           .maybeSingle();
                         downloadToken = (licRow as any)?.download_token ?? null;
+                        shortCode = (licRow as any)?.short_code ?? null;
                       } catch (err) {
                         console.error("[webhook] license record failed", err);
                       }
