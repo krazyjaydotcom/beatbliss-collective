@@ -39,6 +39,7 @@ import { Route as BeatsSlugRouteImport } from './routes/beats.$slug'
 import { Route as BuyBeatIdRouteImport } from './routes/buy.$beatId'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ClaimTokenRouteImport } from './routes/claim.$token'
+import { Route as DCodeRouteImport } from './routes/d.$code'
 import { Route as DownloadTokenRouteImport } from './routes/download.$token'
 import { Route as FreeSlugRouteImport } from './routes/free.$slug'
 import { Route as IgSlugRouteImport } from './routes/ig.$slug'
@@ -240,6 +241,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
 const ClaimTokenRoute = ClaimTokenRouteImport.update({
   id: '/claim/$token',
   path: '/claim/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DCodeRoute = DCodeRouteImport.update({
+  id: '/d/$code',
+  path: '/d/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DownloadTokenRoute = DownloadTokenRouteImport.update({
@@ -556,6 +562,7 @@ export interface FileRoutesByFullPath {
   '/buy/$beatId': typeof BuyBeatIdRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
+  '/d/$code': typeof DCodeRoute
   '/download/$token': typeof DownloadTokenRoute
   '/free/$slug': typeof FreeSlugRoute
   '/ig/$slug': typeof IgSlugRoute
@@ -637,6 +644,7 @@ export interface FileRoutesByTo {
   '/buy/$beatId': typeof BuyBeatIdRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
+  '/d/$code': typeof DCodeRoute
   '/download/$token': typeof DownloadTokenRoute
   '/free/$slug': typeof FreeSlugRoute
   '/ig/$slug': typeof IgSlugRoute
@@ -721,6 +729,7 @@ export interface FileRoutesById {
   '/buy/$beatId': typeof BuyBeatIdRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/claim/$token': typeof ClaimTokenRoute
+  '/d/$code': typeof DCodeRoute
   '/download/$token': typeof DownloadTokenRoute
   '/free/$slug': typeof FreeSlugRoute
   '/ig/$slug': typeof IgSlugRoute
@@ -805,6 +814,7 @@ export interface FileRouteTypes {
     | '/buy/$beatId'
     | '/checkout/return'
     | '/claim/$token'
+    | '/d/$code'
     | '/download/$token'
     | '/free/$slug'
     | '/ig/$slug'
@@ -886,6 +896,7 @@ export interface FileRouteTypes {
     | '/buy/$beatId'
     | '/checkout/return'
     | '/claim/$token'
+    | '/d/$code'
     | '/download/$token'
     | '/free/$slug'
     | '/ig/$slug'
@@ -969,6 +980,7 @@ export interface FileRouteTypes {
     | '/buy/$beatId'
     | '/checkout/return'
     | '/claim/$token'
+    | '/d/$code'
     | '/download/$token'
     | '/free/$slug'
     | '/ig/$slug'
@@ -1040,6 +1052,7 @@ export interface RootRouteChildren {
   BeatsSlugRoute: typeof BeatsSlugRoute
   BuyBeatIdRoute: typeof BuyBeatIdRoute
   ClaimTokenRoute: typeof ClaimTokenRoute
+  DCodeRoute: typeof DCodeRoute
   DownloadTokenRoute: typeof DownloadTokenRoute
   FreeSlugRoute: typeof FreeSlugRoute
   IgSlugRoute: typeof IgSlugRoute
@@ -1270,6 +1283,13 @@ declare module '@tanstack/react-router' {
       path: '/claim/$token'
       fullPath: '/claim/$token'
       preLoaderRoute: typeof ClaimTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/d/$code': {
+      id: '/d/$code'
+      path: '/d/$code'
+      fullPath: '/d/$code'
+      preLoaderRoute: typeof DCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/download/$token': {
@@ -1781,6 +1801,7 @@ const rootRouteChildren: RootRouteChildren = {
   BeatsSlugRoute: BeatsSlugRoute,
   BuyBeatIdRoute: BuyBeatIdRoute,
   ClaimTokenRoute: ClaimTokenRoute,
+  DCodeRoute: DCodeRoute,
   DownloadTokenRoute: DownloadTokenRoute,
   FreeSlugRoute: FreeSlugRoute,
   IgSlugRoute: IgSlugRoute,

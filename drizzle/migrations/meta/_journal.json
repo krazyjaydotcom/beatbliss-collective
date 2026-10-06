@@ -15,6 +15,13 @@
       "when": 1791268232946,
       "tag": "0001_add_purchase_license_download_token",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791268840448,
+      "tag": "0002_lov_database_migration",
+      "breakpoints": true
     }
   ]
 }

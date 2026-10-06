@@ -267,7 +267,9 @@ function PurchasedLicenses({ onCustomer }: { onCustomer: (email: string) => void
                         variant="ghost"
                         title="Copy buyer download link (files + agreement)"
                         onClick={() => {
-                          const url = `https://mybeatcatalog.com/download/${r.download_token}`;
+                          const url = r.short_code
+                            ? `https://mybeatcatalog.com/d/${r.short_code}`
+                            : `https://mybeatcatalog.com/download/${r.download_token}`;
                           navigator.clipboard.writeText(url).then(
                             () => toast.success("Download link copied"),
                             () => toast.error("Could not copy link"),

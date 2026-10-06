@@ -120,7 +120,7 @@ export const adminPreviewEmailTemplate = createServerFn({ method: "POST" })
       siteName: "MYBEATCATALOG", supportEmail: "support@krazyjay.com",
       firstName: "Alex", buyerEmail: "buyer@example.com", name: "Sample Sender", email: "sender@example.com",
       beatTitle: "Sample Beat", beatUrl: "https://mybeatcatalog.com/beats/sample",
-      downloadUrl: "https://mybeatcatalog.com/download/sample",
+      downloadUrl: "https://mybeatcatalog.com/d/Ab3dEf9hIj12",
       checkoutUrl: "https://mybeatcatalog.com/buy/sample",
       loginUrl: "https://mybeatcatalog.com/login",
       inviteUrl: "https://mybeatcatalog.com/invite/sample",

@@ -2,26 +2,25 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
-import { getPurchaseDownload } from "@/lib/download-link.functions";
+import { getPurchaseDownloadByCode } from "@/lib/download-link.functions";
 import { PurchaseDownloadCard } from "@/components/store/purchase-download-card";
 
-export const Route = createFileRoute("/download/$token")({
+export const Route = createFileRoute("/d/$code")({
   head: () => ({
     meta: [
       { title: "Your purchase — MYBEATCATALOG" },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: PurchaseDownloadPage,
+  component: ShortDownloadPage,
 });
 
-// Legacy shape kept alive for links already emailed to buyers.
-function PurchaseDownloadPage() {
-  const { token } = Route.useParams();
-  const fetchDownload = useServerFn(getPurchaseDownload);
+function ShortDownloadPage() {
+  const { code } = Route.useParams();
+  const fetchDownload = useServerFn(getPurchaseDownloadByCode);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["purchase-download", "token", token],
-    queryFn: () => fetchDownload({ data: { token } }),
+    queryKey: ["purchase-download", "code", code],
+    queryFn: () => fetchDownload({ data: { code } }),
     retry: false,
   });
 
