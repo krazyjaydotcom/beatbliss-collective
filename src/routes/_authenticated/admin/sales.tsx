@@ -114,6 +114,26 @@ function AdminSalesPage() {
   };
 
   const downloadPdf = async (agreementRowId: string) => {
+    if (agreementRowId.startsWith("lic:")) {
+      const { data: r } = await (supabase as any)
+        .from("purchase_licenses").select("*").eq("id", agreementRowId.slice(4)).maybeSingle();
+      if (!r) return;
+      const doc: AgreementData = {
+        agreement_id: r.agreement_code,
+        user_name: r.buyer_name || r.email,
+        user_email: r.email,
+        beat_title: r.beat_title,
+        beat_id: r.beat_id ?? "",
+        producer_name: "KRAZYJAYDOTCOM",
+        license_type: r.license_label,
+        credits_used: 0,
+        file_type: r.license_tier === "nonexclusive" ? "MP3" : r.license_tier === "trackout" ? "WAV + MP3 + STEMs" : "WAV + MP3",
+        accepted_at: r.created_at,
+        agreement_text: `${r.rights_text}\n\nProducer credits (required): Writer — Jason A. Spencer (IPI 516703075) 50%; Publishing — March 26th Publishing (IPI 1213085595) 50%; PRO — ASCAP. Failure to register these splits voids the rights granted.\n\nRestrictions: Licensee may not resell, redistribute, sublicense, or claim sole ownership of the underlying beat. MYBEATCATALOG retains ownership of the composition and production.\n\nAmount paid: $${(r.amount_cents / 100).toFixed(2)}${r.payment_environment === "sandbox" ? " (test payment)" : ""}`,
+      } as AgreementData;
+      generateAgreementPdf(doc).save(`MBC_${r.agreement_code}.pdf`);
+      return;
+    }
     const { data: a } = await supabase.from("agreements").select("*").eq("id", agreementRowId).maybeSingle();
     if (!a) return;
     const doc = a as unknown as AgreementData;
