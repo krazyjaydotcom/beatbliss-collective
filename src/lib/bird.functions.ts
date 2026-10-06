@@ -184,6 +184,9 @@ export const adminBirdSend = createServerFn({ method: "POST" })
       track_opens: false,
       track_clicks: false,
     }));
+    // Reject oversized attachment batches before expanding repeated base64 strings.
+    const estimatedBytes = (new TextEncoder().encode(JSON.stringify(messages[0])).length + 254) * messages.length + 32;
+    if (estimatedBytes > 19 * 1024 * 1024) return { ok: false as const, reason: "This batch exceeds the encoded request limit. Use a file link or fewer recipients." };
     const payload = JSON.stringify(recipients.length === 1 ? messages[0] : { messages });
     if (new TextEncoder().encode(payload).length > 19 * 1024 * 1024)
       return {

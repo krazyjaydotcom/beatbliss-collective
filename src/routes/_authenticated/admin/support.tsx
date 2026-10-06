@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { VoiceMemoButton } from "@/components/voice-memo-button";
-import { CustomerRecordDrawer } from "./customers";
+import { CustomerRecordDrawer } from "@/components/admin/customer-workspace";
 import { playSentDing, uploadVoiceMemo } from "@/lib/chat-audio";
 
 export const Route = createFileRoute("/_authenticated/admin/support")({

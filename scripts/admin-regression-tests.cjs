@@ -63,6 +63,13 @@ async function run() {
   assert.equal(networkCalls, 1);
   assert.deepEqual(payload.messages.map(m => m.to), [['a@example.com'], ['b@example.com']]);
   assert.ok(payload.messages.every(m => m.category === 'marketing'));
+  const beforeSizeCheck = networkCalls;
+  const originalDownload = db.storage.from;
+  db.storage.from = () => ({ download: async () => ({ data: new Blob([new Uint8Array(8 * 1024 * 1024)]), error: null }) });
+  const large = { ...data, files: [{ path: 'uploads/fixture.pdf', name: 'fixture.pdf' }] };
+  assert.match((await bird.adminBirdSend.h({ data: large, context })).reason, /encoded request limit/);
+  assert.equal(networkCalls, beforeSizeCheck);
+  db.storage.from = originalDownload;
   duplicate = true;
   assert.match((await bird.adminBirdSend.h({ data, context })).reason, /already recorded/);
   assert.equal(networkCalls, 1, 'duplicate attempt must never reach Bird');

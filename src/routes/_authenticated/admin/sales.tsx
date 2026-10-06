@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { generateAgreementPdf, buildAgreementFilename, type AgreementData } from "@/lib/agreement-pdf";
 import { EmptyState, PageHeader, StatTile, Surface } from "@/components/admin/ui";
 import { cn } from "@/lib/utils";
-import { CustomerRecordDrawer } from "./customers";
+import { CustomerRecordDrawer } from "@/components/admin/customer-workspace";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/sales")({

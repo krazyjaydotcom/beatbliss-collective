@@ -19,7 +19,7 @@ import {
   SesSendAction,
   type DraftFile,
 } from "@/components/admin/ses-panel";
-import { CustomerRecordDrawer } from "./customers";
+import { CustomerRecordDrawer } from "@/components/admin/customer-workspace";
 import { PageHeader, Surface } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
