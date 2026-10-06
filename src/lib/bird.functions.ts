@@ -111,7 +111,8 @@ export const adminBirdReview = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ recipients: z.array(email).min(1).max(100) }).parse(d))
   .handler(async ({ data, context }) => {
     await admin(context);
-    return checkRecipients(context.supabase, [...new Set(data.recipients)]);
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+    return checkRecipients(sb, [...new Set(data.recipients)]);
   });
 
 export const adminBirdSend = createServerFn({ method: "POST" })
@@ -143,7 +144,8 @@ export const adminBirdSend = createServerFn({ method: "POST" })
         ok: false as const,
         reason: "Confirm permission to send marketing to every selected recipient.",
       };
-    const checks = await checkRecipients(context.supabase, recipients);
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+    const checks = await checkRecipients(sb, recipients);
     const blocked = checks.filter((r) => r.problem);
     if (blocked.length)
       return {
@@ -194,7 +196,6 @@ export const adminBirdSend = createServerFn({ method: "POST" })
         reason:
           "This batch exceeds the encoded request limit. Use a file link or fewer recipients.",
       };
-    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
     // The unique attempt ID prevents double-clicks and retries from sending twice, even after Bird's replay window expires.
     const { error: logError } = await sb
       .from("email_send_log")
