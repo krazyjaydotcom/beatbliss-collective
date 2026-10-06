@@ -78,13 +78,28 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
 
     const rows: ActivityRow[] = [];
 
+    const licRes = await sb.from("purchase_licenses")
+      .select("id,agreement_code,email,buyer_name,beat_id,license_label,stripe_session_id")
+      .order("created_at", { ascending: false }).limit(2000);
+    const licBySession = new Map<string, any>();
+    const licByEmailBeat = new Map<string, any>();
+    for (const l of licRes.data ?? []) {
+      licBySession.set(`${l.stripe_session_id}:${l.beat_id}`, l);
+      licBySession.set(l.stripe_session_id, licBySession.get(l.stripe_session_id) ?? l);
+      licByEmailBeat.set(`${(l.email ?? "").toLowerCase()}:${l.beat_id}`, l);
+    }
+
     for (const o of ordersRes.data ?? []) {
       const beat = o.beat_id ? beats.get(o.beat_id) : undefined;
+      const lic = o.stripe_session_id
+        ? licBySession.get(`${o.stripe_session_id}:${o.beat_id}`) ?? licBySession.get(o.stripe_session_id)
+        : undefined;
+      const license = lic ?? (o.stripe_session_id ? licByEmailBeat.get(`${(o.email ?? "").toLowerCase()}:${o.beat_id}`) : undefined);
       rows.push({
         id: `order:${o.id}`,
         kind: "purchase",
         created_at: o.created_at,
-        name: null,
+        name: license?.buyer_name ?? null,
         email: o.email,
         beat_id: o.beat_id,
         beat_title: beat?.title ?? "(unknown beat)",
@@ -92,9 +107,9 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
         amount_cents: o.amount_cents ?? 0,
         paid: !!o.stripe_session_id,
         detail: o.used_first_time_discount ? "First-time discount" : null,
-        agreement_row_id: null,
-        agreement_code: null,
-        license_type: "Unlimited Lease License",
+        agreement_row_id: license ? `lic:${license.id}` : null,
+        agreement_code: license?.agreement_code ?? null,
+        license_type: license?.license_label ?? "Unlimited Lease License",
       });
     }
 
