@@ -373,6 +373,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                       const { TIER_EMAIL, agreementCode } = await import("@/lib/beat-landing-email.server");
                       const licSession = `${session.id}:${beatId}`;
                       const code = agreementCode(licSession);
+                      let downloadToken: string | null = null;
                       try {
                         await admin.from("purchase_licenses" as any).upsert({
                           agreement_code: code,
@@ -387,6 +388,13 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                           stripe_session_id: session.id,
                           payment_environment: env,
                         } as any, { onConflict: "stripe_session_id,beat_id", ignoreDuplicates: true });
+                        const { data: licRow } = await admin
+                          .from("purchase_licenses" as any)
+                          .select("download_token")
+                          .eq("stripe_session_id", session.id)
+                          .eq("beat_id", beatId)
+                          .maybeSingle();
+                        downloadToken = (licRow as any)?.download_token ?? null;
                       } catch (err) {
                         console.error("[webhook] license record failed", err);
                       }
