@@ -42,7 +42,15 @@ const bird = load('src/lib/bird.functions.ts', (name) => {
 const context = { supabase: db, userId: 'fixture-admin' };
 async function run() {
   delete process.env.BIRD_API_KEY; delete process.env.BIRD_FROM_EMAIL; delete process.env.BIRD_REGION;
-  assert.equal((await bird.adminBirdStatus.h({ context })).configured, false);
+  const missingStatus = await bird.adminBirdStatus.h({ context });
+  assert.equal(missingStatus.configured, false);
+  assert.deepEqual(missingStatus.missing, ['BIRD_API_KEY', 'BIRD_FROM_EMAIL', 'BIRD_REGION']);
+  process.env.BIRD_API_KEY = 'secret-fixture'; process.env.BIRD_FROM_EMAIL = 'invalid'; process.env.BIRD_REGION = 'wrong';
+  const invalidStatus = await bird.adminBirdStatus.h({ context });
+  assert.equal(invalidStatus.configured, false);
+  assert.equal(invalidStatus.issues.length, 2);
+  assert.ok(!JSON.stringify(invalidStatus).includes('secret-fixture'));
+  assert.equal(networkCalls, 0, 'settings checks must not send emails or call Bird');
   await assert.rejects(() => bird.adminBirdStatus.h({ context: { supabase: { rpc: async () => ({ data: false }) } } }), /Forbidden/);
   assert.throws(() => bird.adminBirdSend.validate({ confirmed: false }));
   process.env.BIRD_API_KEY = 'fixture'; process.env.BIRD_FROM_EMAIL = 'sender@example.com'; process.env.BIRD_REGION = 'us1';

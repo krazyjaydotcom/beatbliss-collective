@@ -34,7 +34,12 @@ function config() {
     !from && "BIRD_FROM_EMAIL",
     !region && "BIRD_REGION",
   ].filter(Boolean) as string[];
+  const issues = [
+    from && !email.safeParse(from).success && "BIRD_FROM_EMAIL must be a valid email address.",
+    region && region !== "us1" && region !== "eu1" && "BIRD_REGION must be us1 or eu1.",
+  ].filter(Boolean) as string[];
   return {
+    issues,
     key,
     from,
     region,
@@ -68,9 +73,10 @@ export const adminBirdStatus = createServerFn({ method: "GET" })
       from: c.from ?? null,
       region: c.region ?? null,
       missing: c.missing,
+      issues: c.issues,
       reason: c.valid
-        ? "Settings saved. Bird checks the sending domain and account allowance when you send."
-        : "Bird needs server settings and a verified sending domain. Drafts are available now.",
+        ? "Bird server settings are present. Verify your sending domain in Bird before sending."
+        : "Bird server settings need attention. Drafts are available while you finish setup.",
     };
   });
 
@@ -187,8 +193,14 @@ export const adminBirdSend = createServerFn({ method: "POST" })
       track_clicks: false,
     }));
     // Reject oversized attachment batches before expanding repeated base64 strings.
-    const estimatedBytes = (new TextEncoder().encode(JSON.stringify(messages[0])).length + 254) * messages.length + 32;
-    if (estimatedBytes > 19 * 1024 * 1024) return { ok: false as const, reason: "This batch exceeds the encoded request limit. Use a file link or fewer recipients." };
+    const estimatedBytes =
+      (new TextEncoder().encode(JSON.stringify(messages[0])).length + 254) * messages.length + 32;
+    if (estimatedBytes > 19 * 1024 * 1024)
+      return {
+        ok: false as const,
+        reason:
+          "This batch exceeds the encoded request limit. Use a file link or fewer recipients.",
+      };
     const payload = JSON.stringify(recipients.length === 1 ? messages[0] : { messages });
     if (new TextEncoder().encode(payload).length > 19 * 1024 * 1024)
       return {
@@ -197,23 +209,21 @@ export const adminBirdSend = createServerFn({ method: "POST" })
           "This batch exceeds the encoded request limit. Use a file link or fewer recipients.",
       };
     // The unique attempt ID prevents double-clicks and retries from sending twice, even after Bird's replay window expires.
-    const { error: logError } = await sb
-      .from("email_send_log")
-      .insert({
-        id: data.requestId,
-        recipient_email:
-          recipients.length === 1 ? recipients[0] : `Bulk: ${recipients.length} recipients`,
-        template_name: "bird-admin",
-        status: "pending",
-        metadata: {
-          subject: data.subject,
-          recipients,
-          sent_by: context.userId,
-          category: data.category,
-          consent_confirmed: data.consentConfirmed,
-          files: data.files.map((f) => f.name),
-        },
-      });
+    const { error: logError } = await sb.from("email_send_log").insert({
+      id: data.requestId,
+      recipient_email:
+        recipients.length === 1 ? recipients[0] : `Bulk: ${recipients.length} recipients`,
+      template_name: "bird-admin",
+      status: "pending",
+      metadata: {
+        subject: data.subject,
+        recipients,
+        sent_by: context.userId,
+        category: data.category,
+        consent_confirmed: data.consentConfirmed,
+        files: data.files.map((f) => f.name),
+      },
+    });
     if (logError)
       return {
         ok: false as const,
@@ -312,12 +322,24 @@ export const adminBirdHistory = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-export const adminCustomerEmailHistory = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const adminCustomerEmailHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ email }).parse(d))
   .handler(async ({ data: input, context }) => {
     await admin(context);
     const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await sb.from("email_send_log").select("id,recipient_email,template_name,status,metadata,created_at").order("created_at", { ascending: false }).limit(100);
+    const { data, error } = await sb
+      .from("email_send_log")
+      .select("id,recipient_email,template_name,status,metadata,created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
     if (error) throw new Error("Could not load customer email history.");
-    return (data ?? []).filter((r) => r.recipient_email.toLowerCase() === input.email || (Array.isArray((r.metadata as any)?.recipients) && (r.metadata as any).recipients.includes(input.email))).slice(0, 10);
+    return (data ?? [])
+      .filter(
+        (r) =>
+          r.recipient_email.toLowerCase() === input.email ||
+          (Array.isArray((r.metadata as any)?.recipients) &&
+            (r.metadata as any).recipients.includes(input.email)),
+      )
+      .slice(0, 10);
   });

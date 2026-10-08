@@ -62,7 +62,22 @@ function AdminEmailPage() {
     reviewFn = useServerFn(adminBirdReview),
     sendFn = useServerFn(adminBirdSend),
     historyFn = useServerFn(adminBirdHistory);
-  const status = useQuery({ queryKey: ["bird-status"], queryFn: () => statusFn() });
+  const status = useQuery({ queryKey: ["bird-status"], queryFn: () => statusFn(), retry: false });
+  async function recheckBirdSettings() {
+    try {
+      const result = await status.refetch({ throwOnError: true });
+      if (!result.data) throw new Error("No settings returned");
+      if (result.data.configured)
+        toast.success(
+          "Bird server settings checked. Verify your sending domain in Bird before sending.",
+        );
+      else toast.info("Check complete: Bird setup still needs attention. See the settings below.");
+    } catch {
+      toast.error(
+        "Could not check Bird settings. Refresh the page and sign in again if needed, then retry.",
+      );
+    }
+  }
   const history = useQuery({
     queryKey: ["bird-history"],
     queryFn: () => historyFn(),
@@ -547,7 +562,30 @@ function AdminEmailPage() {
                 <option value="ses">Amazon SES (optional)</option>
               </select>
             </label>
-            <p className="text-sm">{status.data?.reason ?? "Checking settings…"}</p>
+            <div role="status" aria-live="polite" className="space-y-2 text-sm">
+              <p>
+                {status.isFetching
+                  ? "Checking Bird server settings…"
+                  : status.isError
+                    ? "Could not check Bird settings. Refresh the page and sign in again if needed, then retry."
+                    : status.data?.reason}
+              </p>
+              {!status.isFetching && !status.isError && status.data?.missing.length ? (
+                <p>Missing server secrets: {status.data.missing.join(", ")}</p>
+              ) : null}
+              {!status.isFetching &&
+                !status.isError &&
+                status.data?.issues.map((issue) => <p key={issue}>{issue}</p>)}
+              {status.dataUpdatedAt > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Last successful check: {new Date(status.dataUpdatedAt).toLocaleTimeString()}
+                </p>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              This checks this site's server configuration. It does not verify DNS or send an email.
+              Verify your sending domain in Bird.
+            </p>
             <details>
               <summary className="cursor-pointer text-sm">Bird setup checklist</summary>
               <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
@@ -565,8 +603,16 @@ function AdminEmailPage() {
                 <p className="mt-2 text-xs">Missing: {status.data.missing.join(", ")}</p>
               ) : null}
             </details>
-            <Button size="sm" variant="outline" onClick={() => void status.refetch()}>
-              Recheck Bird settings
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={status.isFetching}
+              onClick={() => void recheckBirdSettings()}
+            >
+              {status.isFetching && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+              )}
+              {status.isFetching ? "Checking settings…" : "Recheck Bird settings"}
             </Button>
             <a
               className="block text-sm text-primary"
