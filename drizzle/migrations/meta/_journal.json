@@ -29,6 +29,13 @@
       "when": 1791997350500,
       "tag": "0003_beat_credit_splits",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791997393745,
+      "tag": "0004_credit_snapshot_fresh_inserts_only",
+      "breakpoints": true
     }
   ]
 }
