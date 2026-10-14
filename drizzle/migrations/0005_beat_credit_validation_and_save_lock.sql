@@ -1,4 +1,3 @@
--- Tighten contributor identity validation and serialize even first saves for a beat.
 CREATE OR REPLACE FUNCTION public.beat_credit_configs_validate()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
 DECLARE el jsonb; f text;
@@ -31,7 +30,6 @@ RETURNS timestamptz LANGUAGE plpgsql SECURITY DEFINER SET search_path = public A
 DECLARE cur timestamptz; res timestamptz;
 BEGIN
   IF auth.uid() IS NULL OR NOT public.has_role(auth.uid(), 'admin') THEN RAISE EXCEPTION 'Forbidden'; END IF;
-  -- Parent row lock serializes concurrent first inserts as well as later edits.
   PERFORM id FROM public.beats WHERE id = _beat_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Beat not found'; END IF;
   SELECT updated_at INTO cur FROM public.beat_credit_configs WHERE beat_id = _beat_id;
