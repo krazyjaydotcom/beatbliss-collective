@@ -258,6 +258,7 @@ export type Database = {
           beat_id: string
           beat_title: string
           created_at: string
+          credit_snapshot: Json | null
           credits_used: number
           download_id: string | null
           file_type: string
@@ -276,6 +277,7 @@ export type Database = {
           beat_id: string
           beat_title: string
           created_at?: string
+          credit_snapshot?: Json | null
           credits_used?: number
           download_id?: string | null
           file_type?: string
@@ -294,6 +296,7 @@ export type Database = {
           beat_id?: string
           beat_title?: string
           created_at?: string
+          credit_snapshot?: Json | null
           credits_used?: number
           download_id?: string | null
           file_type?: string
@@ -403,6 +406,44 @@ export type Database = {
             foreignKeyName: "beat_claims_beat_id_fkey"
             columns: ["beat_id"]
             isOneToOne: false
+            referencedRelation: "beats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      beat_credit_configs: {
+        Row: {
+          admin_notes: string
+          beat_id: string
+          contributors: Json
+          created_at: string
+          production_credit: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          admin_notes?: string
+          beat_id: string
+          contributors?: Json
+          created_at?: string
+          production_credit?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          admin_notes?: string
+          beat_id?: string
+          contributors?: Json
+          created_at?: string
+          production_credit?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_credit_configs_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: true
             referencedRelation: "beats"
             referencedColumns: ["id"]
           },
@@ -1907,6 +1948,7 @@ export type Database = {
           beat_title: string
           buyer_name: string | null
           created_at: string
+          credit_snapshot: Json | null
           download_token: string
           email: string
           id: string
@@ -1924,6 +1966,7 @@ export type Database = {
           beat_title: string
           buyer_name?: string | null
           created_at?: string
+          credit_snapshot?: Json | null
           download_token?: string
           email: string
           id?: string
@@ -1941,6 +1984,7 @@ export type Database = {
           beat_title?: string
           buyer_name?: string | null
           created_at?: string
+          credit_snapshot?: Json | null
           download_token?: string
           email?: string
           id?: string
@@ -2199,6 +2243,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _credit_pct: {
+        Args: { _field: string; _idx: number; _v: Json }
+        Returns: number
+      }
+      _pct_txt: { Args: { n: number }; Returns: string }
       admin_broadcast_chat_message: {
         Args: {
           _audio_duration_seconds?: number
@@ -2260,10 +2309,25 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_preview_beat_credit_terms: {
+        Args: { _contributors: Json; _production_credit: string }
+        Returns: string
+      }
+      admin_save_beat_credits: {
+        Args: {
+          _admin_notes: string
+          _beat_id: string
+          _contributors: Json
+          _expected_updated_at: string
+          _production_credit: string
+        }
+        Returns: string
+      }
       beat_audio_access_level: {
         Args: { _object_name: string }
         Returns: string
       }
+      beat_credit_snapshot: { Args: { _beat_id: string }; Returns: Json }
       capture_funnel_lead: {
         Args: { _email: string; _ip?: string; _slug: string; _ua?: string }
         Returns: Json
@@ -2299,6 +2363,11 @@ export type Database = {
         Returns: Json
       }
       ensure_chat_thread: { Args: never; Returns: string }
+      format_beat_credit_terms: {
+        Args: { _contributors: Json; _production_credit: string }
+        Returns: string
+      }
+      get_beat_credit_terms: { Args: { _beat_id: string }; Returns: string }
       get_beat_offer: {
         Args: { _token: string }
         Returns: {
@@ -2425,6 +2494,10 @@ export type Database = {
       }
       record_beat_play: {
         Args: { _beat_id: string; _session_key?: string }
+        Returns: undefined
+      }
+      validate_beat_credit_contributors: {
+        Args: { _c: Json }
         Returns: undefined
       }
     }
