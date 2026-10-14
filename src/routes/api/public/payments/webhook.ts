@@ -1,3 +1,4 @@
+import type { CreditSnapshot } from "@/lib/beat-credits";
 import { createFileRoute } from "@tanstack/react-router";
 import type Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
@@ -247,8 +248,23 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                   const { queueBuyerPurchaseEmail, queueAdminSaleEmail } = await import(
                     "@/lib/beat-landing-email.server"
                   );
-                  if (buyerEmail) {
+                  if (buyerEmail && beatId) {
+                    const { TIER_EMAIL, agreementCode } = await import("@/lib/beat-landing-email.server");
+                    const { error: licenseError } = await admin.from("purchase_licenses" as any).upsert({
+                      agreement_code: agreementCode(session.id), email: buyerEmail,
+                      buyer_name: session.customer_details?.name ?? null, beat_id: beatId, beat_title: beatTitle,
+                      license_tier: "unlimited", license_label: TIER_EMAIL.unlimited.label,
+                      rights_text: TIER_EMAIL.unlimited.rights, amount_cents: amount,
+                      stripe_session_id: session.id, payment_environment: env,
+                    }, { onConflict: "stripe_session_id,beat_id", ignoreDuplicates: true });
+                    if (licenseError) throw licenseError;
+                    const { data: license, error: loadError } = await admin.from("purchase_licenses" as any)
+                      .select("credit_snapshot,short_code,agreement_code").eq("stripe_session_id", session.id).eq("beat_id", beatId).single();
+                    if (loadError || !license) throw loadError || new Error("License snapshot unavailable");
                     await queueBuyerPurchaseEmail({
+                      creditSnapshot: (license as any).credit_snapshot,
+                      agreementCode: (license as any).agreement_code,
+                      downloadPageUrl: `https://mybeatcatalog.com/d/${(license as any).short_code}`,
                       to: buyerEmail,
                       beatTitle,
                       downloadUrl,
@@ -375,8 +391,9 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                       const code = agreementCode(licSession);
                       let downloadToken: string | null = null;
                       let shortCode: string | null = null;
+                      let creditSnapshot: CreditSnapshot | null = null;
                       try {
-                        await admin.from("purchase_licenses" as any).upsert({
+                        const { error: licenseError } = await admin.from("purchase_licenses" as any).upsert({
                           agreement_code: code,
                           email: buyerEmail,
                           buyer_name: session.customer_details?.name ?? null,
@@ -389,20 +406,25 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                           stripe_session_id: session.id,
                           payment_environment: env,
                         } as any, { onConflict: "stripe_session_id,beat_id", ignoreDuplicates: true });
-                        const { data: licRow } = await admin
+                        if (licenseError) throw licenseError;
+                        const { data: licRow, error: loadError } = await admin
                           .from("purchase_licenses" as any)
-                          .select("download_token,short_code")
+                          .select("download_token,short_code,credit_snapshot")
                           .eq("stripe_session_id", session.id)
                           .eq("beat_id", beatId)
                           .maybeSingle();
+                        if (loadError || !licRow) throw loadError || new Error("License snapshot unavailable");
                         downloadToken = (licRow as any)?.download_token ?? null;
                         shortCode = (licRow as any)?.short_code ?? null;
+                        creditSnapshot = (licRow as any)?.credit_snapshot ?? null;
                       } catch (err) {
                         console.error("[webhook] license record failed", err);
                       }
                       try {
+                        if (!shortCode && !downloadToken) throw new Error("Cannot send an agreement without its saved license");
                         await queueBuyerPurchaseEmail({
                           agreementCode: code,
+                          creditSnapshot,
                           stemsUrl: beat?.stems_url ?? null,
                           to: buyerEmail,
                           beatTitle,

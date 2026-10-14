@@ -17,7 +17,7 @@ export const requestMyLicenses = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: rows } = await (supabaseAdmin as any)
         .from("purchase_licenses")
-        .select("agreement_code,beat_title,license_label,rights_text,amount_cents,created_at,buyer_name")
+        .select("agreement_code,beat_title,license_label,rights_text,amount_cents,created_at,buyer_name,credit_snapshot")
         .ilike("email", email)
         .order("created_at", { ascending: false })
         .limit(100);

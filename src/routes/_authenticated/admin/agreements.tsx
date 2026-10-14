@@ -1,3 +1,4 @@
+import { purchaseAgreementText } from "@/lib/beat-credits";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 import { useEffect, useState } from "react";
@@ -212,12 +213,12 @@ function PurchasedLicenses({ onCustomer }: { onCustomer: (email: string) => void
       user_email: r.email,
       beat_title: r.beat_title,
       beat_id: r.beat_id ?? "",
-      producer_name: "KRAZYJAYDOTCOM",
+      producer_name: r.credit_snapshot?.production_credit || "KRAZYJAYDOTCOM",
       license_type: r.license_label,
       credits_used: 0,
       file_type: r.license_tier === "nonexclusive" ? "MP3" : r.license_tier === "trackout" ? "WAV + MP3 + STEMs" : "WAV + MP3",
       accepted_at: r.created_at,
-      agreement_text: `${r.rights_text}\n\nProducer credits (required): Writer — Jason A. Spencer (IPI 516703075) 50%; Publishing — March 26th Publishing (IPI 1213085595) 50%; PRO — ASCAP. Failure to register these splits voids the rights granted.\n\nRestrictions: Licensee may not resell, redistribute, sublicense, or claim sole ownership of the underlying beat. MYBEATCATALOG retains ownership of the composition and production.\n\nAmount paid: $${(r.amount_cents / 100).toFixed(2)}${r.payment_environment === "sandbox" ? " (test payment)" : ""}`,
+      agreement_text: purchaseAgreementText(r.rights_text, r.amount_cents, r.credit_snapshot, r.payment_environment === "sandbox"),
     };
     generateAgreementPdf(a).save(`MBC_${r.agreement_code}.pdf`);
   };

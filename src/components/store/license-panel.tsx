@@ -1,3 +1,4 @@
+import { BeatCreditTerms } from "@/components/store/beat-credit-terms";
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, FileText, Plus, ShieldCheck } from "lucide-react";
 import { formatPrice } from "@/components/store/player-provider";
@@ -10,7 +11,7 @@ import { trackPurchaseFunnel } from "@/lib/purchase-attribution";
 
 
 /** The exact license terms already used on the public beat pages. */
-export function LicenseTerms() {
+export function LicenseTerms({ beatId }: { beatId: string }) {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
@@ -26,6 +27,7 @@ export function LicenseTerms() {
         <strong className="text-foreground">100% of the master recording royalties</strong> for the
         song they create.
       </p>
+      <BeatCreditTerms beatId={beatId}>
       <div className="rounded-xl border border-primary/25 bg-primary/[0.07] p-4">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-primary">
           Writer &amp; Publishing Credits (Required)
@@ -63,6 +65,7 @@ export function LicenseTerms() {
         MYBEATCATALOG retains ownership of the underlying composition and production. A dated,
         uniquely numbered copy of this agreement is issued at the time of purchase.
       </p>
+      </BeatCreditTerms>
     </div>
   );
 }
@@ -220,7 +223,7 @@ export function LicenseCheckout({
       <button type="button" onClick={() => setTermsOpen((v) => !v)} className="my-2 min-h-8 text-left text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground" aria-expanded={termsOpen}>
         {termsOpen ? "Hide full license terms" : "Read full license terms"}
       </button>
-      {termsOpen ? <LicenseTerms /> : null}
+      {termsOpen ? <LicenseTerms beatId={beat.id} /> : null}
       </div>
 
       {!inquiryOnly ? (

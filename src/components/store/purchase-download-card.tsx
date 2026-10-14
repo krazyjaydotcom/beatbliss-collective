@@ -1,3 +1,4 @@
+import { purchaseAgreementText } from "@/lib/beat-credits";
 import { Download as DownloadIcon, FileText, Music } from "lucide-react";
 import { generateAgreementPdf, type AgreementData } from "@/lib/agreement-pdf";
 import type { PurchaseDownload } from "@/lib/download-link.functions";
@@ -12,12 +13,12 @@ export function PurchaseDownloadCard({ data }: { data: PurchaseDownload }) {
       user_email: data.email,
       beat_title: data.beatTitle,
       beat_id: "",
-      producer_name: "KRAZYJAYDOTCOM",
+      producer_name: data.creditSnapshot?.production_credit || "KRAZYJAYDOTCOM",
       license_type: data.licenseLabel,
       credits_used: 0,
       file_type: data.licenseTier === "nonexclusive" ? "MP3" : data.licenseTier === "trackout" ? "WAV + MP3 + STEMs" : "WAV + MP3",
       accepted_at: data.createdAt,
-      agreement_text: `${data.rightsText}\n\nProducer credits (required): Writer — Jason A. Spencer (IPI 516703075) 50%; Publishing — March 26th Publishing (IPI 1213085595) 50%; PRO — ASCAP. Failure to register these splits voids the rights granted.\n\nRestrictions: Licensee may not resell, redistribute, sublicense, or claim sole ownership of the underlying beat. MYBEATCATALOG retains ownership of the composition and production.\n\nAmount paid: $${(data.amountCents / 100).toFixed(2)}`,
+      agreement_text: purchaseAgreementText(data.rightsText, data.amountCents, data.creditSnapshot),
     };
     generateAgreementPdf(a).save(`MBC_${data.agreementCode}.pdf`);
   };

@@ -1,3 +1,4 @@
+import type { CreditSnapshot } from "@/lib/beat-credits";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -9,6 +10,7 @@ export type PurchaseDownload = {
   licenseTier: string;
   licenseLabel: string;
   rightsText: string;
+  creditSnapshot: CreditSnapshot | null;
   amountCents: number;
   createdAt: string;
   coverUrl: string | null;
@@ -28,7 +30,7 @@ async function loadPurchase(
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: row, error } = await (supabaseAdmin as any)
     .from("purchase_licenses")
-    .select("agreement_code,beat_title,buyer_name,email,license_tier,license_label,rights_text,amount_cents,created_at,beat_id")
+    .select("agreement_code,beat_title,buyer_name,email,license_tier,license_label,rights_text,amount_cents,created_at,beat_id,credit_snapshot")
     .eq(column, value)
     .maybeSingle();
   if (error) throw new Error("This purchase could not be loaded.");
@@ -53,6 +55,7 @@ async function loadPurchase(
     licenseTier: tier,
     licenseLabel: row.license_label,
     rightsText: row.rights_text,
+    creditSnapshot: row.credit_snapshot ?? null,
     amountCents: row.amount_cents,
     createdAt: row.created_at,
     coverUrl: beat?.cover_url ?? null,

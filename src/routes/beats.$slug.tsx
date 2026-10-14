@@ -1,3 +1,4 @@
+import { BeatCreditTerms } from "@/components/store/beat-credit-terms";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -301,7 +302,7 @@ function BeatLandingPage() {
         />
       )}
       {inquiryOpen && <InquiryModal beatId={beat!.id} beatTitle={beat!.title} onClose={() => setInquiryOpen(false)} />}
-      {licenseOpen && <LicenseTermsModal onClose={() => setLicenseOpen(false)} />}
+      {licenseOpen && <LicenseTermsModal beatId={beat!.id} onClose={() => setLicenseOpen(false)} />}
       <StickyBottomPlayer
         src={beat!.audio_url || beat!.audio_url_tagged}
         title={beat!.title}
@@ -404,7 +405,7 @@ function ModalShell({
   );
 }
 
-function LicenseTermsModal({ onClose }: { onClose: () => void }) {
+function LicenseTermsModal({ onClose, beatId }: { onClose: () => void; beatId: string }) {
   return (
     <ModalShell onClose={onClose} maxWidth="max-w-2xl">
       <div className="flex items-center justify-between">
@@ -426,6 +427,7 @@ function LicenseTermsModal({ onClose }: { onClose: () => void }) {
           song they create.
         </p>
 
+        <BeatCreditTerms beatId={beatId}>
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
           <h4 className="text-xs font-bold tracking-wider text-blue-700 uppercase">
             Writer &amp; Publishing Credits (Required)
@@ -461,6 +463,7 @@ function LicenseTermsModal({ onClose }: { onClose: () => void }) {
           MYBEATCATALOG retains ownership of the underlying composition and production. A dated, uniquely numbered copy
           of this agreement is issued at the time of purchase.
         </p>
+        </BeatCreditTerms>
       </div>
       <div className="mt-5 flex justify-end">
         <button

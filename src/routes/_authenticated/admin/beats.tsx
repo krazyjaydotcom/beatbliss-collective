@@ -1,3 +1,4 @@
+import { BeatCreditsEditor } from "@/components/admin/beat-credits-editor";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1047,7 +1048,7 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
 
   return (
     <Dialog open={!!beat} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Pencil className="h-5 w-5" /> Edit beat information</DialogTitle>
         </DialogHeader>
@@ -1085,6 +1086,8 @@ function EditBeatDialog({ beat, onClose, onDone }: { beat: any | null; onClose: 
             </label>
           </div>
         </div>
+
+        {beat && <BeatCreditsEditor key={beat.id} beatId={beat.id} />}
 
         <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-4">
           <div className="flex items-start justify-between gap-3">
