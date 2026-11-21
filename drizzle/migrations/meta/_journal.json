@@ -50,6 +50,20 @@
       "when": 1795220588227,
       "tag": "0006_restrict_gallery_and_attachment_storage_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795228064035,
+      "tag": "0007_retryable_beat_checkout_fulfillment",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795228370299,
+      "tag": "0008_correct_checkout_item_lock_expression",
+      "breakpoints": true
     }
   ]
 }

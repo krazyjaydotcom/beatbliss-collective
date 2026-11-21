@@ -1,4 +1,3 @@
-import type { CreditSnapshot } from "@/lib/beat-credits";
 import { createFileRoute } from "@tanstack/react-router";
 import type Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
@@ -10,6 +9,7 @@ import {
 } from "@/lib/stripe.server";
 import type { Database } from "@/integrations/supabase/types";
 import { issueInviteAndEmail } from "@/lib/invites.server";
+import { isFulfillablePayment } from "@/lib/checkout-pricing";
 
 function getAdmin() {
   const url = process.env.SUPABASE_URL!;
@@ -172,315 +172,15 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
 
         try {
           switch (event.type) {
-            case "checkout.session.completed": {
+            case "checkout.session.completed":
+            case "checkout.session.async_payment_succeeded": {
               const session = event.data.object as Stripe.Checkout.Session;
+              if (!isFulfillablePayment(session.payment_status)) break;
               await markBeatClaimPurchased(session.metadata?.beatClaimToken, session.id);
 
-              // NEW: beat-landing lease purchase delivery. Isolated from membership flow.
-              if (session.metadata?.source === "beat_landing") {
-                try {
-                  const admin = getAdmin();
-                  const beatId = session.metadata?.beat_id;
-                  const beatSlug = session.metadata?.beat_slug || null;
-                  const buyerEmail =
-                    session.customer_details?.email ||
-                    session.customer_email ||
-                    session.metadata?.buyer_email ||
-                    null;
-                  const amount = session.amount_total ?? 0;
-
-                  let beatTitle = session.metadata?.beat_title || "Your beat";
-                  let downloadUrl: string | null = null;
-                  if (beatId) {
-                    const { data: b } = await admin
-                      .from("beats")
-                      .select("title,audio_url,audio_url_tagged,landing_slug")
-                      .eq("id", beatId)
-                      .maybeSingle();
-                    if (b) {
-                      beatTitle = (b as any).title ?? beatTitle;
-                      downloadUrl = (b as any).audio_url ?? (b as any).audio_url_tagged ?? null;
-                    }
-                  }
-
-                  // Mark the recorded lease order as actually paid so the admin
-                  // Sales dashboard can separate real sales from abandoned checkouts.
-                  try {
-                    const { data: existingPaid } = await admin
-                      .from("lease_orders")
-                      .select("id")
-                      .eq("stripe_session_id", session.id)
-                      .limit(1);
-                    if (!existingPaid || existingPaid.length === 0) {
-                      let matched = false;
-                      if (buyerEmail && beatId) {
-                        const { data: pending } = await admin
-                          .from("lease_orders")
-                          .select("id")
-                          .eq("email", buyerEmail.toLowerCase())
-                          .eq("beat_id", beatId)
-                          .is("stripe_session_id", null)
-                          .order("created_at", { ascending: false })
-                          .limit(1);
-                        if (pending && pending.length > 0) {
-                          await admin
-                            .from("lease_orders")
-                            .update({ stripe_session_id: session.id, amount_cents: amount, license_tier: "unlimited" })
-                            .eq("id", (pending[0] as any).id);
-                          matched = true;
-                        }
-                      }
-                      if (!matched && buyerEmail) {
-                        await admin.from("lease_orders").insert({
-                          email: buyerEmail.toLowerCase(),
-                          beat_id: beatId ?? null,
-                          amount_cents: amount,
-                          used_first_time_discount: false,
-                          stripe_session_id: session.id,
-                          license_tier: "unlimited",
-                        });
-                      }
-                    }
-                  } catch (err) {
-                    console.error("[webhook] lease_orders reconcile failed", err);
-                  }
-
-                  const { queueBuyerPurchaseEmail, queueAdminSaleEmail } = await import(
-                    "@/lib/beat-landing-email.server"
-                  );
-                  if (buyerEmail && beatId) {
-                    const { TIER_EMAIL, agreementCode } = await import("@/lib/beat-landing-email.server");
-                    const { error: licenseError } = await admin.from("purchase_licenses" as any).upsert({
-                      agreement_code: agreementCode(session.id), email: buyerEmail,
-                      buyer_name: session.customer_details?.name ?? null, beat_id: beatId, beat_title: beatTitle,
-                      license_tier: "unlimited", license_label: TIER_EMAIL.unlimited.label,
-                      rights_text: TIER_EMAIL.unlimited.rights, amount_cents: amount,
-                      stripe_session_id: session.id, payment_environment: env,
-                    }, { onConflict: "stripe_session_id,beat_id", ignoreDuplicates: true });
-                    if (licenseError) throw licenseError;
-                    const { data: license, error: loadError } = await admin.from("purchase_licenses" as any)
-                      .select("credit_snapshot,short_code,agreement_code").eq("stripe_session_id", session.id).eq("beat_id", beatId).single();
-                    if (loadError || !license) throw loadError || new Error("License snapshot unavailable");
-                    await queueBuyerPurchaseEmail({
-                      creditSnapshot: (license as any).credit_snapshot,
-                      agreementCode: (license as any).agreement_code,
-                      downloadPageUrl: `https://mybeatcatalog.com/d/${(license as any).short_code}`,
-                      to: buyerEmail,
-                      beatTitle,
-                      downloadUrl,
-                      amountCents: amount,
-                      sessionId: session.id,
-                      beatSlug,
-                    });
-                  } else {
-                    console.warn("[webhook] beat_landing session missing buyer email", session.id);
-                  }
-                  await queueAdminSaleEmail({
-                    beatTitle,
-                    buyerEmail: buyerEmail || "(unknown)",
-                    amountCents: amount,
-                    sessionId: session.id,
-                    beatSlug,
-                  });
-                } catch (err) {
-                  // Never fail the webhook on email issues — Stripe would retry forever.
-                  console.error("[webhook] beat_landing delivery emails failed", err);
-                }
-                break;
-              }
-
-              // Multi-beat cart purchase: reconcile one lease order per beat and
-              // deliver every beat in the same way a single purchase is delivered.
-              if (session.metadata?.source === "beat_cart") {
-                // License-limited discount codes are applied by us (not Stripe),
-                // so count the use on the promotion code ourselves.
-                const promoId = session.metadata?.discount_promo_id;
-                if (promoId && /^promo_[A-Za-z0-9]+$/.test(promoId)) {
-                  try {
-                    const s = createStripeClient(env);
-                    const p: any = await s.promotionCodes.retrieve(promoId);
-                    const used = Number(p.metadata?.tier_redemptions ?? 0) + 1;
-                    await s.promotionCodes.update(promoId, {
-                      metadata: { ...(p.metadata ?? {}), tier_redemptions: String(used) },
-                      ...(p.max_redemptions && used >= p.max_redemptions ? { active: false } : {}),
-                    });
-                  } catch (err) {
-                    console.error("[webhook] discount redemption count failed", err);
-                  }
-                }
-                try {
-                  const admin = getAdmin();
-                  const buyerEmail = (
-                    session.customer_details?.email ||
-                    session.customer_email ||
-                    session.metadata?.buyer_email ||
-                    ""
-                  ).toLowerCase();
-                  const beatIds = (session.metadata?.beat_ids ?? "")
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean);
-                  const tiers = (session.metadata?.tiers ?? "").split(",").map((s) => s.trim());
-                  const amounts = (session.metadata?.amounts ?? "").split(",").map((s) => Number(s) || 0);
-
-                  const { data: alreadyHandled } = await admin
-                    .from("lease_orders")
-                    .select("id")
-                    .eq("stripe_session_id", session.id)
-                    .limit(1);
-                  if (alreadyHandled && alreadyHandled.length > 0) {
-                    if (session.payment_status === "paid") {
-                      await admin.from("purchase_funnel_events").upsert(
-                        beatIds.map((beatId, i) => ({ event_type: "purchase_confirmed", beat_id: beatId, license_tier: tiers[i] || null, utm_source: session.metadata?.utm_source || null, utm_medium: session.metadata?.utm_medium || null, utm_campaign: session.metadata?.utm_campaign || null, utm_content: session.metadata?.utm_content || null, session_key: session.metadata?.attribution_session || null, stripe_session_id: session.id, amount_cents: amounts[i] ?? 0, payment_environment: env })),
-                        { onConflict: "payment_environment,stripe_session_id,beat_id", ignoreDuplicates: true },
-                      );
-                    }
-                    break;
-                  }
-
-                  const { data: beats } = await admin
-                    .from("beats")
-                    .select("id,title,audio_url,audio_url_tagged,landing_slug")
-                    .in("id", beatIds);
-                  const byId = new Map(
-                    ((beats ?? []) as any[]).map((b) => [b.id as string, b]),
-                  );
-
-                  const { queueBuyerPurchaseEmail, queueAdminSaleEmail } = await import(
-                    "@/lib/beat-landing-email.server"
-                  );
-
-                  for (let i = 0; i < beatIds.length; i += 1) {
-                    const beatId = beatIds[i]!;
-                    const beat = byId.get(beatId) as any;
-                    const beatTitle = beat?.title ?? "Your beat";
-                    const licenseType = tiers[i] ?? "lease";
-
-                    try {
-                      const { data: pending } = await admin
-                        .from("lease_orders")
-                        .select("id")
-                        .eq("email", buyerEmail)
-                        .eq("beat_id", beatId)
-                        .is("stripe_session_id", null)
-                        .order("created_at", { ascending: false })
-                        .limit(1);
-                      if (pending && pending.length > 0) {
-                        await admin
-                          .from("lease_orders")
-                           .update({ stripe_session_id: session.id, license_tier: licenseType, amount_cents: amounts[i] ?? 0 })
-                          .eq("id", (pending[0] as any).id);
-                      } else if (buyerEmail) {
-                        await admin.from("lease_orders").insert({
-                          email: buyerEmail,
-                          beat_id: beatId,
-                           amount_cents: amounts[i] ?? 0,
-                          used_first_time_discount: false,
-                          stripe_session_id: session.id,
-                          license_tier: licenseType,
-                        });
-                      }
-                    } catch (err) {
-                      console.error("[webhook] beat_cart order reconcile failed", err);
-                    }
-
-                    if (buyerEmail) {
-                      const tierKey = (["nonexclusive", "unlimited", "trackout"] as const).find((t) => t === licenseType) ?? "unlimited";
-                      const { TIER_EMAIL, agreementCode } = await import("@/lib/beat-landing-email.server");
-                      const licSession = `${session.id}:${beatId}`;
-                      const code = agreementCode(licSession);
-                      let downloadToken: string | null = null;
-                      let shortCode: string | null = null;
-                      let creditSnapshot: CreditSnapshot | null = null;
-                      try {
-                        const { error: licenseError } = await admin.from("purchase_licenses" as any).upsert({
-                          agreement_code: code,
-                          email: buyerEmail,
-                          buyer_name: session.customer_details?.name ?? null,
-                          beat_id: beatId,
-                          beat_title: beatTitle,
-                          license_tier: tierKey,
-                          license_label: TIER_EMAIL[tierKey].label,
-                          rights_text: TIER_EMAIL[tierKey].rights,
-                          amount_cents: amounts[i] ?? 0,
-                          stripe_session_id: session.id,
-                          payment_environment: env,
-                        } as any, { onConflict: "stripe_session_id,beat_id", ignoreDuplicates: true });
-                        if (licenseError) throw licenseError;
-                        const { data: licRow, error: loadError } = await admin
-                          .from("purchase_licenses" as any)
-                          .select("download_token,short_code,credit_snapshot")
-                          .eq("stripe_session_id", session.id)
-                          .eq("beat_id", beatId)
-                          .maybeSingle();
-                        if (loadError || !licRow) throw loadError || new Error("License snapshot unavailable");
-                        downloadToken = (licRow as any)?.download_token ?? null;
-                        shortCode = (licRow as any)?.short_code ?? null;
-                        creditSnapshot = (licRow as any)?.credit_snapshot ?? null;
-                      } catch (err) {
-                        console.error("[webhook] license record failed", err);
-                      }
-                      try {
-                        if (!shortCode && !downloadToken) throw new Error("Cannot send an agreement without its saved license");
-                        await queueBuyerPurchaseEmail({
-                          agreementCode: code,
-                          creditSnapshot,
-                          stemsUrl: beat?.stems_url ?? null,
-                          to: buyerEmail,
-                          beatTitle,
-                          downloadUrl: beat?.audio_url ?? null,
-                          wavUrl: beat?.audio_url_wav ?? null,
-                          licenseTier: tierKey,
-                          amountCents: amounts[i] ?? 0,
-                          sessionId: `${session.id}:${beatId}`,
-                          beatSlug: beat?.landing_slug ?? null,
-                          downloadPageUrl: shortCode
-                            ? `https://mybeatcatalog.com/d/${shortCode}`
-                            : downloadToken
-                              ? `https://mybeatcatalog.com/download/${downloadToken}`
-                              : null,
-                        });
-                      } catch (err) {
-                        console.error("[webhook] buyer delivery email failed", err);
-                      }
-                    }
-                  }
-
-                  const tierNames: Record<string, string> = { nonexclusive: "Non-Exclusive MP3", unlimited: "Unlimited License", trackout: "Unlimited w/ STEMs" };
-                  const titles = beatIds.map((id) => ((byId.get(id) as any)?.title as string | undefined) ?? "Beat");
-                  const firstSlug = beatIds.length === 1 ? (((byId.get(beatIds[0]!) as any)?.landing_slug as string | null) ?? null) : null;
-                  await queueAdminSaleEmail({
-                    beatTitle: titles.join(", "),
-                    licenseLabel: [...new Set(tiers.map((t) => tierNames[t] ?? t))].join(" + ") || "Beat license",
-                    buyerEmail: buyerEmail || "(unknown)",
-                    amountCents: session.amount_total ?? 0,
-                    sessionId: session.id,
-                    beatSlug: firstSlug,
-                  });
-
-                  if (session.payment_status === "paid") try {
-                    await admin.from("purchase_funnel_events").upsert(
-                      beatIds.map((beatId, i) => ({
-                        event_type: "purchase_confirmed",
-                        beat_id: beatId,
-                        license_tier: tiers[i] || null,
-                        utm_source: session.metadata?.utm_source || null,
-                        utm_medium: session.metadata?.utm_medium || null,
-                        utm_campaign: session.metadata?.utm_campaign || null,
-                        utm_content: session.metadata?.utm_content || null,
-                        session_key: session.metadata?.attribution_session || null,
-                        stripe_session_id: session.id,
-                        amount_cents: amounts[i] ?? 0,
-                        payment_environment: env,
-                      })),
-                      { onConflict: "payment_environment,stripe_session_id,beat_id", ignoreDuplicates: true },
-                    );
-                  } catch (err) {
-                    console.error("[webhook] paid funnel event failed", err);
-                  }
-                } catch (err) {
-                  console.error("[webhook] beat_cart handling failed", err);
-                }
+              if (session.metadata?.source === "beat_cart" || session.metadata?.source === "beat_landing") {
+                const { fulfillBeatCheckout } = await import("@/lib/beat-checkout-fulfillment.server");
+                await fulfillBeatCheckout(session, stripe, getAdmin(), env);
                 break;
               }
 
@@ -545,9 +245,9 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
               break;
           }
         } catch (err) {
-          // Log but return 200 so Stripe doesn't retry forever for otherwise-valid events.
+          // Failed purchase delivery must remain retryable by Stripe.
           console.error("[webhook] handler error", err);
-          return new Response("ok", { status: 200 });
+          return new Response("Retry fulfillment", { status: 500 });
         }
 
 

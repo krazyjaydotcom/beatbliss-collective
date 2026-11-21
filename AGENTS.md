@@ -8,3 +8,4 @@
 - Bird sends use a unique logged attempt ID and provider idempotency; unknown outcomes must not be automatically retried. Accepted is not delivered.
 - Catalog search ranks normalized live input in a browser-safe helper after filters and sort, preserving sort within title/metadata tiers; URL synchronization must not delay results.
 - Direct storage reads for home_gallery and beat-attachments are admin-only; retain signed gallery URLs and the existing attachment delivery route so public pages do not need unrestricted storage access.
+- Beat checkout fulfillment uses Stripe settled line totals, atomic item persistence, durable session leases and per-session promo redemptions; retry failed delivery with the same provider idempotency key to preserve money, credits and licenses without duplicate sends.

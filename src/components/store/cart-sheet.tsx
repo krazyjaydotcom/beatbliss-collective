@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, ShoppingBag, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ShoppingBag, Trash2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/store/cart-provider";
 import { formatPrice } from "@/components/store/player-provider";
 import { TIER_META } from "@/lib/licensing";
@@ -30,8 +31,10 @@ export function CartButton() {
 export function CartSheet() {
   const cart = useCart();
   const [paying, setPaying] = useState(false);
+  const [completed, setCompleted] = useState(false);
   const closeCart = () => {
     setPaying(false);
+    setCompleted(false);
     cart.close();
   };
 
@@ -79,10 +82,17 @@ export function CartSheet() {
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          {paying && cart.items.length > 0 ? (
+          {completed ? (
+            <div className="space-y-3 border border-primary/40 p-5 text-center">
+              <CheckCircle2 className="mx-auto h-7 w-7 text-primary" aria-hidden />
+              <p className="font-semibold">Order complete</p>
+              <p className="text-sm text-muted-foreground">Your download links and personalized license agreements are on their way by email.</p>
+              <Button variant="outline" onClick={closeCart}><ArrowLeft /> Continue shopping</Button>
+            </div>
+          ) : paying && cart.items.length > 0 ? (
             <InlineCheckout
               items={cart.items.map((i) => ({ beatId: i.beatId, tier: i.tier }))}
-              onComplete={cart.clear}
+              onComplete={() => { setCompleted(true); cart.clear(); }}
             />
           ) : cart.items.length === 0 ? (
             <p className="text-sm text-muted-foreground">

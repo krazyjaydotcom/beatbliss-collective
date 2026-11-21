@@ -358,6 +358,33 @@ export type Database = {
         }
         Relationships: []
       }
+      beat_checkout_fulfillments: {
+        Row: {
+          environment: string
+          lease_token: string | null
+          lease_until: string | null
+          session_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          environment: string
+          lease_token?: string | null
+          lease_until?: string | null
+          session_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          environment?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          session_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       beat_claims: {
         Row: {
           beat_id: string
@@ -724,6 +751,53 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      beat_promo_redemptions: {
+        Row: {
+          created_at: string
+          environment: string
+          promo_id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          environment: string
+          promo_id: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          promo_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_promo_redemptions_environment_promo_id_fkey"
+            columns: ["environment", "promo_id"]
+            isOneToOne: false
+            referencedRelation: "beat_promo_usage"
+            referencedColumns: ["environment", "promo_id"]
+          },
+        ]
+      }
+      beat_promo_usage: {
+        Row: {
+          environment: string
+          legacy_count: number
+          promo_id: string
+        }
+        Insert: {
+          environment: string
+          legacy_count?: number
+          promo_id: string
+        }
+        Update: {
+          environment?: string
+          legacy_count?: number
+          promo_id?: string
+        }
+        Relationships: []
       }
       beat_requests: {
         Row: {
@@ -2328,6 +2402,14 @@ export type Database = {
         Returns: string
       }
       beat_credit_snapshot: { Args: { _beat_id: string }; Returns: Json }
+      beat_promo_redemption_count: {
+        Args: {
+          p_environment: string
+          p_legacy_count?: number
+          p_promo_id: string
+        }
+        Returns: number
+      }
       capture_funnel_lead: {
         Args: { _email: string; _ip?: string; _slug: string; _ua?: string }
         Returns: Json
@@ -2358,6 +2440,10 @@ export type Database = {
               token: string
             }[]
           }
+      claim_beat_checkout: {
+        Args: { p_environment: string; p_session_id: string; p_token: string }
+        Returns: string
+      }
       claim_invite: {
         Args: { _token: string; _user_id: string }
         Returns: Json
@@ -2492,9 +2578,22 @@ export type Database = {
         Args: { _ad_id: string; _event: string }
         Returns: undefined
       }
+      record_beat_checkout_item: {
+        Args: { p_funnel: Json; p_license: Json }
+        Returns: Json
+      }
       record_beat_play: {
         Args: { _beat_id: string; _session_key?: string }
         Returns: undefined
+      }
+      record_beat_promo_redemption: {
+        Args: {
+          p_environment: string
+          p_legacy_count?: number
+          p_promo_id: string
+          p_session_id: string
+        }
+        Returns: number
       }
       validate_beat_credit_contributors: {
         Args: { _c: Json }

@@ -35,21 +35,27 @@ export const listDiscountCodes = createServerFn({ method: "POST" })
     const { createStripeClient } = await import("@/lib/stripe.server");
     const stripe = createStripeClient(data.environment);
     const res = await stripe.promotionCodes.list({ limit: 100, expand: ["data.promotion.coupon"] } as any);
-    return res.data.map((p: any) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return Promise.all(res.data.map(async (p: any) => {
       const coupon = p.coupon ?? p.promotion?.coupon ?? {};
+      const { data: count, error } = await supabaseAdmin.rpc("beat_promo_redemption_count", {
+        p_environment: data.environment, p_promo_id: p.id,
+        p_legacy_count: Number(p.metadata?.tier_redemptions ?? coupon.metadata?.tier_redemptions ?? 0),
+      });
+      if (error) throw error;
       return {
         id: p.id,
         code: p.code,
         active: p.active,
         percentOff: coupon.percent_off ?? null,
         amountOffCents: coupon.amount_off ?? null,
-        timesRedeemed: (p.times_redeemed ?? 0) + Number(p.metadata?.tier_redemptions ?? coupon.metadata?.tier_redemptions ?? 0),
+        timesRedeemed: (p.times_redeemed ?? 0) + Number(count),
         maxRedemptions: p.max_redemptions ?? null,
         expiresAt: p.expires_at ?? null,
         created: p.created,
         tiers: coupon.metadata?.tiers ? String(coupon.metadata.tiers).split(",") : null,
       };
-    });
+    }));
   });
 
 export const createDiscountCode = createServerFn({ method: "POST" })

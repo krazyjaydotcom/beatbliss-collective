@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { createStripeClient, type StripeEnv } from "@/lib/stripe.server";
+import { createStripeClient, getStripeErrorMessage, type StripeEnv } from "@/lib/stripe.server";
+import { discountEligibleAmounts } from "@/lib/checkout-pricing";
 import { DEFAULT_NONEXCLUSIVE_CENTS, DEFAULT_TRACKOUT_CENTS, TIER_META, type LicenseTier } from "@/lib/licensing";
 
 /**
@@ -67,6 +68,9 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       const sb = adminClient() as any;
       const email = data.email ? data.email.toLowerCase() : null;
       const ids = Array.from(new Set(data.items.map((i) => i.beatId)));
+      if (ids.length !== data.items.length) {
+        return { clientSecret: null, error: "Choose one license per beat before checkout." };
+      }
 
       const { data: rows } = await sb
         .from("beats")
@@ -80,7 +84,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       );
 
       const lineItems: any[] = [];
-      const amounts: number[] = [];
+      let amounts: number[] = [];
       const lineMeta: { beat: Record<string, any>; tier: LicenseTier }[] = [];
       const orders: { beat_id: string; amount_cents: number }[] = [];
 
@@ -103,6 +107,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       // license-limited codes are applied here, only to the matching items.
       let stripeDiscount: { promotion_code: string } | null = null;
       let restrictedPromoId: string | null = null;
+      let expectedFinalAmounts: number[] | null = null;
       let discountNote: string | null = null;
       if (data.discountCode) {
         try {
@@ -116,9 +121,17 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
           const tiers = coupon.metadata?.tiers ? String(coupon.metadata.tiers).split(",") : null;
           if (!tiers) {
             stripeDiscount = { promotion_code: promo.id };
+            // Intent metadata is an estimate for legacy reconciliation only;
+            // fulfillment always reads Stripe's final, settled line totals.
+            expectedFinalAmounts = discountEligibleAmounts(amounts, amounts.map((_, i) => i), coupon);
             discountNote = `${data.discountCode} applied to your whole order.`;
           } else {
-            const used = Number(promo.metadata?.tier_redemptions ?? 0);
+            const { data: usage, error: usageError } = await sb.rpc("beat_promo_redemption_count", {
+              p_environment: data.environment, p_promo_id: promo.id,
+              p_legacy_count: Number(promo.metadata?.tier_redemptions ?? 0),
+            });
+            if (usageError) throw usageError;
+            const used = Number(usage) + (promo.times_redeemed ?? 0);
             if (promo.max_redemptions && used >= promo.max_redemptions) {
               return { clientSecret: null, error: "That discount code has been used up." };
             }
@@ -127,16 +140,34 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
               const names = tiers.map((t) => TIER_META[t as LicenseTier]?.label ?? t).join(", ");
               return { clientSecret: null, error: `${data.discountCode} only works on ${names} licenses, and none are in your cart.` };
             }
-            const matchTotal = idx.reduce((n, i) => n + amounts[i], 0);
-            let remainingOff = coupon.amount_off ?? 0;
-            idx.forEach((i, k) => {
-              let off: number;
-              if (coupon.percent_off) off = Math.round((amounts[i] * coupon.percent_off) / 100);
-              else off = k === idx.length - 1 ? remainingOff : Math.round(((coupon.amount_off ?? 0) * amounts[i]) / matchTotal);
-              off = Math.min(off, amounts[i] - 50);
-              remainingOff -= off;
-              amounts[i] -= Math.max(0, off);
-            });
+            const matchTotal = idx.reduce((n, i) => n + (amounts[i] ?? 0), 0);
+            if (coupon.currency && coupon.currency !== "usd") {
+              return { clientSecret: null, error: "That discount code uses a different currency." };
+            }
+            if (promo.restrictions?.minimum_amount && matchTotal < promo.restrictions.minimum_amount) {
+              return { clientSecret: null, error: "Your eligible licenses don't meet this code's minimum purchase amount." };
+            }
+            if (promo.restrictions?.first_time_transaction) {
+              if (!email) return { clientSecret: null, error: "Enter your email before using a first-purchase discount." };
+              const { data: previous, error: previousError } = await sb.from("purchase_licenses")
+                .select("id").eq("email", email).eq("payment_environment", data.environment).limit(1);
+              if (previousError) throw previousError;
+              const customers = await stripe.customers.list({ email, limit: 100 });
+              if (previous?.length) return { clientSecret: null, error: "This code is only for first-time buyers." };
+              for (const customer of customers.data) {
+                const sessions = await stripe.checkout.sessions.list({ customer: customer.id, limit: 100 });
+                if (sessions.data.some((s) => s.status === "complete")) {
+                  return { clientSecret: null, error: "This code is only for first-time buyers." };
+                }
+              }
+            }
+            if (promo.customer) {
+              const customer = await stripe.customers.retrieve(typeof promo.customer === "string" ? promo.customer : promo.customer.id);
+              if (customer.deleted || !email || customer.email?.toLowerCase() !== email) {
+                return { clientSecret: null, error: "That discount code is reserved for a different buyer." };
+              }
+            }
+            amounts = discountEligibleAmounts(amounts, idx, coupon);
             restrictedPromoId = promo.id;
             discountNote = `${data.discountCode} applied to ${idx.length} matching license${idx.length > 1 ? "s" : ""}.`;
           }
@@ -152,12 +183,13 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
             unit_amount: amounts[i],
             product_data: {
               name: `${beat.title} — ${TIER_META[tier].label} License`,
+              metadata: { beat_id: beat.id, license_tier: tier },
               ...(beat.cover_url ? { images: [beat.cover_url] } : {}),
             },
           },
           quantity: 1,
         });
-        orders.push({ beat_id: beat.id, amount_cents: amounts[i] });
+        orders.push({ beat_id: beat.id, amount_cents: expectedFinalAmounts?.[i] ?? amounts[i] });
       });
 
       // Record intent (best-effort) only when we already know the buyer's
@@ -182,6 +214,9 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
         mode: "payment" as const,
         line_items: lineItems,
         ui_mode: "embedded_page" as const,
+        // Payment-mode $0 sessions skip card collection automatically. Stripe
+        // only accepts payment_method_collection for recurring checkout.
+        name_collection: { individual: { enabled: true, optional: false } },
         ...(stripeDiscount ? { discounts: [stripeDiscount] } : { allow_promotion_codes: true }),
         ...(email ? { customer_email: email } : {}),
         payment_intent_data: {
@@ -189,7 +224,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
         },
         metadata: {
           source: "beat_cart",
-          ...(restrictedPromoId ? { discount_promo_id: restrictedPromoId, discount_code: data.discountCode! } : {}),
+          ...(restrictedPromoId ? { discount_promo_id: restrictedPromoId, discount_code: data.discountCode ?? "" } : {}),
           ...(email ? { buyer_email: email } : {}),
           beat_ids: data.items.map((i) => i.beatId).join(","),
           tiers: data.items.map((i) => i.tier).join(","),
@@ -218,7 +253,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       } catch (err) {
         return {
           clientSecret: null,
-          error: err instanceof Error ? err.message : "Checkout is unavailable right now.",
+          error: getStripeErrorMessage(err),
         };
       }
 
