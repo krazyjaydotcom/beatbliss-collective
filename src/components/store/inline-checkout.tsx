@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Download, Gift, Loader2, Sparkles } from "lucide-react";
+import { CheckCircle2, Download, Loader2, Sparkles } from "lucide-react";
+import { ArtistGiftCelebration } from "@/components/store/artist-gift-celebration";
 import { Button } from "@/components/ui/button";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createCartCheckoutSession } from "@/lib/cart.functions";
@@ -16,43 +17,6 @@ export interface CheckoutDownload {
   title: string;
   label: string;
   url: string;
-}
-
-function Celebration({ complete = false }: { complete?: boolean }) {
-  const [burst, setBurst] = useState(true);
-  useEffect(() => {
-    const timeout = setTimeout(() => setBurst(false), 1800);
-    return () => clearTimeout(timeout);
-  }, []);
-  return (
-    <div className="relative overflow-hidden py-2 text-center" role="status">
-      {burst && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 flex items-center justify-around"
-        >
-          {["bg-primary", "bg-chart-2", "bg-chart-4", "bg-primary", "bg-chart-2", "bg-chart-4"].map(
-            (color, index) => (
-              <span
-                key={index}
-                className={`h-2 w-1.5 ${color} animate-ping motion-reduce:animate-none`}
-              />
-            ),
-          )}
-        </div>
-      )}
-      <div className="relative">
-        <Gift className="mx-auto mb-2 h-8 w-8 text-primary" aria-hidden />
-        <p className="text-xs font-bold uppercase text-primary">
-          {complete ? "It's yours!" : "100% off unlocked"}
-        </p>
-        <h3 className="mt-1 text-xl font-semibold">
-          {complete ? "Go make something great." : "This one's on us!"}
-        </h3>
-        {!complete && <p className="mt-2 text-3xl font-semibold tabular-nums">$0.00</p>}
-      </div>
-    </div>
-  );
 }
 
 export function InlineCheckout({
@@ -72,6 +36,7 @@ export function InlineCheckout({
   const [codeInput, setCodeInput] = useState(initialCode ?? "");
   const [code, setCode] = useState(initialCode ?? "");
   const [note, setNote] = useState<string | null>(null);
+  const [originalTotal, setOriginalTotal] = useState(0);
   const [free, setFree] = useState(false);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
@@ -142,6 +107,7 @@ export function InlineCheckout({
             return;
           }
           setNote(quote.discountNote ?? null);
+          setOriginalTotal(quote.originalTotalCents ?? 0);
           if (quote.freeOrder) {
             setFree(true);
             return;
@@ -225,7 +191,7 @@ export function InlineCheckout({
     return (
       <div className="space-y-3">
         {free ? (
-          <Celebration complete />
+          <ArtistGiftCelebration complete originalCents={originalTotal} />
         ) : (
           <CheckCircle2 className="mx-auto h-8 w-8 text-primary" />
         )}
@@ -310,9 +276,9 @@ export function InlineCheckout({
       ) : null}
       {free && !loading ? (
         <>
-          <Celebration key={code} />
+          <ArtistGiftCelebration key={code} originalCents={originalTotal} />
           <p className="text-center text-sm text-muted-foreground">
-            No card. No payment screen. Just your music.
+            Your beat and personalized license paperwork are included.
           </p>
           <form
             className="space-y-3"

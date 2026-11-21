@@ -94,6 +94,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       discountNote?: string | null;
       freeOrder?: boolean;
       totalCents?: number;
+      originalTotalCents?: number;
       downloads?: { title: string; label: string; url: string }[];
       deliveryPending?: boolean;
     }> => {
@@ -178,6 +179,7 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
       let validatedPromo: any = null;
       let stripeDiscount: { promotion_code: string } | null = null;
       let restrictedPromoId: string | null = null;
+      const originalTotalCents = amounts.reduce((sum, amount) => sum + amount, 0);
       let expectedFinalAmounts: number[] | null = null;
       let discountNote: string | null = null;
       if (data.discountCode) {
@@ -304,13 +306,21 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
           clientSecret: null,
           error: null,
           freeOrder,
+          originalTotalCents,
           totalCents: finalAmounts.reduce((a, b) => a + b, 0),
           discountNote,
         };
       if (freeOrder) {
         // Nothing is recorded until the buyer explicitly supplies identity and claims.
         if (data.action !== "claim")
-          return { clientSecret: null, error: null, freeOrder, totalCents: 0, discountNote };
+          return {
+            clientSecret: null,
+            error: null,
+            freeOrder,
+            originalTotalCents,
+            totalCents: 0,
+            discountNote,
+          };
         const session = {
           id: `free_${data.requestId}`,
           amount_total: 0,
@@ -437,22 +447,20 @@ export const createCartCheckoutSession = createServerFn({ method: "POST" })
           session = await stripe.checkout.sessions.create({ ...base, return_url: data.returnUrl });
         }
         try {
-          await sb
-            .from("purchase_funnel_events")
-            .insert(
-              data.items.map((item) => ({
-                event_type: "checkout_started",
-                beat_id: item.beatId,
-                license_tier: item.tier,
-                utm_source: data.attribution?.source ?? null,
-                utm_medium: data.attribution?.medium ?? null,
-                utm_campaign: data.attribution?.campaign ?? null,
-                utm_content: data.attribution?.content ?? null,
-                session_key: data.attribution?.sessionKey ?? null,
-                stripe_session_id: session.id,
-                payment_environment: data.environment,
-              })),
-            );
+          await sb.from("purchase_funnel_events").insert(
+            data.items.map((item) => ({
+              event_type: "checkout_started",
+              beat_id: item.beatId,
+              license_tier: item.tier,
+              utm_source: data.attribution?.source ?? null,
+              utm_medium: data.attribution?.medium ?? null,
+              utm_campaign: data.attribution?.campaign ?? null,
+              utm_content: data.attribution?.content ?? null,
+              session_key: data.attribution?.sessionKey ?? null,
+              stripe_session_id: session.id,
+              payment_environment: data.environment,
+            })),
+          );
         } catch {
           /* analytics never blocks checkout */
         }
