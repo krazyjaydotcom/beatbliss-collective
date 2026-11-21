@@ -4,21 +4,58 @@ import { z } from "zod";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { DollarSign, Download, FileText, Loader2, Search, Users, Music, Clock, RefreshCw } from "lucide-react";
+import {
+  DollarSign,
+  Download,
+  FileText,
+  Loader2,
+  Search,
+  Users,
+  Music,
+  Clock,
+  RefreshCw,
+} from "lucide-react";
 import { adminListCustomerActivity, type ActivityRow } from "@/lib/admin-activity.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { generateAgreementPdf, buildAgreementFilename, type AgreementData } from "@/lib/agreement-pdf";
+import {
+  generateAgreementPdf,
+  buildAgreementFilename,
+  type AgreementData,
+} from "@/lib/agreement-pdf";
 import { EmptyState, PageHeader, StatTile, Surface } from "@/components/admin/ui";
 import { cn } from "@/lib/utils";
 import { CustomerRecordDrawer } from "@/components/admin/customer-workspace";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/sales")({
-  head: () => ({ meta: [{ title: "Admin · Sales & Downloads — MYBEATCATALOG" }] }),
-  validateSearch: (s) => z.object({ day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).parse(s),
+  head: () => ({
+    meta: [
+      { title: "Admin · Sales & Downloads — MYBEATCATALOG" },
+      {
+        name: "description",
+        content: "Review MYBEATCATALOG purchases, promo claims, downloads and license agreements.",
+      },
+      { property: "og:title", content: "Sales & Downloads — MYBEATCATALOG" },
+      {
+        property: "og:description",
+        content: "MYBEATCATALOG sales, promo claims and license records.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  validateSearch: (s) =>
+    z
+      .object({
+        day: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+      })
+      .parse(s),
   component: AdminSalesPage,
 });
 
@@ -34,7 +71,8 @@ type TabKey = (typeof TABS)[number]["key"];
 const money = (c: number | null) => (c == null ? "—" : `$${(c / 100).toFixed(2)}`);
 
 function kindLabel(r: ActivityRow) {
-  if (r.kind === "purchase") return r.paid ? "Paid sale" : "Checkout started";
+  if (r.kind === "purchase")
+    return r.promo_claim ? "Promo claim" : r.paid ? "Paid sale" : "Checkout started";
   return r.kind === "member_download" ? "Member download" : "Free download";
 }
 
@@ -64,10 +102,15 @@ function AdminSalesPage() {
         if (tab !== "all" && r.kind !== tab) return false;
         if (day) {
           const date = new Date(r.created_at);
-          const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
           if (key !== day) return false;
         }
-        if (!day && range !== "all" && new Date(r.created_at).getTime() < Date.now() - Number(range) * 86400000) return false;
+        if (
+          !day &&
+          range !== "all" &&
+          new Date(r.created_at).getTime() < Date.now() - Number(range) * 86400000
+        )
+          return false;
         if (payment === "paid" && !(r.kind === "purchase" && r.paid)) return false;
         if (payment === "pending" && !(r.kind === "purchase" && !r.paid)) return false;
         if (!s) return true;
@@ -106,7 +149,11 @@ function AdminSalesPage() {
     setBusyId(row.id);
     try {
       const table =
-        row.kind === "purchase" ? "lease_orders" : row.kind === "free_download" ? "beat_lead_captures" : "downloads";
+        row.kind === "purchase"
+          ? "lease_orders"
+          : row.kind === "free_download"
+            ? "beat_lead_captures"
+            : "downloads";
       const { error } = await (supabase as any).rpc("admin_manage_records", {
         p_action: "delete",
         p_table: table,
@@ -125,7 +172,10 @@ function AdminSalesPage() {
   const downloadPdf = async (agreementRowId: string) => {
     if (agreementRowId.startsWith("lic:")) {
       const { data: r } = await (supabase as any)
-        .from("purchase_licenses").select("*").eq("id", agreementRowId.slice(4)).maybeSingle();
+        .from("purchase_licenses")
+        .select("*")
+        .eq("id", agreementRowId.slice(4))
+        .maybeSingle();
       if (!r) return;
       const doc: AgreementData = {
         agreement_id: r.agreement_code,
@@ -136,21 +186,45 @@ function AdminSalesPage() {
         producer_name: r.credit_snapshot?.production_credit || "KRAZYJAYDOTCOM",
         license_type: r.license_label,
         credits_used: 0,
-        file_type: r.license_tier === "nonexclusive" ? "MP3" : r.license_tier === "trackout" ? "WAV + MP3 + STEMs" : "WAV + MP3",
+        file_type:
+          r.license_tier === "nonexclusive"
+            ? "MP3"
+            : r.license_tier === "trackout"
+              ? "WAV + MP3 + STEMs"
+              : "WAV + MP3",
         accepted_at: r.created_at,
-        agreement_text: purchaseAgreementText(r.rights_text, r.amount_cents, r.credit_snapshot, r.payment_environment === "sandbox"),
+        agreement_text: purchaseAgreementText(
+          r.rights_text,
+          r.amount_cents,
+          r.credit_snapshot,
+          r.payment_environment === "sandbox",
+        ),
       } as AgreementData;
       generateAgreementPdf(doc).save(`MBC_${r.agreement_code}.pdf`);
       return;
     }
-    const { data: a } = await supabase.from("agreements").select("*").eq("id", agreementRowId).maybeSingle();
+    const { data: a } = await supabase
+      .from("agreements")
+      .select("*")
+      .eq("id", agreementRowId)
+      .maybeSingle();
     if (!a) return;
     const doc = a as unknown as AgreementData;
     generateAgreementPdf(doc).save(buildAgreementFilename(doc));
   };
 
   const exportCsv = () => {
-    const head = ["Date", "Type", "Name", "Email", "Beat", "Amount", "Status", "License", "Agreement"];
+    const head = [
+      "Date",
+      "Type",
+      "Name",
+      "Email",
+      "Beat",
+      "Amount",
+      "Status",
+      "License",
+      "Agreement",
+    ];
     const lines = filtered.map((r) => [
       new Date(r.created_at).toISOString(),
       r.kind,
@@ -175,7 +249,14 @@ function AdminSalesPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      {day && <p className="text-sm text-primary">Sales on {day} · <a href="/admin/sales" className="underline">Clear date</a></p>}
+      {day && (
+        <p className="text-sm text-primary">
+          Sales on {day} ·{" "}
+          <a href="/admin/sales" className="underline">
+            Clear date
+          </a>
+        </p>
+      )}
       <PageHeader
         breadcrumb="Business"
         title="Sales & downloads"
@@ -185,7 +266,12 @@ function AdminSalesPage() {
             <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={cn("mr-1 h-4 w-4", isFetching && "animate-spin")} /> Refresh
             </Button>
-            <Button size="sm" variant="outline" onClick={exportCsv} disabled={filtered.length === 0}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={exportCsv}
+              disabled={filtered.length === 0}
+            >
               Export CSV
             </Button>
           </>
@@ -287,7 +373,10 @@ function AdminSalesPage() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState title="Nothing here yet" description="Sales and downloads appear as soon as they happen." />
+          <EmptyState
+            title="Nothing here yet"
+            description="Sales and downloads appear as soon as they happen."
+          />
         ) : (
           <>
             {/* Mobile: stacked cards */}
@@ -306,23 +395,41 @@ function AdminSalesPage() {
                       </button>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="text-sm font-semibold tabular-nums">{money(r.amount_cents)}</div>
+                      <div className="text-sm font-semibold tabular-nums">
+                        {money(r.amount_cents)}
+                      </div>
                       <div className="text-[11px] text-muted-foreground">
                         {new Date(r.created_at).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Button size="sm" variant="outline" disabled={busyId !== null} onClick={() => void deleteRecord(r)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busyId !== null}
+                      onClick={() => void deleteRecord(r)}
+                    >
                       Delete
                     </Button>
-                    <Badge variant={r.kind === "purchase" && r.paid ? "default" : "secondary"}>{kindLabel(r)}</Badge>
+                    <Badge variant={r.kind === "purchase" && r.paid ? "default" : "secondary"}>
+                      {kindLabel(r)}
+                    </Badge>
                     {r.agreement_row_id ? (
-                      <Button size="sm" variant="outline" className="min-h-11" onClick={() => onPdf(r, downloadPdf)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="min-h-11"
+                        onClick={() => onPdf(r, downloadPdf)}
+                      >
                         <FileText className="mr-1 h-4 w-4" /> {r.agreement_code ?? "License PDF"}
                       </Button>
                     ) : (
-                      <span className="text-[11px] text-muted-foreground">{r.kind === "free_download" ? "Tagged preview · no paid license needed" : "License needs review"}</span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {r.kind === "free_download"
+                          ? "Tagged preview · no paid license needed"
+                          : "License needs review"}
+                      </span>
                     )}
                   </div>
                 </Surface>
@@ -348,7 +455,10 @@ function AdminSalesPage() {
                       <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                         {new Date(r.created_at).toLocaleDateString()}
                         <div className="text-[11px] text-muted-foreground/80">
-                          {new Date(r.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                          {new Date(r.created_at).toLocaleTimeString([], {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -359,7 +469,9 @@ function AdminSalesPage() {
                         >
                           {r.name || r.email || "No customer identity recorded"}
                         </button>
-                        {r.name && r.email && <div className="text-xs text-muted-foreground">{r.email}</div>}
+                        {r.name && r.email && (
+                          <div className="text-xs text-muted-foreground">{r.email}</div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         {r.beat_slug ? (
@@ -374,7 +486,9 @@ function AdminSalesPage() {
                         ) : (
                           <div className="font-medium">{r.beat_title}</div>
                         )}
-                        {r.detail && <div className="text-xs text-muted-foreground">{r.detail}</div>}
+                        {r.detail && (
+                          <div className="text-xs text-muted-foreground">{r.detail}</div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <Badge
@@ -389,7 +503,9 @@ function AdminSalesPage() {
                           {kindLabel(r)}
                         </Badge>
                         {r.license_type && (
-                          <div className="mt-1 text-[11px] text-muted-foreground">{r.license_type}</div>
+                          <div className="mt-1 text-[11px] text-muted-foreground">
+                            {r.license_type}
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3 tabular-nums">{money(r.amount_cents)}</td>
@@ -404,11 +520,21 @@ function AdminSalesPage() {
                           Delete
                         </Button>
                         {r.agreement_row_id ? (
-                          <Button size="sm" variant="ghost" onClick={() => downloadPdf(r.agreement_row_id!)}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              if (r.agreement_row_id) void downloadPdf(r.agreement_row_id);
+                            }}
+                          >
                             <FileText className="mr-1 h-4 w-4" /> {r.agreement_code ?? "PDF"}
                           </Button>
                         ) : (
-                          <span className="text-xs text-muted-foreground">{r.kind === "free_download" ? "Tagged preview · no paid license needed" : "License needs review"}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {r.kind === "free_download"
+                              ? "Tagged preview · no paid license needed"
+                              : "License needs review"}
+                          </span>
                         )}
                       </td>
                     </tr>

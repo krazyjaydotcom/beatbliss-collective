@@ -64,6 +64,13 @@
       "when": 1795228370299,
       "tag": "0008_correct_checkout_item_lock_expression",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795232905982,
+      "tag": "0009_on_site_free_promo_claims",
+      "breakpoints": true
     }
   ]
 }

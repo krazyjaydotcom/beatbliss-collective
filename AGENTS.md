@@ -9,3 +9,4 @@
 - Catalog search ranks normalized live input in a browser-safe helper after filters and sort, preserving sort within title/metadata tiers; URL synchronization must not delay results.
 - Direct storage reads for home_gallery and beat-attachments are admin-only; retain signed gallery URLs and the existing attachment delivery route so public pages do not need unrestricted storage access.
 - Beat checkout fulfillment uses Stripe settled line totals, atomic item persistence, durable session leases and per-session promo redemptions; retry failed delivery with the same provider idempotency key to preserve money, credits and licenses without duplicate sends.
+- On-site zero-total promo claims use server-validated prices and a durable atomic redemption reservation; reuse purchase fulfillment with trusted zero amounts, never browser amounts, and keep nonzero checkout on Stripe.

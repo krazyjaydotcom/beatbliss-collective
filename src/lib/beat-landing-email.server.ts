@@ -21,7 +21,10 @@ type EmailPayload = Record<string, unknown> & {
 };
 
 function escapeHtml(s: string): string {
-  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+  return String(s).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+  );
 }
 
 // Successful/suppressed sends are terminal; failures must remain retryable.
@@ -40,7 +43,7 @@ async function alreadyQueued(messageId: string): Promise<boolean> {
 async function logEmailAttempt(
   payload: EmailPayload,
   status: "sent" | "suppressed" | "failed",
-  errorMessage?: string
+  errorMessage?: string,
 ): Promise<void> {
   const { error } = await (supabaseAdmin as any).from("email_send_log").insert({
     message_id: payload.message_id,
@@ -71,7 +74,7 @@ async function enqueue(payload: EmailPayload): Promise<{ messageId: string }> {
         label: payload.label || "beat_landing_email",
         idempotency_key: payload.message_id,
       },
-      { apiKey, sendUrl: process.env["LOVABLE_SEND_URL"] }
+      { apiKey, sendUrl: process.env["LOVABLE_SEND_URL"] },
     );
     if (result.status === "suppressed" || result.status === "recipient_suppressed") {
       await logEmailAttempt(payload, "suppressed", "Recipient is suppressed");
@@ -86,11 +89,14 @@ async function enqueue(payload: EmailPayload): Promise<{ messageId: string }> {
       return { messageId: payload.message_id };
     }
     console.error("[beat-landing-email] send failed", err);
-    await logEmailAttempt(payload, "failed", err instanceof Error ? err.message : "Failed to send email");
+    await logEmailAttempt(
+      payload,
+      "failed",
+      err instanceof Error ? err.message : "Failed to send email",
+    );
     throw err;
   }
 }
-
 
 // --- Free MP3 download email ---
 export async function queueFreeDownloadEmail(opts: {
@@ -108,9 +114,18 @@ export async function queueFreeDownloadEmail(opts: {
     downloadUrl: opts.downloadUrl,
   });
   const subject = resolved?.subject ?? `Your free MP3: ${opts.beatTitle}`;
-  const html = resolved?.html ?? `<!doctype html><html><body><p>Your free MP3 of ${escapeHtml(opts.beatTitle)}: <a href="${escapeHtml(opts.downloadUrl)}">${escapeHtml(opts.downloadUrl)}</a></p></body></html>`;
+  const html =
+    resolved?.html ??
+    `<!doctype html><html><body><p>Your free MP3 of ${escapeHtml(opts.beatTitle)}: <a href="${escapeHtml(opts.downloadUrl)}">${escapeHtml(opts.downloadUrl)}</a></p></body></html>`;
   const text = `Hey ${opts.firstName || "there"},\n\nYour free MP3 of "${opts.beatTitle}" is ready:\n${opts.downloadUrl}\n\n— MYBEATCATALOG`;
-  return enqueue({ to: opts.to, subject, html, text, label: "beat_free_download", message_id: messageId });
+  return enqueue({
+    to: opts.to,
+    subject,
+    html,
+    text,
+    label: "beat_free_download",
+    message_id: messageId,
+  });
 }
 
 // --- Paid purchase: buyer email with download + license ---
@@ -172,24 +187,43 @@ export async function queueBuyerPurchaseEmail(opts: {
     const code = opts.agreementCode ?? agreementCode(opts.sessionId);
     const hasStems = opts.licenseTier === "trackout" && !!opts.stemsUrl;
     const links: { label: string; url: string }[] = [];
-    if (opts.licenseTier !== "nonexclusive" && opts.wavUrl) links.push({ label: "Download WAV", url: opts.wavUrl });
+    if (opts.licenseTier !== "nonexclusive" && opts.wavUrl)
+      links.push({ label: "Download WAV", url: opts.wavUrl });
     if (opts.downloadUrl) links.push({ label: "Download MP3", url: opts.downloadUrl });
     if (hasStems && opts.stemsUrl) links.push({ label: "Download STEMs", url: opts.stemsUrl });
     const e = escapeHtml;
     const buttons = links
-      .map((l) => `<a href="${e(l.url)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px;margin:0 8px 8px 0">${e(l.label)}</a>`)
+      .map(
+        (l) =>
+          `<a href="${e(l.url)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px;margin:0 8px 8px 0">${e(l.label)}</a>`,
+      )
       .join("");
     const pageButton = opts.downloadPageUrl
       ? `<a href="${e(opts.downloadPageUrl)}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px;margin:0 8px 8px 0">Your download page (files + license)</a>`
       : "";
-    const stemNote = opts.licenseTier === "trackout" && !hasStems
-      ? `<p style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;font-size:13px;color:#1e3a8a;margin:0 0 16px">Your STEMs are being prepared and will be emailed within 24 hours.</p>`
-      : "";
+    const stemNote =
+      opts.licenseTier === "trackout" && !hasStems
+        ? `<p style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;font-size:13px;color:#1e3a8a;margin:0 0 16px">Your STEMs are being prepared and will be emailed within 24 hours.</p>`
+        : "";
     const subject = `Your ${t.label} — ${opts.beatTitle}`;
     const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111"><div style="max-width:600px;margin:0 auto;padding:32px 24px;background:#fff"><h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MYBEATCATALOG</h1><p style="color:#71717a;margin:0 0 24px">Purchase Confirmation</p><h2 style="font-size:20px;margin:0 0 10px">Thank you for your purchase!</h2><p style="line-height:1.6;color:#3f3f46;margin:0 0 16px">You purchased the <strong>${e(t.label)}</strong> for <strong>${e(opts.beatTitle)}</strong> (${price}).<br>Included files: ${e(hasStems ? "Untagged WAV + MP3 + individual WAV STEMs" : t.files)}.</p><div style="margin:0 0 16px">${pageButton}${buttons}</div>${stemNote}<h3 style="font-size:16px;font-weight:800;margin:24px 0 8px">${e(t.label)} Agreement</h3><div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:16px;font-size:13px;line-height:1.6;color:#3f3f46"><p style="margin:0 0 8px"><strong>Agreement ID:</strong> ${code}<br><strong>Licensee:</strong> ${e(licensee)}<br><strong>Beat:</strong> ${e(opts.beatTitle)}<br><strong>License:</strong> ${e(t.label)}<br><strong>Amount paid:</strong> ${price}<br><strong>Purchase ID:</strong> ${e(opts.sessionId)}<br><strong>Date:</strong> ${date}</p><p style="margin:8px 0"><strong>Rights granted:</strong> ${e(t.rights)}</p><p style="margin:8px 0;white-space:pre-wrap">${e(creditTerms)}</p></div><p style="color:#71717a;font-size:12px;margin:16px 0 0">Keep this email as your license record. You can request a copy anytime at ${SITE}/licenses. Questions? Reply to this email.<br>— KRAZYJAYDOTCOM</p></div></body></html>`;
     const text = `Thank you for your purchase!\n\n${t.label} — ${opts.beatTitle} (${price})\nIncluded files: ${hasStems ? "Untagged WAV + MP3 + STEMs" : t.files}\n\n${opts.downloadPageUrl ? `Your download page (files + license): ${opts.downloadPageUrl}\n\n` : ""}${links.map((l) => `${l.label}: ${l.url}`).join("\n")}\n\n${opts.licenseTier === "trackout" && !hasStems ? "STEMs will be emailed within 24 hours.\n\n" : ""}LICENSE AGREEMENT ${code}\nLicensee: ${licensee}\nAmount paid: ${price}\nRights: ${t.rights}\n${creditTerms}\nPurchase ID: ${opts.sessionId}\nDate: ${date}\n\n— MYBEATCATALOG`;
-    await enqueue({ to: opts.to, subject, html, text, label: "beat_purchase_buyer", message_id: messageId,
-      audit: { download_page_url: opts.downloadPageUrl, files: links, agreement_code: code, buyer_name: opts.buyerName ?? null, amount_cents: opts.amountCents, license_tier: opts.licenseTier } });
+    await enqueue({
+      to: opts.to,
+      subject,
+      html,
+      text,
+      label: "beat_purchase_buyer",
+      message_id: messageId,
+      audit: {
+        download_page_url: opts.downloadPageUrl,
+        files: links,
+        agreement_code: code,
+        buyer_name: opts.buyerName ?? null,
+        amount_cents: opts.amountCents,
+        license_tier: opts.licenseTier,
+      },
+    });
     return { queued: true, messageId };
   }
 
@@ -203,9 +237,18 @@ export async function queueBuyerPurchaseEmail(opts: {
     date,
   });
   const subject = resolved?.subject ?? `Your beat is ready — ${opts.beatTitle}`;
-  const html = resolved?.html ?? `<!doctype html><html><body><p>Thanks for purchasing ${escapeHtml(opts.beatTitle)} (${price}). ${opts.downloadUrl ? `<a href="${escapeHtml(opts.downloadUrl)}">Download</a>` : ""}</p></body></html>`;
+  const html =
+    resolved?.html ??
+    `<!doctype html><html><body><p>Thanks for purchasing ${escapeHtml(opts.beatTitle)} (${price}). ${opts.downloadUrl ? `<a href="${escapeHtml(opts.downloadUrl)}">Download</a>` : ""}</p></body></html>`;
   const text = `Thank you for your purchase!\n\nBeat: ${opts.beatTitle}\nAmount: ${price}\nPurchase ID: ${opts.sessionId}\nDate: ${date}\n\n${opts.downloadUrl ? `Download: ${opts.downloadUrl}\n\n` : ""}— MYBEATCATALOG`;
-  await enqueue({ to: opts.to, subject, html, text, label: "beat_purchase_buyer", message_id: messageId });
+  await enqueue({
+    to: opts.to,
+    subject,
+    html,
+    text,
+    label: "beat_purchase_buyer",
+    message_id: messageId,
+  });
   return { queued: true, messageId };
 }
 
@@ -218,6 +261,8 @@ export async function queueAdminSaleEmail(opts: {
   sessionId: string;
   beatSlug: string | null;
   overrideRecipient?: string;
+  buyerName?: string | null;
+  promoCode?: string | null;
 }): Promise<{ queued: boolean; skipped?: string; messageId?: string }> {
   const messageId = `bl_admin_${opts.sessionId}`;
   if (await alreadyQueued(messageId)) return { queued: false, skipped: "already_queued" };
@@ -226,9 +271,15 @@ export async function queueAdminSaleEmail(opts: {
   let adminEmail = opts.overrideRecipient || process.env.SALES_NOTIFICATION_EMAIL || null;
   if (!adminEmail) {
     try {
-      const { data } = await (supabaseAdmin as any).from("global_video").select("contact_email").eq("id", 1).maybeSingle();
+      const { data } = await (supabaseAdmin as any)
+        .from("global_video")
+        .select("contact_email")
+        .eq("id", 1)
+        .maybeSingle();
       if (data?.contact_email) adminEmail = data.contact_email as string;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   if (!adminEmail) adminEmail = FALLBACK_ADMIN_EMAIL;
 
@@ -246,11 +297,24 @@ export async function queueAdminSaleEmail(opts: {
     salesUrl: `${SITE}/admin/sales`,
     customersUrl: `${SITE}/admin/customers?q=${encodeURIComponent(opts.buyerEmail)}`,
   });
-  const subject = resolved?.subject ?? `🔥 BAG ALERT: You just made ${price} on MYBEATCATALOG!`;
-  const html = resolved?.html ?? `<!doctype html><html><body><p>New sale: ${escapeHtml(opts.beatTitle)} ${price}</p></body></html>`;
-  const text = `🔥 BAG ALERT — ${price}\nSomebody just copped ${opts.beatTitle} (${licenseLabel}).\nBuyer: ${opts.buyerEmail}\nBeat: ${beatUrl}\nView sales: ${SITE}/admin/sales\n\nSession: ${opts.sessionId}`;
+  const freeClaim = opts.sessionId.startsWith("free_");
+  const subject = freeClaim
+    ? `🎉 PROMO CLAIM: ${opts.beatTitle} — ${price}`
+    : (resolved?.subject ?? `🔥 BAG ALERT: You just made ${price} on MYBEATCATALOG!`);
+  const html = freeClaim
+    ? `<!doctype html><html><body><h1>🎉 Beat unlocked!</h1><p>${escapeHtml(opts.buyerName || opts.buyerEmail)} claimed <strong>${escapeHtml(opts.beatTitle)}</strong>.</p><p>${escapeHtml(licenseLabel)} · ${price}<br>Promo code: ${escapeHtml(opts.promoCode || "—")}<br>Buyer: ${escapeHtml(opts.buyerEmail)}</p><p><a href="${SITE}/admin/sales">View Sales &amp; Downloads</a> · <a href="${SITE}/admin/customers?q=${encodeURIComponent(opts.buyerEmail)}">View customer</a></p><small>Order: ${escapeHtml(opts.sessionId)}</small></body></html>`
+    : (resolved?.html ??
+      `<!doctype html><html><body><p>New sale: ${escapeHtml(opts.beatTitle)} ${price}</p></body></html>`);
+  const text = `${freeClaim ? "🎉 PROMO CLAIM" : "🔥 BAG ALERT"} — ${price}\nSomebody just copped ${opts.beatTitle} (${licenseLabel}).\nBuyer: ${opts.buyerName || ""} ${opts.buyerEmail}\nPromo: ${opts.promoCode || "—"}\nBeat: ${beatUrl}\nView sales: ${SITE}/admin/sales\n\nSession: ${opts.sessionId}`;
 
-  await enqueue({ to: adminEmail, subject, html, text, label: "beat_purchase_admin", message_id: messageId });
+  await enqueue({
+    to: adminEmail,
+    subject,
+    html,
+    text,
+    label: "beat_purchase_admin",
+    message_id: messageId,
+  });
   return { queued: true, messageId };
 }
 
@@ -268,15 +332,18 @@ export async function queueExclusiveInquiryEmail(opts: {
   const messageId = `bl_inquiry_${opts.submissionId}`;
   if (await alreadyQueued(messageId)) return { queued: false };
 
-  const recipient = opts.overrideRecipient || process.env.SALES_NOTIFICATION_EMAIL || "jason@krazyjay.com";
+  const recipient =
+    opts.overrideRecipient || process.env.SALES_NOTIFICATION_EMAIL || "jason@krazyjay.com";
   const beatTitleLabel = opts.beatTitle || "(no specific beat)";
   const beatUrl = opts.beatSlug ? `${SITE}/beats/${opts.beatSlug}` : SITE;
 
-  const rowsHtml = Object.entries(opts.answers).map(([qid, val]) => {
-    const label = escapeHtml(opts.labels[qid] || qid);
-    const safeVal = escapeHtml(val || "—").replace(/\n/g, "<br>");
-    return `<tr><td style="padding:6px 12px 6px 0;color:#71717a;vertical-align:top;white-space:nowrap"><strong>${label}</strong></td><td style="padding:6px 0;color:#111">${safeVal}</td></tr>`;
-  }).join("");
+  const rowsHtml = Object.entries(opts.answers)
+    .map(([qid, val]) => {
+      const label = escapeHtml(opts.labels[qid] || qid);
+      const safeVal = escapeHtml(val || "—").replace(/\n/g, "<br>");
+      return `<tr><td style="padding:6px 12px 6px 0;color:#71717a;vertical-align:top;white-space:nowrap"><strong>${label}</strong></td><td style="padding:6px 0;color:#111">${safeVal}</td></tr>`;
+    })
+    .join("");
 
   const { resolveTemplate } = await import("@/lib/email-templates.server");
   const resolved = await resolveTemplate("beat_exclusive_inquiry", {
@@ -286,8 +353,11 @@ export async function queueExclusiveInquiryEmail(opts: {
     beatUrl,
     answersTable: rowsHtml,
   });
-  const subject = resolved?.subject ?? `[Inquiry] ${opts.name} — ${opts.beatTitle || "custom work"}`;
-  const html = resolved?.html ?? `<!doctype html><html><body><p>Inquiry from ${escapeHtml(opts.name)} (${escapeHtml(opts.email)}) about ${escapeHtml(beatTitleLabel)}</p></body></html>`;
+  const subject =
+    resolved?.subject ?? `[Inquiry] ${opts.name} — ${opts.beatTitle || "custom work"}`;
+  const html =
+    resolved?.html ??
+    `<!doctype html><html><body><p>Inquiry from ${escapeHtml(opts.name)} (${escapeHtml(opts.email)}) about ${escapeHtml(beatTitleLabel)}</p></body></html>`;
   const textLines = [
     `New exclusive/custom inquiry`,
     `Name: ${opts.name}`,
@@ -298,8 +368,10 @@ export async function queueExclusiveInquiryEmail(opts: {
   await enqueue({
     to: recipient,
     subject,
-    html, text: textLines.join("\n"),
-    label: "beat_exclusive_inquiry", message_id: messageId,
+    html,
+    text: textLines.join("\n"),
+    label: "beat_exclusive_inquiry",
+    message_id: messageId,
     reply_to: opts.email,
   });
   return { queued: true, messageId };
@@ -308,13 +380,39 @@ export async function queueExclusiveInquiryEmail(opts: {
 // --- Licence lookup: buyer requested copies of their licences ---
 export async function queueLicenseLookupEmail(opts: {
   to: string;
-  licenses: { agreement_code: string; beat_title: string; license_label: string; rights_text: string; amount_cents: number; created_at: string; buyer_name: string | null; credit_snapshot?: CreditSnapshot | null }[];
+  licenses: {
+    agreement_code: string;
+    beat_title: string;
+    license_label: string;
+    rights_text: string;
+    amount_cents: number;
+    created_at: string;
+    buyer_name: string | null;
+    credit_snapshot?: CreditSnapshot | null;
+  }[];
 }): Promise<void> {
   const e = escapeHtml;
-  const blocks = opts.licenses.map((l) => `<div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:16px;font-size:13px;line-height:1.6;color:#3f3f46;margin:0 0 14px"><p style="margin:0 0 8px"><strong>${e(l.license_label)} — ${e(l.beat_title)}</strong><br><strong>Agreement ID:</strong> ${e(l.agreement_code)}<br><strong>Licensee:</strong> ${e(l.buyer_name || opts.to)} (${e(opts.to)})<br><strong>Amount paid:</strong> $${(l.amount_cents / 100).toFixed(2)}<br><strong>Date:</strong> ${l.created_at.slice(0, 10)}</p><p style="margin:8px 0"><strong>Rights granted:</strong> ${e(l.rights_text)}</p><p style="margin:8px 0 0"><strong>Producer credits (required):</strong> ${e(purchaseCreditTerms(l.credit_snapshot)).replace(/\n/g, "<br>")}</p></div>`).join("");
+  const blocks = opts.licenses
+    .map(
+      (l) =>
+        `<div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:16px;font-size:13px;line-height:1.6;color:#3f3f46;margin:0 0 14px"><p style="margin:0 0 8px"><strong>${e(l.license_label)} — ${e(l.beat_title)}</strong><br><strong>Agreement ID:</strong> ${e(l.agreement_code)}<br><strong>Licensee:</strong> ${e(l.buyer_name || opts.to)} (${e(opts.to)})<br><strong>Amount paid:</strong> $${(l.amount_cents / 100).toFixed(2)}<br><strong>Date:</strong> ${l.created_at.slice(0, 10)}</p><p style="margin:8px 0"><strong>Rights granted:</strong> ${e(l.rights_text)}</p><p style="margin:8px 0 0"><strong>Producer credits (required):</strong> ${e(purchaseCreditTerms(l.credit_snapshot)).replace(/\n/g, "<br>")}</p></div>`,
+    )
+    .join("");
   const html = `<!doctype html><html><body style="margin:0;background:#f6f6f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#111"><div style="max-width:600px;margin:0 auto;padding:32px 24px;background:#fff"><h1 style="font-size:24px;font-weight:900;margin:0 0 6px">MYBEATCATALOG</h1><p style="color:#71717a;margin:0 0 20px">Your license agreements (${opts.licenses.length})</p>${blocks}<p style="color:#71717a;font-size:12px;margin:16px 0 0">You requested these at mybeatcatalog.com/licenses. Questions? Reply to this email.</p></div></body></html>`;
-  const text = opts.licenses.map((l) => `${l.license_label} — ${l.beat_title}\nAgreement ID: ${l.agreement_code}\nDate: ${l.created_at.slice(0, 10)}\nRights: ${l.rights_text}\nCredits: ${purchaseCreditTerms(l.credit_snapshot)}`).join("\n\n");
+  const text = opts.licenses
+    .map(
+      (l) =>
+        `${l.license_label} — ${l.beat_title}\nAgreement ID: ${l.agreement_code}\nDate: ${l.created_at.slice(0, 10)}\nRights: ${l.rights_text}\nCredits: ${purchaseCreditTerms(l.credit_snapshot)}`,
+    )
+    .join("\n\n");
   const bucket = Math.floor(Date.now() / (10 * 60 * 1000));
   if (await alreadyQueued(`license_lookup_${opts.to}_${bucket}`)) return;
-  await enqueue({ to: opts.to, subject: "Your MYBEATCATALOG license agreements", html, text, label: "license_lookup", message_id: `license_lookup_${opts.to}_${bucket}` });
+  await enqueue({
+    to: opts.to,
+    subject: "Your MYBEATCATALOG license agreements",
+    html,
+    text,
+    label: "license_lookup",
+    message_id: `license_lookup_${opts.to}_${bucket}`,
+  });
 }

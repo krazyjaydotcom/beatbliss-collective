@@ -24,6 +24,7 @@ export type ActivityRow = {
   beat_slug: string | null;
   amount_cents: number | null;
   paid: boolean;
+  promo_claim?: boolean;
   detail: string | null;
   /** agreements.id (uuid) for PDF generation, when a license doc exists */
   agreement_row_id: string | null;
@@ -55,35 +56,63 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
 
     const [beatsRes, ordersRes, leadsRes, dlRes, agrRes, profRes] = await Promise.all([
       sb.from("beats").select("id,title,landing_slug"),
-      sb.from("lease_orders")
-        .select("id,beat_id,email,amount_cents,used_first_time_discount,stripe_session_id,license_tier,created_at")
-        .order("created_at", { ascending: false }).limit(1000),
-      sb.from("beat_lead_captures")
+      sb
+        .from("lease_orders")
+        .select(
+          "id,beat_id,email,amount_cents,used_first_time_discount,stripe_session_id,license_tier,created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      sb
+        .from("beat_lead_captures")
         .select("id,beat_id,first_name,email,created_at")
-        .order("created_at", { ascending: false }).limit(1000),
-      sb.from("downloads")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      sb
+        .from("downloads")
         .select("id,user_id,beat_id,file_type,credits_used,created_at")
-        .order("created_at", { ascending: false }).limit(1000),
-      sb.from("agreements")
-        .select("id,agreement_id,download_id,user_id,beat_id,license_type,user_name,user_email,accepted_at"),
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      sb
+        .from("agreements")
+        .select(
+          "id,agreement_id,download_id,user_id,beat_id,license_type,user_name,user_email,accepted_at",
+        ),
       sb.from("profiles").select("id,email,display_name,full_name"),
     ]);
 
     const beats = new Map<string, { title: string; slug: string | null }>();
-    for (const b of beatsRes.data ?? []) beats.set(b.id, { title: b.title, slug: b.landing_slug ?? null });
+    for (const b of beatsRes.data ?? [])
+      beats.set(b.id, { title: b.title, slug: b.landing_slug ?? null });
     const profiles = new Map<string, { email: string | null; name: string | null }>();
     for (const p of profRes.data ?? []) {
       profiles.set(p.id, { email: p.email ?? null, name: p.full_name ?? p.display_name ?? null });
     }
     const agreementsByDownload = new Map<string, any>();
-    for (const a of agrRes.data ?? []) if (a.download_id) agreementsByDownload.set(a.download_id, a);
+    for (const a of agrRes.data ?? [])
+      if (a.download_id) agreementsByDownload.set(a.download_id, a);
 
     const rows: ActivityRow[] = [];
 
-    const licRes = await sb.from("purchase_licenses")
-      .select("id,agreement_code,email,buyer_name,beat_id,license_label,stripe_session_id,short_code")
-      .order("created_at", { ascending: false }).limit(2000);
+    const licRes = await sb
+      .from("purchase_licenses")
+      .select(
+        "id,agreement_code,email,buyer_name,beat_id,license_label,stripe_session_id,short_code",
+      )
+      .order("created_at", { ascending: false })
+      .limit(2000);
     if (licRes.error) throw new Error("Could not load purchase licenses.");
+    const freeClaims = await sb
+      .from("beat_free_claims")
+      .select("request_id,request_data")
+      .limit(2000);
+    if (freeClaims.error) throw new Error("Could not load promo claim details.");
+    const promoCodes = new Map<string, string>(
+      (freeClaims.data ?? []).map((claim: any) => [
+        `free_${claim.request_id}`,
+        String(claim.request_data?.code ?? ""),
+      ]),
+    );
     for (const o of ordersRes.data ?? []) {
       const beat = o.beat_id ? beats.get(o.beat_id) : undefined;
       const license = matchPurchaseLicense(o, licRes.data ?? []) as any;
@@ -98,10 +127,24 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
         beat_slug: beat?.slug ?? null,
         amount_cents: o.amount_cents ?? 0,
         paid: !!o.stripe_session_id,
-        detail: o.used_first_time_discount ? "First-time discount" : null,
+        promo_claim: String(o.stripe_session_id ?? "").startsWith("free_"),
+        detail: promoCodes.has(o.stripe_session_id)
+          ? `Promo ${promoCodes.get(o.stripe_session_id)} · $0 claim`
+          : o.used_first_time_discount
+            ? "First-time discount"
+            : null,
         agreement_row_id: license ? `lic:${license.id}` : null,
         agreement_code: license?.agreement_code ?? null,
-        license_type: license?.license_label ?? ({ nonexclusive: "Non-exclusive", unlimited: "Unlimited", trackout: "Unlimited with STEMs" } as Record<string, string>)[o.license_tier] ?? "License needs review",
+        license_type:
+          license?.license_label ??
+          (
+            {
+              nonexclusive: "Non-exclusive",
+              unlimited: "Unlimited",
+              trackout: "Unlimited with STEMs",
+            } as Record<string, string>
+          )[o.license_tier] ??
+          "License needs review",
         download_code: license?.short_code ?? null,
       });
     }
@@ -153,11 +196,18 @@ export const adminListCustomerActivity = createServerFn({ method: "GET" })
     rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 
     const emails = new Set<string>();
-    let paidCount = 0, paidRevenueCents = 0, pendingCount = 0, freeDownloads = 0, memberDownloads = 0;
+    let paidCount = 0,
+      paidRevenueCents = 0,
+      pendingCount = 0,
+      freeDownloads = 0,
+      memberDownloads = 0;
     for (const r of rows) {
       if (r.email) emails.add(r.email.toLowerCase());
       if (r.kind === "purchase") {
-        if (r.paid) { paidCount++; paidRevenueCents += r.amount_cents ?? 0; } else pendingCount++;
+        if (r.paid) {
+          paidCount++;
+          paidRevenueCents += r.amount_cents ?? 0;
+        } else pendingCount++;
       } else if (r.kind === "free_download") freeDownloads++;
       else memberDownloads++;
     }

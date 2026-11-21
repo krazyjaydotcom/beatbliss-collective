@@ -1,5 +1,10 @@
 # Roadmap
 
+- [x] Build secure on-site $0 promo claims and celebratory buyer form
+- [x] Reuse personalized license/file delivery, admin alerts and duplicate-safe promo counting
+- [x] Verify sandbox free claims, Stripe mixed/paid pricing, retry behavior, PDFs, email acceptance and mobile preview; nothing published
+- [ ] Verify admin-screen promo labels — blocked: available authenticated account lacks admin access; saved rows and email logs verified
+
 - [x] Allow validated 100% beat promos and no-card checkout with buyer identity
 - [x] Preserve actual discounted amounts and tier-specific personalized delivery
 - [x] Make fulfillment/redemptions duplicate-safe and failed delivery retryable

@@ -7,14 +7,33 @@ import { Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { adminListCustomerActivity, type ActivityRow } from "@/lib/admin-activity.functions";
-import { adminListCrm, adminSaveProspect, adminSaveTask, type Prospect, type ProspectStage } from "@/lib/crm.functions";
+import {
+  adminListCrm,
+  adminSaveProspect,
+  adminSaveTask,
+  type Prospect,
+  type ProspectStage,
+} from "@/lib/crm.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { EmptyState, PageHeader, StageChip, StatTile, Surface, STAGE_LABELS } from "@/components/admin/ui";
+import {
+  EmptyState,
+  PageHeader,
+  StageChip,
+  StatTile,
+  Surface,
+  STAGE_LABELS,
+} from "@/components/admin/ui";
 import { cn } from "@/lib/utils";
 
 type Contact = {
@@ -100,7 +119,9 @@ function buildContacts(rows: ActivityRow[], prospects: Prospect[]): Contact[] {
     if (!c.prospectId && c.purchases > 0) c.stage = "client";
   }
 
-  return [...map.values()].sort((a, b) => ((a.lastActivity ?? "") < (b.lastActivity ?? "") ? 1 : -1));
+  return [...map.values()].sort((a, b) =>
+    (a.lastActivity ?? "") < (b.lastActivity ?? "") ? 1 : -1,
+  );
 }
 
 export function AdminCustomersPage({
@@ -125,16 +146,27 @@ export function AdminCustomersPage({
   const [stage, setStage] = useState<string>("all");
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState(false);
-  const [draft, setDraft] = useState<{ name: string; email: string; phone: string; source: string; notes: string }>({
+  const [draft, setDraft] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    source: string;
+    notes: string;
+  }>({
     name: "",
     email: "",
     phone: "",
     source: "manual",
     notes: "",
   });
-  const [edit, setEdit] = useState<{ stage: ProspectStage; notes: string; next: string } | null>(null);
+  const [edit, setEdit] = useState<{ stage: ProspectStage; notes: string; next: string } | null>(
+    null,
+  );
 
-  const activityQ = useQuery({ queryKey: ["admin-customer-activity"], queryFn: () => fetchActivity() });
+  const activityQ = useQuery({
+    queryKey: ["admin-customer-activity"],
+    queryFn: () => fetchActivity(),
+  });
   const crmQ = useQuery({ queryKey: ["admin-crm"], queryFn: () => fetchCrm() });
 
   const contacts = useMemo(
@@ -168,7 +200,13 @@ export function AdminCustomersPage({
   };
 
   useEffect(() => {
-    if (!initialEmail || openedEmail.current === initialEmail || activityQ.isLoading || crmQ.isLoading) return;
+    if (
+      !initialEmail ||
+      openedEmail.current === initialEmail ||
+      activityQ.isLoading ||
+      crmQ.isLoading
+    )
+      return;
     openedEmail.current = initialEmail;
     const contact = contacts.find((c) => norm(c.email) === norm(initialEmail));
     if (contact) openDetail(contact);
@@ -177,7 +215,9 @@ export function AdminCustomersPage({
     mutationFn: () =>
       saveTask({
         data: {
-          title: followUpTitle.trim() || "Follow up with " + (selected?.name ?? selected?.email ?? "customer"),
+          title:
+            followUpTitle.trim() ||
+            "Follow up with " + (selected?.name ?? selected?.email ?? "customer"),
           customer_email: selected?.email,
           prospect_id: selected?.prospectId,
           due_date: edit?.next || localToday(),
@@ -216,8 +256,9 @@ export function AdminCustomersPage({
             <StatTile
               label="Follow-ups due"
               value={
-                (crmQ.data?.prospects ?? []).filter((p) => p.next_follow_up_at && p.next_follow_up_at <= localToday())
-                  .length
+                (crmQ.data?.prospects ?? []).filter(
+                  (p) => p.next_follow_up_at && p.next_follow_up_at <= localToday(),
+                ).length
               }
             />
           </div>
@@ -265,17 +306,25 @@ export function AdminCustomersPage({
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : filtered.length === 0 ? (
-            <EmptyState title="No contacts match" description="Try a different search, or add a prospect by hand." />
+            <EmptyState
+              title="No contacts match"
+              description="Try a different search, or add a prospect by hand."
+            />
           ) : layout === "board" ? (
             <div
               className="flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-auto pb-2"
               aria-label="Customer pipeline"
             >
               {Object.entries(STAGE_LABELS).map(([key, label]) => (
-                <section key={key} className="w-64 shrink-0 snap-start rounded-xl border border-border bg-card p-3">
+                <section
+                  key={key}
+                  className="w-64 shrink-0 snap-start rounded-xl border border-border bg-card p-3"
+                >
                   <h2 className="mb-3 font-semibold">
                     {label}{" "}
-                    <span className="text-muted-foreground">{filtered.filter((c) => c.stage === key).length}</span>
+                    <span className="text-muted-foreground">
+                      {filtered.filter((c) => c.stage === key).length}
+                    </span>
                   </h2>
                   <div className="space-y-2">
                     {filtered
@@ -286,8 +335,12 @@ export function AdminCustomersPage({
                           onClick={() => openDetail(c)}
                           className="w-full rounded-lg border border-border bg-background p-3 text-left"
                         >
-                          <div className="truncate text-sm font-medium">{c.name ?? c.email ?? "Unknown customer"}</div>
-                          <div className="mt-1 truncate text-xs text-muted-foreground">{c.email}</div>
+                          <div className="truncate text-sm font-medium">
+                            {c.name ?? c.email ?? "Unknown customer"}
+                          </div>
+                          <div className="mt-1 truncate text-xs text-muted-foreground">
+                            {c.email}
+                          </div>
                           <div className="mt-2 text-xs">
                             {c.nextFollowUp ? "Follow up " + c.nextFollowUp : "Set next action"}
                           </div>
@@ -306,21 +359,30 @@ export function AdminCustomersPage({
                     className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 p-3 text-left"
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold">{c.name ?? c.email ?? "Unknown"}</div>
-                      <div className="truncate text-xs text-muted-foreground">{c.email ?? "No email on file"}</div>
+                      <div className="truncate text-sm font-semibold">
+                        {c.name ?? c.email ?? "Unknown"}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {c.email ?? "No email on file"}
+                      </div>
                       <div className="mt-1 text-xs text-muted-foreground">
-                        {c.nextFollowUp ? "Next follow-up: " + c.nextFollowUp : "No follow-up scheduled"}
+                        {c.nextFollowUp
+                          ? "Next follow-up: " + c.nextFollowUp
+                          : "No follow-up scheduled"}
                       </div>
                       <div className="mt-1.5 flex flex-wrap items-center gap-2">
                         <StageChip stage={c.stage} />
                         <span className="text-[11px] text-muted-foreground">
-                          {c.purchases} purchase{c.purchases === 1 ? "" : "s"} · {c.downloads} download
+                          {c.purchases} purchase{c.purchases === 1 ? "" : "s"} · {c.downloads}{" "}
+                          download
                           {c.downloads === 1 ? "" : "s"}
                         </span>
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="text-sm font-semibold tabular-nums">{money(c.spendCents)}</div>
+                      <div className="text-sm font-semibold tabular-nums">
+                        {money(c.spendCents)}
+                      </div>
                       <div className="text-[11px] text-muted-foreground">
                         {c.lastActivity ? new Date(c.lastActivity).toLocaleDateString() : "—"}
                       </div>
@@ -343,7 +405,9 @@ export function AdminCustomersPage({
             <SheetHeader>
               <SheetTitle>Customer</SheetTitle>
             </SheetHeader>
-            <p className="p-4">{loading ? "Loading customer…" : "No customer activity found for " + initialEmail}</p>
+            <p className="p-4">
+              {loading ? "Loading customer…" : "No customer activity found for " + initialEmail}
+            </p>
           </SheetContent>
         </Sheet>
       )}
@@ -360,17 +424,26 @@ export function AdminCustomersPage({
       >
         <SheetContent side="right" className="flex h-full w-full flex-col gap-0 p-0 sm:max-w-lg">
           <SheetHeader className="border-b border-border/60 p-4">
-            <SheetTitle className="truncate">{selected?.name ?? selected?.email ?? "Contact"}</SheetTitle>
+            <SheetTitle className="truncate">
+              {selected?.name ?? selected?.email ?? "Contact"}
+            </SheetTitle>
           </SheetHeader>
           {selected && edit && (
             <>
               <div className="flex-1 space-y-5 overflow-y-auto p-4">
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-muted-foreground">{selected.email ?? "No email on file"}</span>
+                    <span className="truncate text-muted-foreground">
+                      {selected.email ?? "No email on file"}
+                    </span>
                     {selected.email && (
                       <Button asChild size="sm" variant="outline">
-                        <Link to="/admin/email" search={{ to: selected.email, returnToCustomer: selected.email }}>Send email</Link>
+                        <Link
+                          to="/admin/email"
+                          search={{ to: selected.email, returnToCustomer: selected.email }}
+                        >
+                          Send email
+                        </Link>
                       </Button>
                     )}
                   </div>
@@ -383,7 +456,10 @@ export function AdminCustomersPage({
 
                 <div className="space-y-1.5">
                   <Label>Stage</Label>
-                  <Select value={edit.stage} onValueChange={(v) => setEdit({ ...edit, stage: v as ProspectStage })}>
+                  <Select
+                    value={edit.stage}
+                    onValueChange={(v) => setEdit({ ...edit, stage: v as ProspectStage })}
+                  >
                     <SelectTrigger className="h-11 text-base">
                       <SelectValue />
                     </SelectTrigger>
@@ -424,7 +500,9 @@ export function AdminCustomersPage({
                     Activity
                   </h3>
                   {selected.activity.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No recorded purchases or downloads.</p>
+                    <p className="text-sm text-muted-foreground">
+                      No recorded purchases or downloads.
+                    </p>
                   ) : (
                     <ul className="divide-y divide-border/60">
                       {selected.activity.slice(0, 25).map((r) => (
@@ -433,16 +511,51 @@ export function AdminCustomersPage({
                             <div className="truncate text-sm">{r.beat_title}</div>
                             <div className="truncate text-xs text-muted-foreground">
                               {r.kind === "purchase"
-                                ? r.paid
-                                  ? "Paid sale"
-                                  : "Unpaid checkout"
+                                ? r.promo_claim
+                                  ? "Promo claim"
+                                  : r.paid
+                                    ? "Paid sale"
+                                    : "Unpaid checkout"
                                 : r.kind === "member_download"
                                   ? "Member download"
                                   : "Free download"}
-                              {r.agreement_code ? ` · ${r.agreement_code}` : r.kind === "free_download" ? " · Tagged preview" : r.kind === "purchase" && r.paid ? " · License needs review" : ""}
+                              {r.agreement_code
+                                ? ` · ${r.agreement_code}`
+                                : r.kind === "free_download"
+                                  ? " · Tagged preview"
+                                  : r.kind === "purchase" && r.paid
+                                    ? " · License needs review"
+                                    : ""}
                             </div>
-                            {r.agreement_row_id && <Button asChild size="sm" variant="ghost"><Link to="/admin/agreements" search={{ agreement: r.agreement_code ?? undefined }}>View license</Link></Button>}
-                            {r.download_code && <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(`https://mybeatcatalog.com/d/${r.download_code}`).then(() => toast.success("Buyer download link copied"), () => toast.error("Could not copy link"))}>Copy download link</Button>}
+                            {r.promo_claim && r.detail && (
+                              <p className="text-xs text-muted-foreground">{r.detail}</p>
+                            )}
+                            {r.agreement_row_id && (
+                              <Button asChild size="sm" variant="ghost">
+                                <Link
+                                  to="/admin/agreements"
+                                  search={{ agreement: r.agreement_code ?? undefined }}
+                                >
+                                  View license
+                                </Link>
+                              </Button>
+                            )}
+                            {r.download_code && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                  navigator.clipboard
+                                    .writeText(`https://mybeatcatalog.com/d/${r.download_code}`)
+                                    .then(
+                                      () => toast.success("Buyer download link copied"),
+                                      () => toast.error("Could not copy link"),
+                                    )
+                                }
+                              >
+                                Copy download link
+                              </Button>
+                            )}
                           </div>
                           <div className="shrink-0 text-right text-xs text-muted-foreground">
                             {new Date(r.created_at).toLocaleDateString()}
@@ -464,10 +577,16 @@ export function AdminCustomersPage({
                     )
                     .map((t) => (
                       <div key={t.id} className="flex items-center justify-between gap-2 text-xs">
-                        <span className={t.status === "done" ? "line-through text-muted-foreground" : ""}>
+                        <span
+                          className={
+                            t.status === "done" ? "line-through text-muted-foreground" : ""
+                          }
+                        >
                           {t.title}
                         </span>
-                        <span>{t.status === "done" ? "Completed" : (t.due_date ?? "No due date")}</span>
+                        <span>
+                          {t.status === "done" ? "Completed" : (t.due_date ?? "No due date")}
+                        </span>
                       </div>
                     ))}
                   <Label htmlFor="customer-followup-title">Next action</Label>
@@ -588,6 +707,39 @@ export function CustomerRecordDrawer({ email, onClose }: { email: string; onClos
 
 function CustomerEmailHistory({ email }: { email: string }) {
   const historyFn = useServerFn(adminCustomerEmailHistory);
-  const history = useQuery({ queryKey: ["customer-email-history", email], queryFn: () => historyFn({ data: { email } }) });
-  return <details className="rounded-lg border border-border p-3"><summary className="cursor-pointer text-sm font-semibold">Recent email activity</summary><p className="mt-2 text-xs text-muted-foreground">Recent site logs. Sent or accepted does not prove inbox delivery.</p>{history.isError ? <p className="text-xs">Could not load email activity.</p> : history.isLoading ? <p className="text-xs">Loading…</p> : !history.data?.length ? <p className="text-xs text-muted-foreground">No matches in the latest 100 site email logs.</p> : history.data.map((r) => <div key={r.id} className="flex justify-between gap-2 border-t border-border py-2 text-xs"><span>{(r.metadata as any)?.subject || r.template_name}<br />{new Date(r.created_at).toLocaleString()}</span><span>{r.status}</span></div>)}</details>;
+  const history = useQuery({
+    queryKey: ["customer-email-history", email],
+    queryFn: () => historyFn({ data: { email } }),
+  });
+  return (
+    <details className="rounded-lg border border-border p-3">
+      <summary className="cursor-pointer text-sm font-semibold">Recent email activity</summary>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Recent site logs. Sent or accepted does not prove inbox delivery.
+      </p>
+      {history.isError ? (
+        <p className="text-xs">Could not load email activity.</p>
+      ) : history.isLoading ? (
+        <p className="text-xs">Loading…</p>
+      ) : !history.data?.length ? (
+        <p className="text-xs text-muted-foreground">
+          No matches in the latest 100 site email logs.
+        </p>
+      ) : (
+        history.data.map((r) => (
+          <div
+            key={r.id}
+            className="flex justify-between gap-2 border-t border-border py-2 text-xs"
+          >
+            <span>
+              {(r.metadata as any)?.subject || r.template_name}
+              <br />
+              {new Date(r.created_at).toLocaleString()}
+            </span>
+            <span>{r.status}</span>
+          </div>
+        ))
+      )}
+    </details>
+  );
 }

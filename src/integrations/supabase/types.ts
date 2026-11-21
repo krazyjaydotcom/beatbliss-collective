@@ -476,6 +476,36 @@ export type Database = {
           },
         ]
       }
+      beat_free_claims: {
+        Row: {
+          created_at: string
+          email: string
+          environment: string
+          promo_id: string
+          request_data: Json
+          request_id: string
+          session_data: Json
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          environment: string
+          promo_id: string
+          request_data: Json
+          request_id: string
+          session_data: Json
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          environment?: string
+          promo_id?: string
+          request_data?: Json
+          request_id?: string
+          session_data?: Json
+        }
+        Relationships: []
+      }
       beat_funnel_leads: {
         Row: {
           captured_at: string
@@ -2594,6 +2624,21 @@ export type Database = {
           p_session_id: string
         }
         Returns: number
+      }
+      reserve_beat_free_claim: {
+        Args: {
+          p_email: string
+          p_environment: string
+          p_first_time: boolean
+          p_legacy: number
+          p_max: number
+          p_promo_id: string
+          p_request: Json
+          p_request_id: string
+          p_session: Json
+          p_stripe_used: number
+        }
+        Returns: Json
       }
       validate_beat_credit_contributors: {
         Args: { _c: Json }

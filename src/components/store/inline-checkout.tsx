@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Download, Gift, Loader2, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createCartCheckoutSession } from "@/lib/cart.functions";
 import type { LicenseTier } from "@/lib/licensing";
@@ -11,12 +12,49 @@ export interface InlineCheckoutItem {
   beatId: string;
   tier: LicenseTier;
 }
+export interface CheckoutDownload {
+  title: string;
+  label: string;
+  url: string;
+}
 
-/**
- * Stripe's payment form rendered in place, inside the cart drawer or the
- * license panel. The page never navigates, so the audio element — and the
- * beat the visitor is listening to — keeps playing while they pay.
- */
+function Celebration({ complete = false }: { complete?: boolean }) {
+  const [burst, setBurst] = useState(true);
+  useEffect(() => {
+    const timeout = setTimeout(() => setBurst(false), 1800);
+    return () => clearTimeout(timeout);
+  }, []);
+  return (
+    <div className="relative overflow-hidden py-2 text-center" role="status">
+      {burst && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 flex items-center justify-around"
+        >
+          {["bg-primary", "bg-chart-2", "bg-chart-4", "bg-primary", "bg-chart-2", "bg-chart-4"].map(
+            (color, index) => (
+              <span
+                key={index}
+                className={`h-2 w-1.5 ${color} animate-ping motion-reduce:animate-none`}
+              />
+            ),
+          )}
+        </div>
+      )}
+      <div className="relative">
+        <Gift className="mx-auto mb-2 h-8 w-8 text-primary" aria-hidden />
+        <p className="text-xs font-bold uppercase text-primary">
+          {complete ? "It's yours!" : "100% off unlocked"}
+        </p>
+        <h3 className="mt-1 text-xl font-semibold">
+          {complete ? "Go make something great." : "This one's on us!"}
+        </h3>
+        {!complete && <p className="mt-2 text-3xl font-semibold tabular-nums">$0.00</p>}
+      </div>
+    </div>
+  );
+}
+
 export function InlineCheckout({
   items,
   onComplete,
@@ -24,7 +62,7 @@ export function InlineCheckout({
   buyerEmail,
 }: {
   items: InlineCheckoutItem[];
-  onComplete?: () => void;
+  onComplete?: (downloads?: CheckoutDownload[]) => void;
   initialCode?: string;
   buyerEmail?: string;
 }) {
@@ -34,117 +72,306 @@ export function InlineCheckout({
   const [codeInput, setCodeInput] = useState(initialCode ?? "");
   const [code, setCode] = useState(initialCode ?? "");
   const [note, setNote] = useState<string | null>(null);
-
-  // Keep the item list stable for the provider: changing the options object
-  // after the session exists makes Stripe throw.
+  const [free, setFree] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [claiming, setClaiming] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState(buyerEmail ?? "");
+  const [downloads, setDownloads] = useState<CheckoutDownload[]>([]);
+  const [pending, setPending] = useState(false);
+  const [reload, setReload] = useState(0);
+  const signature = items.map((i) => `${i.beatId}:${i.tier}`).join("|");
+  // Stable across parent rerenders and while Stripe owns its payment form.
   const payload = useMemo(
-    () => items.map((i) => ({ beatId: i.beatId, tier: i.tier })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items.map((i) => `${i.beatId}:${i.tier}`).join("|")],
+    () =>
+      signature
+        .split("|")
+        .filter(Boolean)
+        .map((value) => {
+          const [beatId, tier] = value.split(":");
+          return { beatId: beatId ?? "", tier: tier as LicenseTier };
+        }),
+    [signature],
   );
 
-  const fetchClientSecret = useCallback(async (): Promise<string> => {
-    let environment: "sandbox" | "live";
-    try {
-      environment = getStripeEnvironment();
-    } catch {
-      const msg = "Payments are not configured yet. Please try again later.";
-      setError(msg);
-      throw new Error(msg);
-    }
-    const r = await create({
-      data: {
-        items: payload,
-        environment,
-        ...(code ? { discountCode: code } : {}),
-        ...(buyerEmail ? { email: buyerEmail } : {}),
-        returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
-        attribution: getPurchaseAttribution(),
-      },
-    });
-    if (r.error || !r.clientSecret) {
-      const msg = r.error ?? "Checkout is unavailable right now.";
-      setError(msg);
-      throw new Error(msg);
-    }
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
     setError(null);
-    setNote(r.discountNote ?? null);
-    return r.clientSecret;
-  }, [create, payload, code, buyerEmail]);
+    setClientSecret(null);
+    setFree(false);
+    setNote(null);
+    async function open() {
+      try {
+        const data = {
+          items: payload,
+          environment: getStripeEnvironment(),
+          ...(code ? { discountCode: code } : {}),
+          ...(buyerEmail ? { email: buyerEmail } : {}),
+          returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+          attribution: getPurchaseAttribution(),
+        };
+        if (code) {
+          const recoveryKey = `mbc-free-recovery:${data.environment}:${signature}:${code}`;
+          const recovery = sessionStorage.getItem(recoveryKey);
+          if (recovery) {
+            const saved = JSON.parse(recovery) as {
+              requestId: string;
+              name: string;
+              email: string;
+            };
+            const resumed = await create({ data: { ...data, action: "claim", ...saved } });
+            if (!active) return;
+            setName(saved.name);
+            setEmail(saved.email);
+            setFree(true);
+            if (resumed.error) {
+              setError(resumed.error);
+              return;
+            }
+            setDownloads(resumed.downloads ?? []);
+            setPending(!!resumed.deliveryPending);
+            setDone(true);
+            return;
+          }
+          const quote = await create({ data: { ...data, action: "quote" } });
+          if (!active) return;
+          if (quote.error) {
+            setError(quote.error);
+            return;
+          }
+          setNote(quote.discountNote ?? null);
+          if (quote.freeOrder) {
+            setFree(true);
+            return;
+          }
+        }
+        const result = await create({ data });
+        if (!active) return;
+        if (result.error) setError(result.error);
+        else if (result.freeOrder) setFree(true);
+        else setClientSecret(result.clientSecret);
+        setNote(result.discountNote ?? null);
+      } catch {
+        if (active) setError("Couldn't open checkout. Please try again.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void open();
+    return () => {
+      active = false;
+    };
+  }, [create, payload, code, buyerEmail, reload, signature]);
 
   const options = useMemo(
     () => ({
-      fetchClientSecret,
+      clientSecret: clientSecret ?? "",
       onComplete: () => {
         setDone(true);
         onComplete?.();
       },
     }),
-    [fetchClientSecret, onComplete],
+    [clientSecret, onComplete],
   );
 
-  const codeBox = (
-    <form
-      className="mb-2 flex gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setError(null);
-        setNote(null);
-        setCode(codeInput.trim().toUpperCase());
-      }}
-    >
-      <input
-        value={codeInput}
-        onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-        placeholder="Discount code"
-        aria-label="Discount code"
-        className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-      />
-      <button type="submit" disabled={!codeInput.trim()} className="rounded-md border border-border px-3 text-sm font-semibold disabled:opacity-50">
-        Apply
-      </button>
-      {code && (
-        <button type="button" onClick={() => { setCode(""); setCodeInput(""); setError(null); setNote(null); }} className="text-xs text-muted-foreground underline">
-          Remove
-        </button>
-      )}
-    </form>
-  );
-
-  if (error) {
-    return (
-      <div>
-        {codeBox}
-        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
-          <p className="font-semibold text-destructive">{code ? "Code not applied" : "Checkout unavailable"}</p>
-          <p className="mt-1 text-muted-foreground">{error}</p>
-        </div>
-      </div>
-    );
+  async function claim() {
+    setClaiming(true);
+    setError(null);
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const key = `mbc-free-claim:${getStripeEnvironment()}:${signature}:${code}:${normalizedEmail}:${name.trim()}`;
+      let requestId = sessionStorage.getItem(key);
+      if (!requestId) {
+        requestId = crypto.randomUUID();
+        sessionStorage.setItem(key, requestId);
+      }
+      sessionStorage.setItem(
+        `mbc-free-recovery:${getStripeEnvironment()}:${signature}:${code}`,
+        JSON.stringify({ requestId, name: name.trim(), email: normalizedEmail }),
+      );
+      const result = await create({
+        data: {
+          action: "claim",
+          requestId,
+          items: payload,
+          name: name.trim(),
+          email: normalizedEmail,
+          environment: getStripeEnvironment(),
+          discountCode: code,
+          returnUrl: window.location.href,
+          attribution: getPurchaseAttribution(),
+        },
+      });
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setDownloads(result.downloads ?? []);
+      setPending(!!result.deliveryPending);
+      setDone(true);
+      if (!result.deliveryPending) onComplete?.(result.downloads ?? []);
+    } catch {
+      setError(
+        "Couldn't finish your claim. Retry with the same details — you won't receive a duplicate order.",
+      );
+    } finally {
+      setClaiming(false);
+    }
   }
 
-  if (done) {
+  if (done)
     return (
-      <div className="space-y-2 rounded-xl border border-primary/40 bg-primary/[0.07] p-5 text-center">
-        <CheckCircle2 className="mx-auto h-7 w-7 text-primary" aria-hidden />
-        <p className="text-sm font-semibold text-foreground">Payment complete</p>
-        <p className="text-sm text-muted-foreground">
-          Your download links and license document are on their way by email. Your music never
-          stopped playing.
+      <div className="space-y-3">
+        {free ? (
+          <Celebration complete />
+        ) : (
+          <CheckCircle2 className="mx-auto h-8 w-8 text-primary" />
+        )}
+        {!free && <h3 className="text-center font-semibold">Payment complete</h3>}
+        {downloads.map((download) => (
+          <div key={download.url} className="border-b border-border pb-3">
+            <p className="text-sm font-semibold">{download.title}</p>
+            <p className="mb-2 text-xs text-muted-foreground">{download.label}</p>
+            <Button asChild className="w-full">
+              <a href={download.url} target="_blank" rel="noopener noreferrer">
+                <Download /> Download beat &amp; license
+              </a>
+            </Button>
+          </div>
+        ))}
+        <p className="text-center text-sm text-muted-foreground">
+          {pending
+            ? "Your claim is saved. Email delivery still needs another attempt; any available downloads are above."
+            : "Your files and personalized agreement are ready. We've requested an email copy, too."}
         </p>
+        {pending && (
+          <Button
+            className="w-full"
+            variant="outline"
+            disabled={claiming}
+            onClick={() => void claim()}
+          >
+            {claiming ? <Loader2 className="animate-spin" /> : null} Retry delivery
+          </Button>
+        )}
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </div>
     );
-  }
 
   return (
-    <div>
-    {codeBox}
-    {note && <p className="mb-2 text-xs font-semibold text-primary">{note}</p>}
-    <div className="rounded-xl bg-white/[0.02] p-1">
-      <EmbeddedCheckoutProvider key={code || "none"} stripe={getStripe()} options={options}>
-        <EmbeddedCheckout />
-      </EmbeddedCheckoutProvider>
-    </div>
+    <div className="space-y-3">
+      <form
+        className="flex flex-wrap gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const next = codeInput.trim().toUpperCase();
+          setCode(next);
+          if (next === code) setReload((v) => v + 1);
+        }}
+      >
+        <input
+          value={codeInput}
+          onChange={(event) => setCodeInput(event.target.value.toUpperCase())}
+          placeholder="Discount code"
+          aria-label="Discount code"
+          disabled={claiming}
+          className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+        <Button type="submit" variant="outline" disabled={!codeInput.trim() || claiming}>
+          Apply
+        </Button>
+        {code && (
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={claiming}
+            onClick={() => {
+              setCode("");
+              setCodeInput("");
+            }}
+          >
+            Remove
+          </Button>
+        )}
+      </form>
+      {loading ? (
+        <div
+          className="flex min-h-24 items-center justify-center gap-2 text-sm text-muted-foreground"
+          role="status"
+        >
+          <Loader2 className="h-4 w-4 animate-spin" /> Checking your order…
+        </div>
+      ) : null}
+      {free && !loading ? (
+        <>
+          <Celebration key={code} />
+          <p className="text-center text-sm text-muted-foreground">
+            No card. No payment screen. Just your music.
+          </p>
+          <form
+            className="space-y-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void claim();
+            }}
+          >
+            <label className="block text-xs font-medium">
+              Your name
+              <input
+                required
+                maxLength={120}
+                autoComplete="name"
+                value={name}
+                disabled={claiming}
+                onChange={(event) => setName(event.target.value)}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm"
+              />
+            </label>
+            <label className="block text-xs font-medium">
+              Email for your files &amp; license
+              <input
+                required
+                type="email"
+                maxLength={255}
+                autoComplete="email"
+                value={email}
+                disabled={claiming}
+                onChange={(event) => setEmail(event.target.value)}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm"
+              />
+            </label>
+            <Button type="submit" className="min-h-11 w-full" disabled={claiming}>
+              {claiming ? <Loader2 className="animate-spin" /> : <Sparkles />}{" "}
+              {claiming ? "Unlocking your music…" : "Claim my beat & license"}
+            </Button>
+          </form>
+          {note && <p className="text-xs text-muted-foreground">{note}</p>}
+        </>
+      ) : null}
+      {error && (
+        <div role="alert" className="rounded-md border border-destructive/40 p-3 text-sm">
+          <p className="font-semibold text-destructive">{error}</p>
+          {!free && (
+            <Button className="mt-2" variant="outline" onClick={() => setReload((v) => v + 1)}>
+              Try again
+            </Button>
+          )}
+        </div>
+      )}
+      {!loading && !free && clientSecret && (
+        <>
+          <p className="text-xs text-primary">{note}</p>
+          <EmbeddedCheckoutProvider key={clientSecret} stripe={getStripe()} options={options}>
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
+        </>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { useCart } from "@/components/store/cart-provider";
 import { formatPrice } from "@/components/store/player-provider";
 import { TIER_META } from "@/lib/licensing";
 import { CoverArt } from "@/components/store/cover-art";
-import { InlineCheckout } from "@/components/store/inline-checkout";
+import { InlineCheckout, type CheckoutDownload } from "@/components/store/inline-checkout";
 import { trackPurchaseFunnel } from "@/lib/purchase-attribution";
 
 export function CartButton() {
@@ -32,14 +32,15 @@ export function CartSheet() {
   const cart = useCart();
   const [paying, setPaying] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [downloads, setDownloads] = useState<CheckoutDownload[]>([]);
   const closeCart = () => {
     setPaying(false);
     setCompleted(false);
+    setDownloads([]);
     cart.close();
   };
 
   if (!cart.isOpen) return null;
-
 
   return (
     <div className="fixed inset-0 z-[95] flex justify-end">
@@ -86,13 +87,33 @@ export function CartSheet() {
             <div className="space-y-3 border border-primary/40 p-5 text-center">
               <CheckCircle2 className="mx-auto h-7 w-7 text-primary" aria-hidden />
               <p className="font-semibold">Order complete</p>
-              <p className="text-sm text-muted-foreground">Your download links and personalized license agreements are on their way by email.</p>
-              <Button variant="outline" onClick={closeCart}><ArrowLeft /> Continue shopping</Button>
+              <p className="text-sm text-muted-foreground">
+                Your files and personalized agreements are ready. An email copy has been requested,
+                too.
+              </p>
+              {downloads.map((download) => (
+                <div key={download.url} className="space-y-2 border-b border-border pb-3">
+                  <p className="text-sm font-medium">{download.title}</p>
+                  <p className="text-xs text-muted-foreground">{download.label}</p>
+                  <Button asChild className="w-full">
+                    <a href={download.url} target="_blank" rel="noopener noreferrer">
+                      Download beat &amp; license
+                    </a>
+                  </Button>
+                </div>
+              ))}
+              <Button variant="outline" onClick={closeCart}>
+                <ArrowLeft /> Continue shopping
+              </Button>
             </div>
           ) : paying && cart.items.length > 0 ? (
             <InlineCheckout
               items={cart.items.map((i) => ({ beatId: i.beatId, tier: i.tier }))}
-              onComplete={() => { setCompleted(true); cart.clear(); }}
+              onComplete={(links) => {
+                setDownloads(links ?? []);
+                setCompleted(true);
+                cart.clear();
+              }}
             />
           ) : cart.items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -146,10 +167,12 @@ export function CartSheet() {
             </div>
             <button
               type="button"
-               onClick={() => {
-                 cart.items.forEach((item) => trackPurchaseFunnel("buy_now_clicked", item.beatId, item.tier));
-                 setPaying(true);
-               }}
+              onClick={() => {
+                cart.items.forEach((item) =>
+                  trackPurchaseFunnel("buy_now_clicked", item.beatId, item.tier),
+                );
+                setPaying(true);
+              }}
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:bg-primary/90"
             >
               Checkout
@@ -175,7 +198,6 @@ export function CartSheet() {
             </button>
           </div>
         ) : null}
-
       </aside>
     </div>
   );
