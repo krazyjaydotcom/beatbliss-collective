@@ -7,3 +7,4 @@
 - Match purchase licenses only by exact payment session and beat. Never fall back by email/beat or another item in the same cart.
 - Bird sends use a unique logged attempt ID and provider idempotency; unknown outcomes must not be automatically retried. Accepted is not delivered.
 - Catalog search ranks normalized live input in a browser-safe helper after filters and sort, preserving sort within title/metadata tiers; URL synchronization must not delay results.
+- Direct storage reads for home_gallery and beat-attachments are admin-only; retain signed gallery URLs and the existing attachment delivery route so public pages do not need unrestricted storage access.
