@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Fix live catalog title search and stable relevance ranking without changing beat data
+- [x] Test search variants, clear/Enter, filters and first visible results in preview
+
 - [x] Build compact responsive purchase drawer with pinned actions
 - [x] Add YouTube purchase-link sharing and CTA copy
 - [x] Add attributed funnel tracking and secure paid-event deduplication

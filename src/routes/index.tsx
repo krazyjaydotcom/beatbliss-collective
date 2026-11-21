@@ -20,6 +20,7 @@ import { BeatDetail, BeatDetailDrawer } from "@/components/store/beat-detail-dra
 import { usePlayer } from "@/components/store/player-provider";
 import { useSavedBeats } from "@/hooks/use-saved-beats";
 import { trackPurchaseFunnel } from "@/lib/purchase-attribution";
+import { rankCatalogMatches } from "@/lib/catalog-search";
 
 const searchSchema = z.object({
   view: fallback(z.string(), "browse").default("browse"),
@@ -109,27 +110,34 @@ function StorePage() {
 
   // Debounced search: the input stays instant, the URL follows.
   const [queryInput, setQueryInput] = useState(search.q);
+  const ownQueryNavigation = useRef<string | null>(null);
   useEffect(() => {
+    // A delayed URL acknowledgement must not replace newer typing.
+    if (ownQueryNavigation.current === search.q) {
+      ownQueryNavigation.current = null;
+      return;
+    }
     setQueryInput(search.q);
   }, [search.q]);
   useEffect(() => {
     if (queryInput === search.q) return;
     const t = setTimeout(() => {
+      ownQueryNavigation.current = queryInput;
       navigate({ search: (prev) => ({ ...prev, q: queryInput }), replace: true });
     }, 250);
     return () => clearTimeout(t);
   }, [queryInput, search.q, navigate]);
 
-  const setSearch = (patch: Record<string, unknown>) =>
-    navigate({ search: (prev) => ({ ...prev, ...patch }) });
+  const setSearch = (patch: Record<string, unknown>) => {
+    if (typeof patch.q === "string") {
+      setQueryInput(patch.q);
+      ownQueryNavigation.current = patch.q;
+    }
+    return navigate({ search: (prev) => ({ ...prev, q: queryInput, ...patch }) });
+  };
 
   const results = useMemo(() => {
-    const q = search.q.trim().toLowerCase();
     let list = beats.filter((b) => {
-      if (q) {
-        const haystack = `${b.title} ${b.producerName} ${b.genre ?? ""} ${b.mood ?? ""}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
       if (genre !== "all" && b.genre !== genre) return false;
       if (!matchesBpm(bpm, b.bpm)) return false;
       return true;
@@ -137,16 +145,17 @@ function StorePage() {
 
     if (view === "saved") list = list.filter((b) => savedIds.includes(b.id));
     if (view === "new") {
-      list = [...list].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 30);
+      list = [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     } else {
       list = [...list].sort((a, b) => {
         if (sort === "title") return a.title.localeCompare(b.title);
         if (sort === "bpm") return (a.bpm ?? 9999) - (b.bpm ?? 9999);
-        return a.createdAt < b.createdAt ? 1 : -1;
+        return b.createdAt.localeCompare(a.createdAt);
       });
     }
-    return list;
-  }, [beats, search.q, genre, bpm, sort, view, savedIds]);
+    const matches = rankCatalogMatches(list, queryInput);
+    return view === "new" ? matches.slice(0, 30) : matches;
+  }, [beats, queryInput, genre, bpm, sort, view, savedIds]);
 
   const selected: StoreBeat | null = useMemo(() => {
     // `b` is the legacy shared-link param; keep it working.
@@ -199,7 +208,7 @@ function StorePage() {
           },
         ]
       : []),
-    ...(search.q ? [{ label: `“${search.q}”`, onClear: () => setSearch({ q: "" }) }] : []),
+    ...(queryInput ? [{ label: `“${queryInput}”`, onClear: () => setSearch({ q: "" }) }] : []),
   ];
 
   const filterSummary = [
