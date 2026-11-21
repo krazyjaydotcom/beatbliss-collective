@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Download, Loader2, Sparkles } from "lucide-react";
@@ -30,6 +30,7 @@ export function InlineCheckout({
   initialCode?: string;
   buyerEmail?: string;
 }) {
+  const checkoutRef = useRef<HTMLDivElement>(null);
   const create = useServerFn(createCartCheckoutSession);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -131,6 +132,14 @@ export function InlineCheckout({
     };
   }, [create, payload, code, buyerEmail, reload, signature]);
 
+  useEffect(() => {
+    if (!free || loading || done) return;
+    const frame = requestAnimationFrame(() =>
+      checkoutRef.current?.scrollIntoView({ block: "start", behavior: "instant" }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [free, loading, done]);
+
   const options = useMemo(
     () => ({
       clientSecret: clientSecret ?? "",
@@ -231,7 +240,7 @@ export function InlineCheckout({
     );
 
   return (
-    <div className="space-y-3">
+    <div ref={checkoutRef} className={free ? "space-y-2 scroll-mt-2" : "space-y-3"}>
       <form
         className="flex flex-wrap gap-2"
         onSubmit={(event) => {
@@ -277,11 +286,11 @@ export function InlineCheckout({
       {free && !loading ? (
         <>
           <ArtistGiftCelebration key={code} originalCents={originalTotal} />
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-xs text-muted-foreground">
             Your beat and personalized license paperwork are included.
           </p>
           <form
-            className="space-y-3"
+            className="space-y-2"
             onSubmit={(event) => {
               event.preventDefault();
               void claim();
@@ -296,7 +305,7 @@ export function InlineCheckout({
                 value={name}
                 disabled={claiming}
                 onChange={(event) => setName(event.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm"
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-base"
               />
             </label>
             <label className="block text-xs font-medium">
@@ -309,7 +318,7 @@ export function InlineCheckout({
                 value={email}
                 disabled={claiming}
                 onChange={(event) => setEmail(event.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm"
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-base"
               />
             </label>
             <Button type="submit" className="min-h-11 w-full" disabled={claiming}>
